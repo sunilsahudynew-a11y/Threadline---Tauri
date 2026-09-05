@@ -38,7 +38,10 @@ jobs:
           rustup target add x86_64-apple-darwin
 
       - name: Install dependencies (frontend)
-        run: npm install
+        shell: bash
+        run: |
+          rm -f package-lock.json
+          npm install
 
       - name: Build Tauri Desktop App
         uses: tauri-apps/tauri-action@v0
