@@ -30,8 +30,12 @@ jobs:
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - name: Install Rust macOS universal targets
+        if: matrix.platform == 'macos-latest'
+        run: |
+          rustup target add aarch64-apple-darwin
+          rustup target add x86_64-apple-darwin
 
       - name: Install dependencies (frontend)
         run: npm install
@@ -41,6 +45,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          tauriScript: npx tauri
           tagName: v__VERSION__
           releaseName: 'Threadline Studio v__VERSION__'
           releaseBody: 'See the assets to download this release and install.'
