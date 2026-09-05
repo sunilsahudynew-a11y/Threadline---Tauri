@@ -1,0 +1,7 @@
+{
+  "name": "Threadline",
+  "description": "Narrative studio & novelist workspace. Keep the story connected. Keep the voice yours.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
