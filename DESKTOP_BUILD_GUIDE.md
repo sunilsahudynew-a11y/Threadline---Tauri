@@ -65,3 +65,32 @@ If you want to compile the desktop binary locally on your Mac or PC:
   - `src-tauri/target/release/bundle/msi/Threadline_0.1.0_x64_en-US.msi`
 
 Double-click the installer on your computer to install Threadline as a native desktop application.
+
+---
+
+## macOS: "Cannot be opened because Apple cannot check it for malicious software"
+
+This is standard macOS **Gatekeeper** behavior for any app built outside the Mac App Store that is not signed with a paid ($99/year) Apple Developer certificate.
+
+You can allow and open it in seconds using any of these methods:
+
+### Method A: Right-Click > Open (Fastest, One-Time)
+1. In **Finder**, go to your **Applications** folder (or wherever the `Threadline.app` is).
+2. **Right-click** (or hold `Control` and click) on the **Threadline** icon.
+3. Select **Open** from the menu.
+4. In the dialog that appears, click the **Open** button.
+5. macOS will remember your choice permanently, and future double-clicks will launch the app normally.
+
+### Method B: System Settings
+1. Click **Done** or **OK** on the warning popup.
+2. Open macOS **System Settings** > **Privacy & Security**.
+3. Scroll down to the **Security** section.
+4. You will see a notification: *"Threadline was blocked from use because it is not from an identified developer"*.
+5. Click **Open Anyway**, enter your Mac password or Touch ID, and click **Open**.
+
+### Method C: Terminal Command (Removes Quarantine Flag)
+If macOS continues to block the app, open Terminal and run:
+```bash
+xattr -cr /Applications/Threadline.app
+```
+*(Replace `/Applications/Threadline.app` with the path to the app if you haven't dragged it to Applications yet).*

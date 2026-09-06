@@ -1,0 +1,205 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <!-- Background Gradients -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#24211D" />
+      <stop offset="50%" stop-color="#191714" />
+      <stop offset="100%" stop-color="#100F0D" />
+    </linearGradient>
+
+    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.22" />
+      <stop offset="40%" stop-color="#FFFFFF" stop-opacity="0.08" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.4" />
+    </linearGradient>
+
+    <!-- Gold Foil Gradients -->
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FBE6A2" />
+      <stop offset="35%" stop-color="#E5C158" />
+      <stop offset="70%" stop-color="#C69226" />
+      <stop offset="100%" stop-color="#8F6211" />
+    </linearGradient>
+
+    <linearGradient id="goldLight" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFF4D0" />
+      <stop offset="100%" stop-color="#D9A83E" />
+    </linearGradient>
+
+    <!-- Threadline Color Gradients -->
+    <linearGradient id="crimsonThread" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#F43F5E" />
+      <stop offset="100%" stop-color="#BE123C" />
+    </linearGradient>
+
+    <linearGradient id="amberThread" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FCD34D" />
+      <stop offset="100%" stop-color="#D97706" />
+    </linearGradient>
+
+    <linearGradient id="tealThread" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2DD4BF" />
+      <stop offset="100%" stop-color="#0F766E" />
+    </linearGradient>
+
+    <linearGradient id="parchmentGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FAF5E8" />
+      <stop offset="100%" stop-color="#EADFC9" />
+    </linearGradient>
+
+    <!-- Shadows -->
+    <filter id="dropShadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="24" stdDeviation="28" flood-color="#000000" flood-opacity="0.55" />
+    </filter>
+    
+    <filter id="nibShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.4" />
+    </filter>
+
+    <filter id="threadGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Base macOS App Icon Squircle Container -->
+  <g filter="url(#dropShadow)">
+    <rect
+      x="80"
+      y="80"
+      width="864"
+      height="864"
+      rx="192"
+      ry="192"
+      fill="url(#bgGrad)"
+    />
+    <!-- Subtle Inner Highlight Rim -->
+    <rect
+      x="81.5"
+      y="81.5"
+      width="861"
+      height="861"
+      rx="190.5"
+      ry="190.5"
+      fill="none"
+      stroke="url(#borderGrad)"
+      stroke-width="3"
+    />
+  </g>
+
+  <!-- Architectural Grid / Story Structure Background Geometry -->
+  <g opacity="0.07" stroke="#FFFFFF" stroke-width="1.5">
+    <line x1="80" y1="512" x2="944" y2="512" stroke-dasharray="8 8" />
+    <line x1="512" y1="80" x2="512" y2="944" stroke-dasharray="8 8" />
+    <circle cx="512" cy="512" r="280" fill="none" />
+    <circle cx="512" cy="512" r="380" fill="none" />
+  </g>
+
+  <!-- Parchment Leaf (Manuscript Base) -->
+  <g filter="url(#nibShadow)">
+    <path
+      d="M 320 680 C 320 680 430 730 512 730 C 594 730 704 680 704 680 L 684 410 C 684 410 594 440 512 440 C 430 440 340 410 340 410 Z"
+      fill="url(#parchmentGrad)"
+      opacity="0.95"
+    />
+    <!-- Page curl / spine fold -->
+    <path
+      d="M 512 440 L 512 730"
+      stroke="#C9BA9B"
+      stroke-width="2.5"
+      stroke-dasharray="6 4"
+    />
+  </g>
+
+  <!-- Narrative Silk Threads (Flowing Behind and Through the Pen) -->
+  <!-- Teal Thread: Thematic Subplot -->
+  <path
+    d="M 220 580 C 310 630 420 540 512 600 C 600 660 690 590 790 620"
+    fill="none"
+    stroke="url(#tealThread)"
+    stroke-width="10"
+    stroke-linecap="round"
+    opacity="0.85"
+    filter="url(#threadGlow)"
+  />
+
+  <!-- Amber Thread: Character Arc -->
+  <path
+    d="M 230 460 C 340 410 410 520 512 470 C 610 420 720 510 800 450"
+    fill="none"
+    stroke="url(#amberThread)"
+    stroke-width="12"
+    stroke-linecap="round"
+    filter="url(#threadGlow)"
+  />
+
+  <!-- Main Fountain Pen Nib -->
+  <g filter="url(#nibShadow)">
+    <!-- Nib Body -->
+    <path
+      d="M 512 210
+         C 512 210 580 340 600 480
+         C 610 550 590 640 590 640
+         L 434 640
+         C 434 640 414 550 424 480
+         C 444 340 512 210 512 210 Z"
+      fill="url(#goldGrad)"
+      stroke="#FFF3C4"
+      stroke-width="3"
+    />
+
+    <!-- Nib Shoulder Inset Wings -->
+    <path
+      d="M 512 245
+         C 512 245 565 355 580 470
+         C 586 520 575 590 575 590
+         L 449 590
+         C 449 590 438 520 444 470
+         C 459 355 512 245 512 245 Z"
+      fill="none"
+      stroke="url(#goldLight)"
+      stroke-width="3.5"
+      opacity="0.7"
+    />
+
+    <!-- Nib Breather Hole -->
+    <circle cx="512" cy="460" r="26" fill="#141311" stroke="#FDE68A" stroke-width="4" />
+
+    <!-- Center Ink Slit -->
+    <line x1="512" y1="210" x2="512" y2="434" stroke="#141311" stroke-width="5.5" stroke-linecap="round" />
+    
+    <!-- Pen Tip Iridium Point -->
+    <polygon points="506,210 518,210 515,198 509,198" fill="#E2E8F0" />
+
+    <!-- Engraved Filigree "T" (Threadline Emblem) -->
+    <path
+      d="M 482 516 L 542 516 M 512 516 L 512 556"
+      stroke="#634509"
+      stroke-width="5"
+      stroke-linecap="round"
+    />
+  </g>
+
+  <!-- Crimson Thread: Core Narrative Threadline (Looping Over the Pen) -->
+  <path
+    d="M 210 520 C 320 590 410 390 512 460 C 620 530 680 370 810 400"
+    fill="none"
+    stroke="url(#crimsonThread)"
+    stroke-width="14"
+    stroke-linecap="round"
+    filter="url(#threadGlow)"
+  />
+
+  <!-- Fine Glowing Narrative Pulse Beads along the Thread -->
+  <circle cx="340" cy="530" r="7" fill="#FDE047" opacity="0.9" />
+  <circle cx="512" cy="460" r="9" fill="#FFFBEB" opacity="0.95" />
+  <circle cx="670" cy="455" r="7" fill="#FDA4AF" opacity="0.9" />
+  <circle cx="780" cy="410" r="6" fill="#A7F3D0" opacity="0.9" />
+
+  <!-- Top Glass Sheen / Light Reflection for macOS Look -->
+  <path
+    d="M 80 272 C 80 166 166 80 272 80 L 752 80 C 858 80 944 166 944 272 C 944 320 860 380 750 390 C 580 405 400 370 240 430 C 140 470 80 440 80 370 Z"
+    fill="#FFFFFF"
+    opacity="0.04"
+  />
+</svg>

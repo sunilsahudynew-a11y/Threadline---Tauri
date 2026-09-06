@@ -300,10 +300,12 @@ export async function writeBundleToVault(bundle: ProjectBundle): Promise<VaultSy
 
   // 1. Tauri File System write
   if (isTauriEnvironment()) {
-    const vaultPath = activeTauriVaultPath || localStorage.getItem(`threadline_vault_path_${projectId}`);
-    if (!vaultPath) {
+    const rawVaultPath = activeTauriVaultPath || localStorage.getItem(`threadline_vault_path_${projectId}`);
+    if (!rawVaultPath) {
       return { success: false, message: 'No vault folder selected', timestamp };
     }
+
+    const vaultPath = rawVaultPath.replace(/[/\\]+$/, '');
 
     try {
       const { writeTextFile, mkdir, exists } = await import('@tauri-apps/plugin-fs');
@@ -317,9 +319,13 @@ export async function writeBundleToVault(bundle: ProjectBundle): Promise<VaultSy
 
       // Ensure directories exist
       for (const dir of [manuscriptDir, bibleDir, cuttingDir, notesDir, metaDir]) {
-        const dirExists = await exists(dir);
-        if (!dirExists) {
-          await mkdir(dir, { recursive: true });
+        try {
+          const dirExists = await exists(dir).catch(() => false);
+          if (!dirExists) {
+            await mkdir(dir, { recursive: true });
+          }
+        } catch {
+          // If already exists or mkdir succeeded recursively, proceed
         }
       }
 
@@ -371,7 +377,12 @@ export async function writeBundleToVault(bundle: ProjectBundle): Promise<VaultSy
       };
     } catch (e: any) {
       console.error('Tauri vault sync failed:', e);
-      return { success: false, message: e.message || 'File write failed', timestamp };
+      const errMsg =
+        e?.message ||
+        (typeof e === 'string' ? e : null) ||
+        (e && typeof e === 'object' ? JSON.stringify(e) : null) ||
+        'File write failed';
+      return { success: false, message: errMsg, timestamp };
     }
   }
 
@@ -464,8 +475,10 @@ export async function writeBundleToVault(bundle: ProjectBundle): Promise<VaultSy
 export async function readBundleFromVault(projectId: string): Promise<ProjectBundle | null> {
   // 1. Tauri File System read
   if (isTauriEnvironment()) {
-    const vaultPath = activeTauriVaultPath || localStorage.getItem(`threadline_vault_path_${projectId}`);
-    if (!vaultPath) return null;
+    const rawVaultPath = activeTauriVaultPath || localStorage.getItem(`threadline_vault_path_${projectId}`);
+    if (!rawVaultPath) return null;
+
+    const vaultPath = rawVaultPath.replace(/[/\\]+$/, '');
 
     try {
       const { readTextFile, readDir, exists } = await import('@tauri-apps/plugin-fs');
