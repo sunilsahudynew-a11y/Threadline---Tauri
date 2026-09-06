@@ -1,0 +1,114 @@
+import fs from 'fs';
+
+// 1024x1024 Master Icon SVG
+// Following macOS App Icon design language:
+// Centered 824x824 squircle on 1024x1024 canvas (standard Apple macOS icon grid)
+// or 1024x1024 rounded icon. Tauri CLI expects a 1024x1024 squared image.
+// When Tauri generates icns, having the squircle with subtle drop shadow gives the exact native macOS Dock look!
+
+const svgContent = `<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Background Gradient: Deep Literary Ink -->
+    <linearGradient id="bgGrad" x1="512" y1="100" x2="512" y2="924" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2D2720" />
+      <stop offset="50%" stop-color="#221E18" />
+      <stop offset="100%" stop-color="#181511" />
+    </linearGradient>
+
+    <!-- Subtle rim light / bevel on squircle border -->
+    <linearGradient id="rimGrad" x1="512" y1="100" x2="512" y2="924" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FAF6EE" stop-opacity="0.18" />
+      <stop offset="40%" stop-color="#FAF6EE" stop-opacity="0.04" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.4" />
+    </linearGradient>
+
+    <!-- Shadow filter for macOS Dock squircle -->
+    <filter id="squircleShadow" x="50" y="60" width="924" height="930" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#000000" flood-opacity="0.32" />
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000000" flood-opacity="0.2" />
+    </filter>
+
+    <!-- Wax seal knot gradient -->
+    <radialGradient id="knotGrad" cx="40%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#D95C3F" />
+      <stop offset="60%" stop-color="#B54B32" />
+      <stop offset="100%" stop-color="#8C331E" />
+    </radialGradient>
+
+    <!-- Arc Paper highlight gradient -->
+    <linearGradient id="arcGrad" x1="220" y1="460" x2="800" y2="560" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FAF6EE" />
+      <stop offset="100%" stop-color="#F1EAD9" />
+    </linearGradient>
+  </defs>
+
+  <!-- macOS Squircle Body (824x824 centered at 100, 100 with rx=185) -->
+  <rect
+    x="100"
+    y="100"
+    width="824"
+    height="824"
+    rx="185"
+    fill="url(#bgGrad)"
+    filter="url(#squircleShadow)"
+  />
+
+  <!-- Subtle inner rim stroke -->
+  <rect
+    x="101"
+    y="101"
+    width="822"
+    height="822"
+    rx="184"
+    fill="none"
+    stroke="url(#rimGrad)"
+    stroke-width="2"
+  />
+
+  <!-- Subtle Paper Parchment Texture Layer in background -->
+  <rect
+    x="100"
+    y="100"
+    width="824"
+    height="824"
+    rx="185"
+    fill="#FAF6EE"
+    fill-opacity="0.02"
+  />
+
+  <!-- Threadline Story Arc Mark -->
+  <!-- Scaled and centered inside the 824x824 squircle: -->
+  <!-- Original: (240x120) with path:
+       M 24 88 C 44 80 58 66 78 66 C 98 66 108 86 128 86 C 150 86 166 42 190 42 C 206 42 216 58 222 66
+       Scale ~ 3.1x, Center offset ~ (145, 330)
+  -->
+  <g transform="translate(142, 325) scale(3.1)">
+    <!-- Arc Stroke -->
+    <path
+      d="M 24 88 C 44 80 58 66 78 66 C 98 66 108 86 128 86 C 150 86 166 42 190 42 C 206 42 216 58 222 66"
+      stroke="url(#arcGrad)"
+      stroke-width="9.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+
+    <!-- Wax Seal Knot -->
+    <circle
+      cx="225"
+      cy="67"
+      r="12.5"
+      fill="url(#knotGrad)"
+    />
+    <!-- Delicate specular dot on the wax seal -->
+    <circle
+      cx="222"
+      cy="64"
+      r="3"
+      fill="#FAF6EE"
+      fill-opacity="0.45"
+    />
+  </g>
+</svg>`;
+
+fs.writeFileSync('app-icon.svg', svgContent);
+console.log('Generated app-icon.svg successfully.');

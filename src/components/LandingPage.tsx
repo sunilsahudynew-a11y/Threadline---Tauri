@@ -9,21 +9,20 @@ import {
   CheckCircle2,
   ShieldCheck,
   Zap,
-  AlignVerticalJustifyCenter,
   BookOpen,
   FolderKanban,
   Download,
   Terminal,
   Lock,
-  Feather,
   Clock,
-  History,
   Scissors,
   Bookmark,
   Check,
-  ChevronRight
+  Eye,
+  ChevronRight,
+  HardDrive
 } from 'lucide-react';
-import { ThreadlineMark, ThreadlineBadge, ThreadlineLogo } from './common/ThreadlineLogo';
+import { ThreadlineMark, ThreadlineBadge } from './common/ThreadlineLogo';
 import { ScreenType } from './Navigation';
 
 interface LandingPageProps {
@@ -36,17 +35,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   onOpenSampleProject
 }) => {
   const [activeInteractiveTab, setActiveInteractiveTab] = useState<'canvas' | 'corkboard' | 'codex' | 'continuity'>('canvas');
-  const [calculatorWords, setCalculatorWords] = useState<number>(75000);
-  const [calculatorDailyRate, setCalculatorDailyRate] = useState<number>(750);
+  const [calculatorWords, setCalculatorWords] = useState<number>(80000);
+  const [calculatorDailyRate, setCalculatorDailyRate] = useState<number>(800);
 
   const estimatedDays = Math.ceil(calculatorWords / calculatorDailyRate);
   const estimatedMonths = (estimatedDays / 30.5).toFixed(1);
 
   return (
     <div className="min-h-screen bg-[#FAF6EE] text-[#221E18] selection:bg-[#F1EAD9] selection:text-[#221E18] font-sans">
-      {/* 1. TOP ANNOUNCEMENT / ORIENTATION BANNER */}
-      <div className="bg-[#F1EAD9] text-[#221E18] text-xs font-sans py-2 px-4 border-b border-[#E5DEC9] flex flex-wrap items-center justify-center gap-2.5 shadow-warm-sm transition-colors">
-        <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#FAF6EE] border border-[#E5DEC9] text-[10px] font-mono font-medium text-[#7A705F]">
+      {/* 1. TOP EDITORIAL BANNER */}
+      <div className="bg-[#F1EAD9] text-[#221E18] text-xs font-sans py-2.5 px-4 border-b border-[rgba(34,30,24,0.12)] flex flex-wrap items-center justify-center gap-2.5 shadow-warm-sm transition-colors">
+        <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#FAF6EE] border border-[rgba(34,30,24,0.12)] text-[10px] font-mono font-medium text-[#7A705F]">
           <span className="w-1.5 h-1.5 rounded-full bg-[#B54B32]" />
           <span className="tracking-[0.14em] uppercase text-[#B54B32] font-semibold">Editorial Edition</span>
         </div>
@@ -63,7 +62,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       </div>
 
       {/* 2. PRIMARY NAVIGATION HEADER */}
-      <header className="sticky top-0 z-40 bg-[#FAF6EE]/90 backdrop-blur-md border-b border-[#E5DEC9] transition-all">
+      <header className="sticky top-0 z-40 bg-[#FAF6EE]/95 backdrop-blur-md border-b border-[rgba(34,30,24,0.12)] transition-all">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <button
@@ -90,29 +89,29 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 Corkboard
               </a>
               <a href="#codex" className="hover:text-[#221E18] transition-colors">
-                Lore Codex
+                Codex &amp; Lore
               </a>
               <a href="#continuity" className="hover:text-[#221E18] transition-colors">
-                Continuity
+                Continuity Radar
               </a>
               <a href="#manifesto" className="hover:text-[#221E18] transition-colors">
-                Local-First Manifesto
+                Local Vault
               </a>
             </nav>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <button
               onClick={() => onEnterStudio('projects')}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-[#221E18] bg-[#F1EAD9] hover:bg-[#EAE4D6] border border-[#E5DEC9] transition-colors cursor-pointer"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-xs font-medium text-[#221E18] bg-[#F1EAD9] hover:bg-[#EAE4D6] border border-[rgba(34,30,24,0.12)] transition-colors cursor-pointer min-h-[36px]"
             >
               <FolderKanban size={13} className="text-[#7A705F]" />
               <span>Manuscripts</span>
             </button>
 
             <button
-              onClick={() => onEnterStudio('home')}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold text-[#FAF6EE] bg-[#B54B32] hover:bg-[#9E3E27] shadow-warm-sm transition-all active:scale-98 cursor-pointer"
+              onClick={() => onEnterStudio('editor')}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-[6px] text-xs font-semibold text-[#FAF6EE] bg-[#B54B32] hover:bg-[#9E3E27] shadow-warm-sm transition-all active:scale-98 cursor-pointer min-h-[36px]"
             >
               <span>Launch Studio</span>
               <ArrowRight size={13} />
@@ -122,17 +121,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       </header>
 
       {/* 3. HERO SECTION */}
-      <section className="pt-14 md:pt-20 pb-16 px-4 sm:px-6 relative overflow-hidden border-b border-[#E5DEC9]">
-        {/* Subtle background decorative watermark */}
+      <section className="pt-14 md:pt-20 pb-16 px-4 sm:px-6 relative overflow-hidden border-b border-[rgba(34,30,24,0.12)]">
+        {/* Decorative background watermark */}
         <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/4 opacity-5 pointer-events-none">
           <ThreadlineMark size={680} color="#221E18" knotColor="#B54B32" />
         </div>
 
         <div className="max-w-4xl mx-auto text-center relative z-10">
           {/* Eyebrow badge */}
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F1EAD9] border border-[#E5DEC9] text-[#7A705F] text-[11px] font-mono font-medium mb-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F1EAD9] border border-[rgba(34,30,24,0.12)] text-[#7A705F] text-[11px] font-mono font-medium mb-6">
             <span className="w-2 h-2 rounded-full bg-[#B54B32]" />
-            <span className="tracking-[0.16em] uppercase">The Novelist's Private Sanctuary</span>
+            <span className="tracking-[0.16em] uppercase">The Novelist's Private Workspace</span>
           </div>
 
           {/* Main Title */}
@@ -144,14 +143,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
           {/* Deck */}
           <p className="text-base sm:text-lg md:text-xl text-[#7A705F] max-w-2xl mx-auto font-sans leading-relaxed mb-8">
-            The distraction-free narrative studio for novelists and long-form storytellers. Structure your chapters with proven frameworks, track canon lore with zero clutter, and draft at eye-level on a calm paper canvas.
+            The distraction-free narrative workspace for novelists and long-form storytellers. Structure your chapters with proven frameworks, track canon lore with zero clutter, and draft at eye-level on a calm paper canvas.
           </p>
 
           {/* Action CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 mb-10">
             <button
               onClick={() => onEnterStudio('editor')}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl text-sm font-semibold text-[#FAF6EE] bg-[#B54B32] hover:bg-[#9E3E27] shadow-warm-modal transition-all active:scale-98 cursor-pointer"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-[6px] text-sm font-semibold text-[#FAF6EE] bg-[#B54B32] hover:bg-[#9E3E27] shadow-warm-modal transition-all active:scale-98 cursor-pointer min-h-[44px]"
             >
               <span>Start Writing Immediately</span>
               <ArrowRight size={15} />
@@ -165,7 +164,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   onEnterStudio('home');
                 }
               }}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl text-sm font-medium text-[#221E18] bg-[#F1EAD9] hover:bg-[#EAE4D6] border border-[#E5DEC9] transition-all cursor-pointer"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-[6px] text-sm font-medium text-[#221E18] bg-[#F1EAD9] hover:bg-[#EAE4D6] border border-[rgba(34,30,24,0.12)] transition-all cursor-pointer min-h-[44px]"
             >
               <BookOpen size={15} className="text-[#35505F]" />
               <span>Explore Demo Manuscript</span>
@@ -173,13 +172,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
 
           {/* Architecture Trust Highlights */}
-          <div className="flex flex-wrap items-center justify-center gap-y-2 gap-x-6 text-xs text-[#7A705F] font-mono pt-4 border-t border-[#E5DEC9]/70 max-w-2xl mx-auto">
+          <div className="flex flex-wrap items-center justify-center gap-y-2 gap-x-6 text-xs text-[#7A705F] font-mono pt-4 border-t border-[rgba(34,30,24,0.12)] max-w-2xl mx-auto">
             <span className="flex items-center gap-1.5">
-              <ShieldCheck size={14} className="text-[#3C6E47]" /> 100% Local-First &amp; Private
+              <ShieldCheck size={14} className="text-[#35505F]" /> 100% Local-First &amp; Private
             </span>
             <span>·</span>
             <span className="flex items-center gap-1.5">
-              <Zap size={14} className="text-[#C88A2E]" /> Zero Cloud Telemetry
+              <Zap size={14} className="text-[#B54B32]" /> Zero Cloud Telemetry
             </span>
             <span>·</span>
             <span className="flex items-center gap-1.5">
@@ -187,340 +186,248 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </span>
             <span>·</span>
             <span className="flex items-center gap-1.5">
-              <Lock size={14} className="text-[#857C90]" /> No Account Required
+              <Lock size={14} className="text-[#7A705F]" /> No Account Required
             </span>
           </div>
         </div>
       </section>
 
       {/* 4. INTERACTIVE LIVE PRODUCT DEMO / EXPLORER */}
-      <section className="py-16 px-4 sm:px-6 bg-[#F1EAD9]/40 border-b border-[#E5DEC9]">
+      <section className="py-16 px-4 sm:px-6 bg-[#F1EAD9]/40 border-b border-[rgba(34,30,24,0.12)]">
         <div className="max-w-5xl mx-auto">
           <div className="text-center max-w-2xl mx-auto mb-10">
-            <span className="section-label block mb-2">Interactive Preview</span>
-            <h2 className="text-2xl sm:text-3xl font-serif font-semibold text-[#221E18] tracking-tight mb-3">
-              Crafted with tactile restraint
+            <span className="section-label block mb-2">Interactive Workspace</span>
+            <h2 className="text-2xl sm:text-3xl font-serif font-semibold text-[#221E18]">
+              Four Integrated Narrative Systems
             </h2>
-            <p className="text-sm text-[#7A705F] leading-relaxed">
-              Every detail is calibrated to protect writer focus. Switch between Threadline's four core studio workspaces below to experience the interface.
+            <p className="text-xs sm:text-sm text-[#7A705F] mt-2">
+              Explore how Threadline keeps prose, character canon, story structure, and continuity in sync.
             </p>
           </div>
 
-          {/* Tab Switcher */}
-          <div className="flex items-center justify-center mb-6">
-            <div className="inline-flex p-1 bg-[#F1EAD9] rounded-xl border border-[#E5DEC9] gap-1 overflow-x-auto max-w-full">
-              <button
-                onClick={() => setActiveInteractiveTab('canvas')}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-medium transition-all cursor-pointer shrink-0 ${
-                  activeInteractiveTab === 'canvas'
-                    ? 'bg-[#FAF6EE] text-[#221E18] font-semibold shadow-warm-sm border border-[#E5DEC9]'
-                    : 'text-[#7A705F] hover:text-[#221E18]'
-                }`}
-              >
-                <FileText size={14} className={activeInteractiveTab === 'canvas' ? 'text-[#B54B32]' : ''} />
-                <span>1. Manuscript Canvas</span>
-              </button>
-              <button
-                onClick={() => setActiveInteractiveTab('corkboard')}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-medium transition-all cursor-pointer shrink-0 ${
-                  activeInteractiveTab === 'corkboard'
-                    ? 'bg-[#FAF6EE] text-[#221E18] font-semibold shadow-warm-sm border border-[#E5DEC9]'
-                    : 'text-[#7A705F] hover:text-[#221E18]'
-                }`}
-              >
-                <Layers size={14} className={activeInteractiveTab === 'corkboard' ? 'text-[#35505F]' : ''} />
-                <span>2. Corkboard Beats</span>
-              </button>
-              <button
-                onClick={() => setActiveInteractiveTab('codex')}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-medium transition-all cursor-pointer shrink-0 ${
-                  activeInteractiveTab === 'codex'
-                    ? 'bg-[#FAF6EE] text-[#221E18] font-semibold shadow-warm-sm border border-[#E5DEC9]'
-                    : 'text-[#7A705F] hover:text-[#221E18]'
-                }`}
-              >
-                <Compass size={14} className={activeInteractiveTab === 'codex' ? 'text-[#C88A2E]' : ''} />
-                <span>3. Lore Codex</span>
-              </button>
-              <button
-                onClick={() => setActiveInteractiveTab('continuity')}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-medium transition-all cursor-pointer shrink-0 ${
-                  activeInteractiveTab === 'continuity'
-                    ? 'bg-[#FAF6EE] text-[#221E18] font-semibold shadow-warm-sm border border-[#E5DEC9]'
-                    : 'text-[#7A705F] hover:text-[#221E18]'
-                }`}
-              >
-                <Sparkles size={14} className={activeInteractiveTab === 'continuity' ? 'text-[#3C6E47]' : ''} />
-                <span>4. Continuity Inbox</span>
-              </button>
-            </div>
+          {/* Tab Selection Row */}
+          <div className="flex items-center justify-center gap-2 mb-8 overflow-x-auto no-scrollbar pb-2">
+            {[
+              { id: 'canvas', label: 'Manuscript Canvas', icon: FileText },
+              { id: 'corkboard', label: 'Corkboard Matrix', icon: Layers },
+              { id: 'codex', label: 'Codex & Lore Vault', icon: Compass },
+              { id: 'continuity', label: 'Continuity Radar', icon: Sparkles }
+            ].map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeInteractiveTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveInteractiveTab(tab.id as any)}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-[6px] text-xs font-medium transition-all cursor-pointer min-h-[44px] ${
+                    isActive
+                      ? 'bg-[#FAF6EE] text-[#221E18] font-semibold border border-[rgba(34,30,24,0.12)] shadow-warm-sm'
+                      : 'text-[#7A705F] hover:text-[#221E18] hover:bg-[#F1EAD9]'
+                  }`}
+                >
+                  <Icon size={14} className={isActive ? 'text-[#B54B32]' : 'text-[#7A705F]'} />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
           </div>
 
-          {/* Interactive Screen Display Container */}
-          <div className="bg-[#FAF6EE] rounded-2xl border border-[#E5DEC9] shadow-warm-modal overflow-hidden">
-            {/* Top Mock Window Bar */}
-            <div className="h-10 bg-[#F1EAD9] border-b border-[#E5DEC9] px-4 flex items-center justify-between text-xs text-[#7A705F]">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#E5DEC9] border border-[#7A705F]/30" />
-                <span className="w-2.5 h-2.5 rounded-full bg-[#E5DEC9] border border-[#7A705F]/30" />
-                <span className="w-2.5 h-2.5 rounded-full bg-[#E5DEC9] border border-[#7A705F]/30" />
-                <span className="ml-2 font-serif italic text-[#221E18] font-medium hidden sm:inline">
-                  The Clockmaker's Secret — Chapter 1
-                </span>
-              </div>
-              <div className="flex items-center gap-3 font-mono text-[11px]">
-                <span className="text-[#3C6E47] flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#3C6E47]" /> Saved Locally
-                </span>
-                <span className="hidden sm:inline text-[#7A705F]/60">·</span>
-                <span className="hidden sm:inline">2,418 words</span>
-              </div>
-            </div>
-
-            {/* TAB CONTENT: 1. Manuscript Canvas */}
+          {/* Tab Content Display Card */}
+          <div className="bg-[#FAF6EE] rounded-[6px] border border-[rgba(34,30,24,0.12)] shadow-warm-modal overflow-hidden p-6 md:p-8">
             {activeInteractiveTab === 'canvas' && (
-              <div className="p-6 sm:p-10 relative min-h-[380px] flex flex-col justify-between">
-                {/* Simulated 42% Caret Horizon Guide */}
-                <div
-                  className="absolute left-0 right-0 pointer-events-none border-b border-dashed border-[#35505F]/35 z-10"
-                  style={{ top: '42%' }}
-                >
-                  <div className="max-w-2xl mx-auto flex justify-end pr-6">
-                    <span className="text-[9px] font-mono uppercase tracking-widest text-[#35505F] bg-[#FAF6EE] px-2 -translate-y-1/2 border border-[#35505F]/20 rounded">
-                      42% VIEWPORT — CARET HORIZON (EYE LEVEL)
-                    </span>
+              <div className="space-y-5 animate-in fade-in duration-200">
+                <div className="flex items-center justify-between border-b border-[rgba(34,30,24,0.12)] pb-4">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-mono uppercase text-[#7A705F]">Chapter 01 · Scene 01</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#35505F]" />
+                    <span className="text-xs font-medium text-[#35505F]">Drafting Mode</span>
+                  </div>
+                  <div className="text-xs font-mono text-[#7A705F]">
+                    Typewriter Horizon: <span className="text-[#221E18] font-bold">42%</span>
                   </div>
                 </div>
 
-                <div className="max-w-2xl mx-auto w-full">
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-xs font-mono uppercase text-[#7A705F] tracking-widest">
-                      Scene 3 · The Midnight Pendulum
-                    </span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-[#F6EEDA] text-[#C88A2E] border border-[#C88A2E]/20 uppercase">
-                      Drafting
-                    </span>
-                  </div>
-
-                  <h3 className="text-3xl font-serif font-semibold text-[#221E18] mb-4">
-                    The Midnight Pendulum
-                  </h3>
-
-                  <div className="font-serif text-[#221E18] text-base sm:text-lg leading-relaxed space-y-4">
-                    <p>
-                      Silas did not look at the dials when the chiming started. He had learned forty years ago that brass could lie if the gear teeth were cut with malice.
-                    </p>
-                    <p className="relative">
-                      Instead, he touched the escapement pallet with a calloused thumb. The vibration was too rapid—nearly three hundred beats per minute, humming like a trapped wasp inside the cedar casing.
-                      <span className="inline-block w-0.5 h-5 bg-[#B54B32] align-middle ml-1 animate-pulse" />
-                    </p>
-                    <blockquote className="border-l-2 border-[#B54B32] pl-4 py-1 italic bg-[#F1EAD9] text-sm text-[#221E18] rounded-r-md">
-                      "If the escapement slips past midnight," his grandfather had written in the ledger, "do not reach inside with bare hands."
-                    </blockquote>
-                  </div>
+                <div className="max-w-2xl mx-auto py-6 font-serif text-lg leading-relaxed text-[#221E18]">
+                  <p className="mb-4">
+                    The iron bell of St. Jude tolled three minutes past midnight. Below the clocktower, the harbor smelled of low tide and charred spruce, the unmistakable perfume of the northern slipways.
+                  </p>
+                  <p className="p-3 bg-[#F1EAD9] rounded-[6px] border-l-2 border-[#B54B32] text-sm font-sans italic text-[#221E18]">
+                    <span className="font-semibold text-[#B54B32] not-italic mr-2">Caret Anchored:</span>
+                    Your eye stays locked on the horizon line while prose flows beneath it without neck strain.
+                  </p>
                 </div>
 
-                {/* Simulated Format Footer */}
-                <div className="mt-8 pt-4 border-t border-[#E5DEC9] flex flex-wrap items-center justify-between text-xs text-[#7A705F]">
-                  <span className="font-mono flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#B54B32]" />
-                    Type <code className="bg-[#F1EAD9] px-1 py-0.5 rounded text-[#221E18] font-mono">/</code> for block commands, <code className="bg-[#F1EAD9] px-1 py-0.5 rounded text-[#221E18] font-mono">#</code> for headings
-                  </span>
+                <div className="flex items-center justify-between pt-4 border-t border-[rgba(34,30,24,0.12)] text-xs text-[#7A705F]">
+                  <div className="flex items-center gap-4">
+                    <span>Target: 2,500 words</span>
+                    <span>Actual: 1,840 words (73%)</span>
+                  </div>
                   <button
                     onClick={() => onEnterStudio('editor')}
-                    className="text-[#B54B32] hover:underline font-medium font-sans flex items-center gap-1 cursor-pointer"
+                    className="inline-flex items-center gap-1.5 font-semibold text-[#B54B32] hover:underline cursor-pointer"
                   >
-                    Open Live Editor <ChevronRight size={12} />
+                    <span>Try in Editor</span>
+                    <ArrowRight size={13} />
                   </button>
                 </div>
               </div>
             )}
 
-            {/* TAB CONTENT: 2. Corkboard Beats */}
             {activeInteractiveTab === 'corkboard' && (
-              <div className="p-6 sm:p-8 min-h-[380px]">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h4 className="font-serif text-lg font-semibold text-[#221E18]">
-                      Save the Cat! 15-Beat Story Architecture
-                    </h4>
-                    <p className="text-xs text-[#7A705F] mt-0.5">
-                      Visual beat cards anchored to chapters with continuous word counts and narrative status.
-                    </p>
+              <div className="space-y-5 animate-in fade-in duration-200">
+                <div className="flex items-center justify-between border-b border-[rgba(34,30,24,0.12)] pb-4">
+                  <div className="flex items-center gap-2">
+                    <Layers size={15} className="text-[#B54B32]" />
+                    <span className="font-serif font-semibold text-sm">Act I: The Call &amp; Crossing</span>
                   </div>
-                  <span className="text-xs font-mono text-[#7A705F] bg-[#F1EAD9] px-2.5 py-1 rounded border border-[#E5DEC9]">
-                    Act I: Opening World
-                  </span>
+                  <span className="text-xs font-mono text-[#7A705F]">Index Card Grid (4 scenes)</span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="p-4 rounded-xl bg-[#F1EAD9] border border-[#E5DEC9] shadow-warm-sm flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-[10px] font-mono uppercase text-[#7A705F] font-bold">Beat 01</span>
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#E5EFE7] text-[#3C6E47] uppercase">Final</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                  {[
+                    { num: '01', title: 'The Harbor Bell', status: 'Drafting', color: '#35505F', words: '1,840', pov: 'Evelyn Gray' },
+                    { num: '02', title: 'The Ledger Office', status: 'Revised', color: '#B54B32', words: '2,100', pov: 'Marcus Vance' },
+                    { num: '03', title: 'Whispers at the Quay', status: 'Idea', color: '#7A705F', words: '950', pov: 'Evelyn Gray' }
+                  ].map((card) => (
+                    <div key={card.num} className="bg-[#F1EAD9] p-4 rounded-[6px] border border-[rgba(34,30,24,0.12)] space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-mono text-[#7A705F]">Scene {card.num}</span>
+                        <span
+                          className="text-[10px] font-mono px-1.5 py-0.5 rounded-[4px] font-semibold text-[#FAF6EE]"
+                          style={{ backgroundColor: card.color }}
+                        >
+                          {card.status}
+                        </span>
                       </div>
-                      <h5 className="font-serif font-semibold text-sm text-[#221E18] mb-1">Opening Image</h5>
-                      <p className="text-xs text-[#7A705F] leading-snug">
-                        Silas cleans the bronze pendulum as the town bells strike dusk. The quiet world before the gears slip.
-                      </p>
+                      <div className="font-serif font-semibold text-sm text-[#221E18]">{card.title}</div>
+                      <div className="text-[11px] text-[#7A705F] flex items-center justify-between pt-2 border-t border-[rgba(34,30,24,0.08)]">
+                        <span>POV: {card.pov}</span>
+                        <span>{card.words} w</span>
+                      </div>
                     </div>
-                    <div className="mt-4 pt-3 border-t border-[#E5DEC9] text-[11px] font-mono text-[#7A705F] flex justify-between">
-                      <span>POV: Silas</span>
-                      <span>1,420 words</span>
-                    </div>
-                  </div>
+                  ))}
+                </div>
 
-                  <div className="p-4 rounded-xl bg-[#FAF6EE] border-2 border-[#B54B32]/40 shadow-warm-sm flex flex-col justify-between relative">
-                    <span className="absolute -top-2.5 right-3 bg-[#B54B32] text-[#FAF6EE] text-[9px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full font-bold">
-                      Current Draft
-                    </span>
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-[10px] font-mono uppercase text-[#7A705F] font-bold">Beat 02</span>
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#F6EEDA] text-[#C88A2E] uppercase">Drafting</span>
-                      </div>
-                      <h5 className="font-serif font-semibold text-sm text-[#221E18] mb-1">Theme Stated</h5>
-                      <p className="text-xs text-[#7A705F] leading-snug">
-                        Master Chen reminds Silas that an artisan who controls time will eventually be consumed by it.
-                      </p>
-                    </div>
-                    <div className="mt-4 pt-3 border-t border-[#E5DEC9] text-[11px] font-mono text-[#7A705F] flex justify-between">
-                      <span>POV: Silas</span>
-                      <span>2,418 words</span>
-                    </div>
-                  </div>
-
-                  <div className="p-4 rounded-xl bg-[#F1EAD9] border border-[#E5DEC9] shadow-warm-sm flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-[10px] font-mono uppercase text-[#7A705F] font-bold">Beat 03</span>
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#ECE8E1] text-[#857C90] uppercase">Idea</span>
-                      </div>
-                      <h5 className="font-serif font-semibold text-sm text-[#221E18] mb-1">Catalyst / Incident</h5>
-                      <p className="text-xs text-[#7A705F] leading-snug">
-                        A broken pocket watch arrives with a seal from the Sunken Foundry, dated three years in the future.
-                      </p>
-                    </div>
-                    <div className="mt-4 pt-3 border-t border-[#E5DEC9] text-[11px] font-mono text-[#7A705F] flex justify-between">
-                      <span>POV: Silas</span>
-                      <span>0 words</span>
-                    </div>
-                  </div>
+                <div className="flex items-center justify-between pt-4 border-t border-[rgba(34,30,24,0.12)] text-xs text-[#7A705F]">
+                  <span>Pacing heatmap &amp; chapter word-count quotas update automatically.</span>
+                  <button
+                    onClick={() => onEnterStudio('dashboard')}
+                    className="inline-flex items-center gap-1.5 font-semibold text-[#B54B32] hover:underline cursor-pointer"
+                  >
+                    <span>Open Corkboard</span>
+                    <ArrowRight size={13} />
+                  </button>
                 </div>
               </div>
             )}
 
-            {/* TAB CONTENT: 3. Lore Codex */}
             {activeInteractiveTab === 'codex' && (
-              <div className="p-6 sm:p-8 min-h-[380px]">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h4 className="font-serif text-lg font-semibold text-[#221E18]">
-                      Lore Codex &amp; Story Bible
-                    </h4>
-                    <p className="text-xs text-[#7A705F] mt-0.5">
-                      Character dossiers, locations, and narrative promises anchored to scenes.
-                    </p>
+              <div className="space-y-5 animate-in fade-in duration-200">
+                <div className="flex items-center justify-between border-b border-[rgba(34,30,24,0.12)] pb-4">
+                  <div className="flex items-center gap-2">
+                    <Compass size={15} className="text-[#35505F]" />
+                    <span className="font-serif font-semibold text-sm">Codex Profile: Evelyn Gray (Protagonist)</span>
                   </div>
-                  <span className="text-xs font-mono text-[#7A705F] bg-[#F1EAD9] px-2.5 py-1 rounded border border-[#E5DEC9]">
-                    3 Core Characters · 2 Open Threads
+                  <span className="text-xs font-mono text-[#35505F] bg-[#35505F]/10 px-2 py-0.5 rounded-[4px]">
+                    Confirmed Canon
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 rounded-xl bg-[#F1EAD9] border border-[#E5DEC9]">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-serif font-bold text-[#221E18]">Silas Vance (Protagonist)</span>
-                      <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#E5EFE7] text-[#3C6E47] uppercase">Confirmed Canon</span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                  <div className="bg-[#F1EAD9] p-4 rounded-[6px] border border-[rgba(34,30,24,0.12)] space-y-2">
+                    <div className="font-semibold text-[#221E18] uppercase tracking-wider text-[10px] font-mono">
+                      Canonical Facts
                     </div>
-                    <p className="text-xs text-[#7A705F] leading-relaxed mb-3">
-                      Master horologist. Secretly deaf in his left ear from a boiler explosion. Carries his grandfather's silver escapement wrench in his left vest pocket.
-                    </p>
-                    <div className="text-[11px] font-mono text-[#7A705F] pt-2 border-t border-[#E5DEC9] flex items-center justify-between">
-                      <span>Motive: Protect the Archive</span>
-                      <span>Anchored in 6 Scenes</span>
-                    </div>
+                    <ul className="space-y-1.5 text-[#221E18]">
+                      <li className="flex items-start gap-1.5">
+                        <span className="text-[#B54B32]">•</span> Eye color: Hazel (confirmed Chapter 01)
+                      </li>
+                      <li className="flex items-start gap-1.5">
+                        <span className="text-[#B54B32]">•</span> Age: 31 during Harbor Riots
+                      </li>
+                      <li className="flex items-start gap-1.5">
+                        <span className="text-[#B54B32]">•</span> Motivation: Vindicate father's lost ledger
+                      </li>
+                    </ul>
                   </div>
 
-                  <div className="p-4 rounded-xl bg-[#F1EAD9] border border-[#E5DEC9]">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-serif font-bold text-[#221E18]">The Brass Astrolabe (Relic)</span>
-                      <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#F6EEDA] text-[#C88A2E] uppercase">Needs Verification</span>
+                  <div className="bg-[#F1EAD9] p-4 rounded-[6px] border border-[rgba(34,30,24,0.12)] space-y-2">
+                    <div className="font-semibold text-[#221E18] uppercase tracking-wider text-[10px] font-mono">
+                      Bidirectional Presence
                     </div>
-                    <p className="text-xs text-[#7A705F] leading-relaxed mb-3">
-                      Forged in 1842. Only operates when submerged in salted oil. Contains celestial coordinates for the Sunken Archive vault under the harbor.
-                    </p>
-                    <div className="text-[11px] font-mono text-[#7A705F] pt-2 border-t border-[#E5DEC9] flex items-center justify-between">
-                      <span>Promise: Chapter 4 Payoff</span>
-                      <span>Anchored in 2 Scenes</span>
+                    <div className="space-y-1.5 text-[#7A705F]">
+                      <div className="flex items-center justify-between">
+                        <span>Ch. 01: The Harbor Bell</span>
+                        <span className="text-[#221E18] font-medium">Primary POV</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Ch. 03: Whispers at Quay</span>
+                        <span className="text-[#221E18] font-medium">Participant</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Ch. 07: The Vault Below</span>
+                        <span className="text-[#7A705F]">Mentioned only</span>
+                      </div>
                     </div>
                   </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-4 border-t border-[rgba(34,30,24,0.12)] text-xs text-[#7A705F]">
+                  <span>Inline mention engine links @Character and #Lore directly inside your prose.</span>
+                  <button
+                    onClick={() => onEnterStudio('codex')}
+                    className="inline-flex items-center gap-1.5 font-semibold text-[#B54B32] hover:underline cursor-pointer"
+                  >
+                    <span>Explore Codex</span>
+                    <ArrowRight size={13} />
+                  </button>
                 </div>
               </div>
             )}
 
-            {/* TAB CONTENT: 4. Continuity Inbox */}
             {activeInteractiveTab === 'continuity' && (
-              <div className="p-6 sm:p-8 min-h-[380px]">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h4 className="font-serif text-lg font-semibold text-[#221E18]">
-                      Continuity Inbox &amp; Inquiry Logger
-                    </h4>
-                    <p className="text-xs text-[#7A705F] mt-0.5">
-                      Evidence-based observations and timeline inconsistencies waiting for writer resolution.
-                    </p>
+              <div className="space-y-5 animate-in fade-in duration-200">
+                <div className="flex items-center justify-between border-b border-[rgba(34,30,24,0.12)] pb-4">
+                  <div className="flex items-center gap-2">
+                    <Sparkles size={15} className="text-[#B54B32]" />
+                    <span className="font-serif font-semibold text-sm">Continuity Radar &amp; Inquiry Inbox</span>
                   </div>
-                  <span className="text-xs font-mono text-[#C88A2E] bg-[#F6EEDA] px-2.5 py-1 rounded border border-[#C88A2E]/20">
-                    2 Pending Inquiries
+                  <span className="text-xs font-mono text-[#B54B32] bg-[#B54B32]/10 px-2 py-0.5 rounded-[4px] font-semibold">
+                    1 Critical Warning Active
                   </span>
                 </div>
 
-                <div className="space-y-3">
-                  <div className="p-4 rounded-xl bg-[#F1EAD9] border border-[#E5DEC9] flex items-start justify-between gap-4">
+                <div className="bg-[#F1EAD9] p-4 rounded-[6px] border border-[rgba(34,30,24,0.12)] space-y-3">
+                  <div className="flex items-start justify-between gap-4">
                     <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#B54B32]/10 text-[#B54B32] font-semibold uppercase">
-                          Timeline Collision
-                        </span>
-                        <span className="text-xs font-serif font-bold text-[#221E18]">
-                          Silas's Pocket Watch Handedness
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-[#B54B32]" />
+                        <span className="font-serif font-semibold text-sm text-[#221E18]">
+                          Eye Color Inconsistency: Evelyn Gray
                         </span>
                       </div>
-                      <p className="text-xs text-[#7A705F] leading-relaxed">
-                        In Scene 1, Silas reaches with his left hand. In Scene 4, you mention his left arm was in a sling after the foundry fire. Did this injury heal before midnight?
+                      <p className="text-xs text-[#7A705F] mt-1">
+                        Scene 01 states Evelyn has "hazel eyes," but Scene 09 describes her with "steely blue eyes in the rain."
                       </p>
                     </div>
                     <button
                       onClick={() => onEnterStudio('continuity')}
-                      className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#221E18] bg-[#FAF6EE] border border-[#E5DEC9] hover:bg-[#EAE4D6] shrink-0 cursor-pointer"
+                      className="px-2.5 py-1 text-xs font-medium text-[#FAF6EE] bg-[#B54B32] rounded-[6px] cursor-pointer shrink-0"
                     >
-                      Resolve
+                      Resolve Flag
                     </button>
                   </div>
+                </div>
 
-                  <div className="p-4 rounded-xl bg-[#F1EAD9] border border-[#E5DEC9] flex items-start justify-between gap-4">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#35505F]/10 text-[#35505F] font-semibold uppercase">
-                          Narrative Thread
-                        </span>
-                        <span className="text-xs font-serif font-bold text-[#221E18]">
-                          The Missing Wrench in Chapter 2
-                        </span>
-                      </div>
-                      <p className="text-xs text-[#7A705F] leading-relaxed">
-                        The silver escapement wrench was dropped into the clockworks in Scene 2, but Silas uses it again in Scene 6 without retrieving it.
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => onEnterStudio('continuity')}
-                      className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#221E18] bg-[#FAF6EE] border border-[#E5DEC9] hover:bg-[#EAE4D6] shrink-0 cursor-pointer"
-                    >
-                      Resolve
-                    </button>
-                  </div>
+                <div className="flex items-center justify-between pt-4 border-t border-[rgba(34,30,24,0.12)] text-xs text-[#7A705F]">
+                  <span>Automated audit checks your timeline, entity attributes, and travel durations.</span>
+                  <button
+                    onClick={() => onEnterStudio('continuity')}
+                    className="inline-flex items-center gap-1.5 font-semibold text-[#B54B32] hover:underline cursor-pointer"
+                  >
+                    <span>Open Continuity Inbox</span>
+                    <ArrowRight size={13} />
+                  </button>
                 </div>
               </div>
             )}
@@ -528,457 +435,165 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </div>
       </section>
 
-      {/* 5. FOUR CORE PRODUCT PILLARS */}
-      <section className="py-20 px-4 sm:px-6 max-w-6xl mx-auto">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <span className="section-label block mb-2">The Architecture of Long-Form Fiction</span>
-          <h2 className="text-3xl sm:text-4xl font-serif font-semibold text-[#221E18] tracking-tight mb-4">
-            Four quiet pillars. Zero distraction.
-          </h2>
-          <p className="text-sm sm:text-base text-[#7A705F] leading-relaxed">
-            Threadline solves the friction of writing a 90,000-word book by giving every stage of drafting its dedicated, tactile home.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Pillar 1: The Canvas */}
-          <div id="canvas" className="p-8 rounded-2xl bg-[#F1EAD9] border border-[#E5DEC9] shadow-warm-sm flex flex-col justify-between">
-            <div>
-              <div className="w-10 h-10 rounded-xl bg-[#221E18] text-[#FAF6EE] flex items-center justify-center mb-5 shadow-xs">
-                <AlignVerticalJustifyCenter size={20} className="text-[#B54B32]" />
-              </div>
-              <span className="section-label text-[10px] block mb-1">The Canvas</span>
-              <h3 className="text-xl font-serif font-semibold text-[#221E18] mb-3">
-                42% Optical Caret Horizon
-              </h3>
-              <p className="text-sm text-[#7A705F] leading-relaxed mb-4">
-                Typing at the bottom of a monitor ruins writer posture and breaks immersion. Threadline's optical typewriter scroll anchors your active line precisely at 42% height—at natural eye-level—scrolling the manuscript beneath your fingers like vintage heavy parchment.
-              </p>
-              <ul className="space-y-2 text-xs text-[#221E18]">
-                <li className="flex items-center gap-2">
-                  <Check size={14} className="text-[#3C6E47] shrink-0" />
-                  <span>Dual editing modes: Interactive rich live preview or raw markdown syntax</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check size={14} className="text-[#3C6E47] shrink-0" />
-                  <span>Notion-style <code className="font-mono bg-[#FAF6EE] px-1 py-0.5 rounded border border-[#E5DEC9]">/</code> slash palette for instant formatting</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check size={14} className="text-[#3C6E47] shrink-0" />
-                  <span>Subtle word pacing timer without intrusive notifications</span>
-                </li>
-              </ul>
-            </div>
-            <div className="mt-6 pt-4 border-t border-[#E5DEC9]">
-              <button
-                onClick={() => onEnterStudio('editor')}
-                className="text-xs font-semibold text-[#B54B32] hover:text-[#9E3E27] flex items-center gap-1 cursor-pointer"
-              >
-                Launch the Manuscript Canvas →
-              </button>
-            </div>
-          </div>
-
-          {/* Pillar 2: The Corkboard */}
-          <div id="corkboard" className="p-8 rounded-2xl bg-[#F1EAD9] border border-[#E5DEC9] shadow-warm-sm flex flex-col justify-between">
-            <div>
-              <div className="w-10 h-10 rounded-xl bg-[#221E18] text-[#FAF6EE] flex items-center justify-center mb-5 shadow-xs">
-                <Layers size={20} className="text-[#35505F]" />
-              </div>
-              <span className="section-label text-[10px] block mb-1">Story Architecture</span>
-              <h3 className="text-xl font-serif font-semibold text-[#221E18] mb-3">
-                Corkboard &amp; Narrative Frameworks
-              </h3>
-              <p className="text-sm text-[#7A705F] leading-relaxed mb-4">
-                Never lose your story's momentum. Choose from time-tested narrative frameworks—Three-Act Structure, Save the Cat! 15 Beats, Hero's Journey, or 7-Point Story Architecture—or draft freeform. Rearrange chapters and track completion status at a glance.
-              </p>
-              <ul className="space-y-2 text-xs text-[#221E18]">
-                <li className="flex items-center gap-2">
-                  <Check size={14} className="text-[#3C6E47] shrink-0" />
-                  <span>Color-coded progression: Idea, Drafting, Revised, Final</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check size={14} className="text-[#3C6E47] shrink-0" />
-                  <span>Automatic chapter-level word rollups and target pacing</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check size={14} className="text-[#3C6E47] shrink-0" />
-                  <span>Instantly jump from any corkboard beat card straight into the scene</span>
-                </li>
-              </ul>
-            </div>
-            <div className="mt-6 pt-4 border-t border-[#E5DEC9]">
-              <button
-                onClick={() => onEnterStudio('dashboard')}
-                className="text-xs font-semibold text-[#35505F] hover:text-[#221E18] flex items-center gap-1 cursor-pointer"
-              >
-                Inspect Story Architecture →
-              </button>
-            </div>
-          </div>
-
-          {/* Pillar 3: The Lore Codex */}
-          <div id="codex" className="p-8 rounded-2xl bg-[#F1EAD9] border border-[#E5DEC9] shadow-warm-sm flex flex-col justify-between">
-            <div>
-              <div className="w-10 h-10 rounded-xl bg-[#221E18] text-[#FAF6EE] flex items-center justify-center mb-5 shadow-xs">
-                <Compass size={20} className="text-[#C88A2E]" />
-              </div>
-              <span className="section-label text-[10px] block mb-1">Canon Worldbuilding</span>
-              <h3 className="text-xl font-serif font-semibold text-[#221E18] mb-3">
-                Lore Codex &amp; Story Bible
-              </h3>
-              <p className="text-sm text-[#7A705F] leading-relaxed mb-4">
-                Keep the facts of your fictional universe anchored and verified. Record character motivations, physical flaws, faction loyalties, and sacred relics. Link each entry to the exact scenes where they appear.
-              </p>
-              <ul className="space-y-2 text-xs text-[#221E18]">
-                <li className="flex items-center gap-2">
-                  <Check size={14} className="text-[#3C6E47] shrink-0" />
-                  <span>Categorized by Characters, Locations, Factions, Relics, and Lore</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check size={14} className="text-[#3C6E47] shrink-0" />
-                  <span>Narrative Promise Tracker: Map story threads to payoffs</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check size={14} className="text-[#3C6E47] shrink-0" />
-                  <span>Status verification tags to distinguish confirmed canon from conjecture</span>
-                </li>
-              </ul>
-            </div>
-            <div className="mt-6 pt-4 border-t border-[#E5DEC9]">
-              <button
-                onClick={() => onEnterStudio('bible')}
-                className="text-xs font-semibold text-[#C88A2E] hover:text-[#221E18] flex items-center gap-1 cursor-pointer"
-              >
-                Browse the Lore Codex →
-              </button>
-            </div>
-          </div>
-
-          {/* Pillar 4: Continuity & Snapshots */}
-          <div id="continuity" className="p-8 rounded-2xl bg-[#F1EAD9] border border-[#E5DEC9] shadow-warm-sm flex flex-col justify-between">
-            <div>
-              <div className="w-10 h-10 rounded-xl bg-[#221E18] text-[#FAF6EE] flex items-center justify-center mb-5 shadow-xs">
-                <Sliders size={20} className="text-[#857C90]" />
-              </div>
-              <span className="section-label text-[10px] block mb-1">Safety &amp; Revision</span>
-              <h3 className="text-xl font-serif font-semibold text-[#221E18] mb-3">
-                Snapshots &amp; The Cutting Room
-              </h3>
-              <p className="text-sm text-[#7A705F] leading-relaxed mb-4">
-                Never hesitate to kill your darlings. When you prune a 500-word paragraph, preserve it in the Cutting Room scrap vault. Take immutable revision snapshots before major structural edits so you can experiment without fear.
-              </p>
-              <ul className="space-y-2 text-xs text-[#221E18]">
-                <li className="flex items-center gap-2">
-                  <Check size={14} className="text-[#3C6E47] shrink-0" />
-                  <span>One-click Point-in-Time snapshots of the entire manuscript</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check size={14} className="text-[#3C6E47] shrink-0" />
-                  <span>Dedicated Cutting Room vault for preserved scraps and fragments</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check size={14} className="text-[#3C6E47] shrink-0" />
-                  <span>Evidence-based continuity inbox for plotting and beta notes</span>
-                </li>
-              </ul>
-            </div>
-            <div className="mt-6 pt-4 border-t border-[#E5DEC9]">
-              <button
-                onClick={() => onEnterStudio('revisions')}
-                className="text-xs font-semibold text-[#857C90] hover:text-[#221E18] flex items-center gap-1 cursor-pointer"
-              >
-                View Revision Snapshots →
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 6. MANUSCRIPT CALCULATOR / PACING ESTIMATOR */}
-      <section className="py-16 px-4 sm:px-6 bg-[#F1EAD9]/60 border-y border-[#E5DEC9]">
+      {/* 5. LOCAL-FIRST MANIFESTO & ZERO LOCK-IN ARCHITECTURE */}
+      <section id="manifesto" className="py-20 px-4 sm:px-6 border-b border-[rgba(34,30,24,0.12)]">
         <div className="max-w-4xl mx-auto">
-          <div className="bg-[#FAF6EE] p-8 md:p-10 rounded-2xl border border-[#E5DEC9] shadow-warm-modal">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
-              <div>
-                <span className="section-label block mb-1">Drafting Rhythm</span>
-                <h3 className="text-2xl font-serif font-semibold text-[#221E18]">
-                  Manuscript Pacing Calculator
-                </h3>
-                <p className="text-xs text-[#7A705F] mt-1">
-                  Adjust your book's target scope and daily output to calculate your completion horizon.
-                </p>
-              </div>
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <span className="section-label block mb-2">Zero Platform Lock-In</span>
+            <h2 className="text-3xl font-serif font-semibold text-[#221E18]">
+              Your Words Live in Plain Files on Your Disk
+            </h2>
+            <p className="text-sm text-[#7A705F] mt-2">
+              Threadline does not trap your life's work in a proprietary cloud database or closed binary bundle.
+            </p>
+          </div>
 
-              <div className="flex items-center gap-4 bg-[#F1EAD9] px-4 py-2.5 rounded-xl border border-[#E5DEC9]">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <div className="bg-[#F1EAD9] p-6 rounded-[6px] border border-[rgba(34,30,24,0.12)] font-mono text-xs text-[#221E18] space-y-2">
+              <div className="text-[#7A705F] pb-2 border-b border-[rgba(34,30,24,0.12)] flex items-center justify-between">
+                <span>📁 MyNovel_Vault/</span>
+                <span className="text-[10px] text-[#35505F]">Obsidian Compatible</span>
+              </div>
+              <div className="space-y-1.5 pl-2 text-[11px]">
+                <div>📄 project.json</div>
+                <div>📁 Manuscript/</div>
+                <div className="pl-4 text-[#B54B32]">📄 01 - The Harbor.md</div>
+                <div className="pl-4 text-[#B54B32]">📄 02 - Whispers.md</div>
+                <div className="pl-4 text-[#B54B32]">📄 03 - Midnight.md</div>
+                <div>📁 StoryBible/</div>
+                <div className="pl-4 text-[#35505F]">📄 entities.json</div>
+                <div className="pl-4 text-[#35505F]">📄 timeline.json</div>
+                <div>📁 CuttingRoom/</div>
+                <div className="pl-4 text-[#7A705F]">📄 cuts.json</div>
+                <div>📁 Notes/</div>
+                <div className="pl-4 text-[#7A705F]">📄 scratchpad.md</div>
+              </div>
+            </div>
+
+            <div className="space-y-4 text-xs sm:text-sm text-[#7A705F] leading-relaxed">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 size={18} className="text-[#35505F] shrink-0 mt-0.5" />
                 <div>
-                  <div className="text-[10px] font-mono uppercase text-[#7A705F]">Finish Horizon</div>
-                  <div className="text-lg font-serif font-bold text-[#B54B32]">{estimatedDays} Days ({estimatedMonths} mo)</div>
+                  <strong className="text-[#221E18] block text-sm">Pure Markdown Files</strong>
+                  Every chapter and scene is written as standard Markdown with clean frontmatter. You can open them in Obsidian, VS Code, iA Writer, or standard text editors.
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <CheckCircle2 size={18} className="text-[#35505F] shrink-0 mt-0.5" />
+                <div>
+                  <strong className="text-[#221E18] block text-sm">Git &amp; Backup Friendly</strong>
+                  Track your revisions with standard Git, sync with iCloud or Dropbox, or keep it on an offline encrypted hard drive.
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <CheckCircle2 size={18} className="text-[#35505F] shrink-0 mt-0.5" />
+                <div>
+                  <strong className="text-[#221E18] block text-sm">Native Desktop &amp; Responsive Web</strong>
+                  Runs natively on macOS and Windows via Tauri v2 with instant local file writes, and operates as a companion studio on mobile browsers.
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      {/* 6. WORD COUNT SPRINT ESTIMATOR */}
+      <section className="py-16 px-4 sm:px-6 bg-[#F1EAD9]/40 border-b border-[rgba(34,30,24,0.12)]">
+        <div className="max-w-2xl mx-auto text-center space-y-6">
+          <span className="section-label block">Drafting Pace Calculator</span>
+          <h2 className="text-2xl sm:text-3xl font-serif font-semibold text-[#221E18]">
+            Plan Your Manuscript Horizon
+          </h2>
+
+          <div className="bg-[#FAF6EE] p-6 rounded-[6px] border border-[rgba(34,30,24,0.12)] shadow-warm-sm space-y-5 text-left">
+            <div>
+              <div className="flex justify-between text-xs font-medium mb-1.5">
+                <span>Target Manuscript Word Count:</span>
+                <span className="font-mono font-bold text-[#B54B32]">{calculatorWords.toLocaleString()} words</span>
+              </div>
+              <input
+                type="range"
+                min="20000"
+                max="150000"
+                step="5000"
+                value={calculatorWords}
+                onChange={(e) => setCalculatorWords(Number(e.target.value))}
+                className="w-full accent-[#B54B32] cursor-pointer"
+              />
+            </div>
+
+            <div>
+              <div className="flex justify-between text-xs font-medium mb-1.5">
+                <span>Daily Drafting Pace:</span>
+                <span className="font-mono font-bold text-[#35505F]">{calculatorDailyRate} words / day</span>
+              </div>
+              <input
+                type="range"
+                min="250"
+                max="2500"
+                step="50"
+                value={calculatorDailyRate}
+                onChange={(e) => setCalculatorDailyRate(Number(e.target.value))}
+                className="w-full accent-[#35505F] cursor-pointer"
+              />
+            </div>
+
+            <div className="pt-4 border-t border-[rgba(34,30,24,0.12)] flex items-center justify-between text-center">
               <div>
-                <div className="flex justify-between text-xs font-medium mb-2">
-                  <span className="text-[#221E18]">Target Word Count:</span>
-                  <span className="font-mono text-[#B54B32] font-semibold">{calculatorWords.toLocaleString()} words</span>
-                </div>
-                <input
-                  type="range"
-                  min={30000}
-                  max={160000}
-                  step={5000}
-                  value={calculatorWords}
-                  onChange={(e) => setCalculatorWords(Number(e.target.value))}
-                  className="w-full accent-[#B54B32] cursor-pointer"
-                />
-                <div className="flex justify-between text-[10px] font-mono text-[#7A705F] mt-1">
-                  <span>Novella (40k)</span>
-                  <span>Standard Novel (80k)</span>
-                  <span>Epic Fantasy (140k)</span>
-                </div>
+                <div className="text-2xl sm:text-3xl font-serif font-bold text-[#221E18]">{estimatedDays}</div>
+                <div className="text-[11px] text-[#7A705F] uppercase font-mono tracking-wider">Writing Days</div>
               </div>
-
+              <div className="h-8 w-px bg-[rgba(34,30,24,0.12)]" />
               <div>
-                <div className="flex justify-between text-xs font-medium mb-2">
-                  <span className="text-[#221E18]">Daily Writing Output:</span>
-                  <span className="font-mono text-[#35505F] font-semibold">{calculatorDailyRate.toLocaleString()} words/day</span>
-                </div>
-                <input
-                  type="range"
-                  min={250}
-                  max={2500}
-                  step={50}
-                  value={calculatorDailyRate}
-                  onChange={(e) => setCalculatorDailyRate(Number(e.target.value))}
-                  className="w-full accent-[#35505F] cursor-pointer"
-                />
-                <div className="flex justify-between text-[10px] font-mono text-[#7A705F] mt-1">
-                  <span>Slow &amp; Steady (300)</span>
-                  <span>Daily Habit (750)</span>
-                  <span>NaNoWriMo Sprint (1,667)</span>
-                </div>
+                <div className="text-2xl sm:text-3xl font-serif font-bold text-[#B54B32]">{estimatedMonths}</div>
+                <div className="text-[11px] text-[#7A705F] uppercase font-mono tracking-wider">Months to Complete</div>
+              </div>
+              <div className="h-8 w-px bg-[rgba(34,30,24,0.12)]" />
+              <div>
+                <button
+                  onClick={() => onEnterStudio('new-project')}
+                  className="px-3.5 py-2 rounded-[6px] bg-[#221E18] text-[#FAF6EE] text-xs font-semibold hover:bg-black transition-colors cursor-pointer min-h-[40px]"
+                >
+                  Start Manuscript
+                </button>
               </div>
             </div>
-
-            <div className="mt-8 pt-6 border-t border-[#E5DEC9] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <p className="text-xs text-[#7A705F] leading-relaxed">
-                At <span className="font-mono text-[#221E18] font-medium">{calculatorDailyRate} words</span> per day, your {calculatorWords.toLocaleString()}-word book will be drafted in approximately <span className="font-mono text-[#221E18] font-medium">{estimatedDays} writing sessions</span>.
-              </p>
-              <button
-                onClick={() => onEnterStudio('new-project')}
-                className="px-4 py-2 rounded-lg text-xs font-semibold text-[#FAF6EE] bg-[#221E18] hover:bg-[#35505F] shrink-0 transition-colors cursor-pointer"
-              >
-                Set Up This Manuscript Project →
-              </button>
-            </div>
           </div>
         </div>
       </section>
 
-      {/* 7. COMPARISON MATRIX (THE THREADLINE DIFFERENCE) */}
-      <section className="py-20 px-4 sm:px-6 max-w-5xl mx-auto">
-        <div className="text-center max-w-2xl mx-auto mb-14">
-          <span className="section-label block mb-2">Honest Comparison</span>
-          <h2 className="text-3xl font-serif font-semibold text-[#221E18] tracking-tight mb-3">
-            Built for writers, not corporate meetings
-          </h2>
-          <p className="text-sm text-[#7A705F]">
-            How Threadline contrasts with traditional word processors and legacy novel drafting tools.
-          </p>
-        </div>
-
-        <div className="bg-[#FAF6EE] rounded-2xl border border-[#E5DEC9] shadow-warm-modal overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="border-b border-[#E5DEC9] bg-[#F1EAD9]/70 text-[#7A705F] font-mono text-[11px] uppercase tracking-wider">
-                <th className="py-3.5 px-4 font-semibold">Feature &amp; Philosophy</th>
-                <th className="py-3.5 px-4 font-bold text-[#B54B32] bg-[#F1EAD9]">Threadline</th>
-                <th className="py-3.5 px-4 font-normal">Scrivener</th>
-                <th className="py-3.5 px-4 font-normal">Google Docs / Word</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#E5DEC9] text-[#221E18]">
-              <tr>
-                <td className="py-3.5 px-4 font-medium">Local-First Storage</td>
-                <td className="py-3.5 px-4 font-semibold bg-[#F1EAD9]/40 text-[#3C6E47] flex items-center gap-1.5">
-                  <Check size={14} /> 100% Private (No Cloud)
-                </td>
-                <td className="py-3.5 px-4 text-[#7A705F]">Local (Sync Errors Common)</td>
-                <td className="py-3.5 px-4 text-[#7A705F]">Cloud-Only (Required Account)</td>
-              </tr>
-              <tr>
-                <td className="py-3.5 px-4 font-medium">42% Optical Caret Horizon</td>
-                <td className="py-3.5 px-4 font-semibold bg-[#F1EAD9]/40 text-[#3C6E47] flex items-center gap-1.5">
-                  <Check size={14} /> Eye-Level Active Guide
-                </td>
-                <td className="py-3.5 px-4 text-[#7A705F]">Basic Centered (No Guide)</td>
-                <td className="py-3.5 px-4 text-[#7A705F]">None (Types at Bottom)</td>
-              </tr>
-              <tr>
-                <td className="py-3.5 px-4 font-medium">Story Architecture Frameworks</td>
-                <td className="py-3.5 px-4 font-semibold bg-[#F1EAD9]/40 text-[#3C6E47] flex items-center gap-1.5">
-                  <Check size={14} /> 4 Built-In Systems
-                </td>
-                <td className="py-3.5 px-4 text-[#7A705F]">Generic Binder Folders</td>
-                <td className="py-3.5 px-4 text-[#7A705F]">None</td>
-              </tr>
-              <tr>
-                <td className="py-3.5 px-4 font-medium">Lore Codex &amp; Thread Payoffs</td>
-                <td className="py-3.5 px-4 font-semibold bg-[#F1EAD9]/40 text-[#3C6E47] flex items-center gap-1.5">
-                  <Check size={14} /> Integrated Scene Linking
-                </td>
-                <td className="py-3.5 px-4 text-[#7A705F]">Plain Notes Files</td>
-                <td className="py-3.5 px-4 text-[#7A705F]">None</td>
-              </tr>
-              <tr>
-                <td className="py-3.5 px-4 font-medium">Distraction-Free Paper Theme</td>
-                <td className="py-3.5 px-4 font-semibold bg-[#F1EAD9]/40 text-[#3C6E47] flex items-center gap-1.5">
-                  <Check size={14} /> Aged Paper &amp; Ink
-                </td>
-                <td className="py-3.5 px-4 text-[#7A705F]">2005 Windows/Mac OS Chrome</td>
-                <td className="py-3.5 px-4 text-[#7A705F]">Harsh Fluorescent White</td>
-              </tr>
-              <tr>
-                <td className="py-3.5 px-4 font-medium">No Subscription / Telemetry</td>
-                <td className="py-3.5 px-4 font-semibold bg-[#F1EAD9]/40 text-[#3C6E47] flex items-center gap-1.5">
-                  <Check size={14} /> Free &amp; Zero Tracking
-                </td>
-                <td className="py-3.5 px-4 text-[#7A705F]">Paid License per OS</td>
-                <td className="py-3.5 px-4 text-[#7A705F]">Data Harvested / Telemetry</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* 8. LOCAL-FIRST MANIFESTO */}
-      <section id="manifesto" className="py-20 px-4 sm:px-6 bg-[#221E18] text-[#FAF6EE]">
-        <div className="max-w-3xl mx-auto">
-          <div className="flex items-center gap-3 mb-6">
-            <ThreadlineBadge size={32} />
-            <span className="text-xs font-mono tracking-[0.16em] uppercase text-[#FAF6EE]/60">
-              The Threadline Manifesto
-            </span>
-          </div>
-
-          <h2 className="text-3xl sm:text-4xl font-serif font-medium tracking-tight mb-8 leading-snug">
-            Your manuscript is not training data.
-            <br />
-            It is your life's work.
-          </h2>
-
-          <div className="space-y-6 text-[#FAF6EE]/80 text-sm sm:text-base leading-relaxed font-serif">
-            <p>
-              In recent years, writing software surrendered to venture capital metrics. Every tool became an AI ghostwriter attempting to replace the writer, a bloated collaborative suite with cursor pings and notification dots, or a hostage negotiation charging $15 a month just to access your own words.
-            </p>
-            <p>
-              We built Threadline because writing a novel requires solitude, focus, and sovereignty.
-            </p>
-            <blockquote className="border-l-2 border-[#B54B32] pl-5 my-6 italic text-[#FAF6EE] text-base sm:text-lg">
-              "We believe your stories belong on your machine, written with calm typography, structured by proven narrative bones, and owned forever by you."
-            </blockquote>
-            <p>
-              Threadline requires no login. It emits zero telemetry. It runs entirely inside your browser's persistent sandbox. When you close the tab, your prose remains safe on your drive. When you want to leave, you export clean Markdown or JSON archives in one click.
-            </p>
-          </div>
-
-          <div className="mt-10 pt-8 border-t border-white/10 flex flex-wrap items-center justify-between gap-4">
-            <div className="text-xs font-mono text-[#FAF6EE]/60">
-              Threadline Narrative Architecture · Open &amp; Local-First
-            </div>
-            <button
-              onClick={() => onEnterStudio('home')}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold bg-[#B54B32] hover:bg-[#9E3E27] text-[#FAF6EE] transition-colors cursor-pointer"
-            >
-              <span>Enter Workspace Now</span>
-              <ArrowRight size={14} />
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* 9. FINAL CALL TO ACTION */}
-      <section className="py-24 px-4 sm:px-6 text-center bg-[#FAF6EE]">
-        <div className="max-w-2xl mx-auto">
-          <ThreadlineMark size={100} color="#221E18" knotColor="#B54B32" className="mx-auto mb-6" />
-
-          <h2 className="text-3xl sm:text-4xl font-serif font-semibold text-[#221E18] tracking-tight mb-4">
-            Sit down. Breathe. Write.
-          </h2>
-
-          <p className="text-sm sm:text-base text-[#7A705F] leading-relaxed mb-8">
-            Your next chapter is waiting. No credit card, no sign-up forms, and no cloud surveillance. Just you and the manuscript.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <button
-              onClick={() => onEnterStudio('editor')}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-semibold text-[#FAF6EE] bg-[#B54B32] hover:bg-[#9E3E27] shadow-warm-modal transition-all active:scale-98 cursor-pointer"
-            >
-              <span>Open Threadline Studio</span>
-              <ArrowRight size={15} />
-            </button>
-
-            <button
-              onClick={() => onEnterStudio('projects')}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl text-sm font-medium text-[#221E18] bg-[#F1EAD9] hover:bg-[#EAE4D6] border border-[#E5DEC9] transition-all cursor-pointer"
-            >
-              <FolderKanban size={15} className="text-[#7A705F]" />
-              <span>Browse Manuscripts Catalog</span>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* 10. FOOTER */}
-      <footer className="bg-[#F1EAD9] border-t border-[#E5DEC9] py-12 px-4 sm:px-6 text-xs text-[#7A705F]">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+      {/* 7. FOOTER */}
+      <footer className="py-12 px-4 sm:px-6 bg-[#FAF6EE] text-xs text-[#7A705F]">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
             <ThreadlineBadge size={24} />
-            <div>
-              <span className="font-serif font-bold text-[#221E18] text-sm">Threadline</span>
-              <span className="text-[10px] font-mono text-[#7A705F] ml-2">v2.4 Editorial Edition</span>
-            </div>
+            <span className="font-serif font-semibold text-[#221E18]">Threadline Studio</span>
+            <span className="text-[11px]">·</span>
+            <span>Version 1.0 (Editorial)</span>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-6">
-            <button
-              onClick={() => onEnterStudio('editor')}
-              className="hover:text-[#221E18] transition-colors cursor-pointer"
-            >
-              Manuscript Editor
+          <div className="flex items-center gap-6">
+            <button onClick={() => onEnterStudio('projects')} className="hover:text-[#221E18] transition-colors cursor-pointer">
+              Manuscripts Hub
             </button>
-            <button
-              onClick={() => onEnterStudio('dashboard')}
-              className="hover:text-[#221E18] transition-colors cursor-pointer"
-            >
+            <button onClick={() => onEnterStudio('editor')} className="hover:text-[#221E18] transition-colors cursor-pointer">
+              Editor
+            </button>
+            <button onClick={() => onEnterStudio('dashboard')} className="hover:text-[#221E18] transition-colors cursor-pointer">
               Corkboard
             </button>
-            <button
-              onClick={() => onEnterStudio('bible')}
-              className="hover:text-[#221E18] transition-colors cursor-pointer"
-            >
-              Lore Codex
+            <button onClick={() => onEnterStudio('codex')} className="hover:text-[#221E18] transition-colors cursor-pointer">
+              Codex
             </button>
-            <button
-              onClick={() => onEnterStudio('continuity')}
-              className="hover:text-[#221E18] transition-colors cursor-pointer"
-            >
-              Continuity Inbox
-            </button>
-            <button
-              onClick={() => onEnterStudio('export')}
-              className="hover:text-[#221E18] transition-colors cursor-pointer"
-            >
-              Plaintext Export
+            <button onClick={() => onEnterStudio('export')} className="hover:text-[#221E18] transition-colors cursor-pointer">
+              Export
             </button>
           </div>
-
-          <div className="text-[11px] font-mono text-[#7A705F]">
-            Local-First &amp; Encrypted · All Rights Reserved
-          </div>
+        </div>
+        <div className="max-w-6xl mx-auto text-center sm:text-left mt-6 pt-6 border-t border-[rgba(34,30,24,0.12)]">
+          "Keep the story connected. Keep the voice yours." Built for novelists and long-form narrative architects.
         </div>
       </footer>
     </div>

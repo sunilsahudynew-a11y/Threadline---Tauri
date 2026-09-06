@@ -55,24 +55,24 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className={`pointer-events-auto flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border shadow-lg text-xs transition-all animate-in slide-in-from-bottom-2 fade-in duration-150 ${
+            className={`pointer-events-auto flex items-center gap-2.5 px-3.5 py-2.5 rounded-[6px] border shadow-warm-lg text-xs transition-all animate-in slide-in-from-bottom-2 fade-in duration-150 ${
               toast.type === 'success'
-                ? 'bg-[#1C2826] text-[#E8F1EE] border-[#2D3E3A]'
+                ? 'bg-[#221E18] text-[#FAF6EE] border-[rgba(250,246,238,0.16)]'
                 : toast.type === 'warning'
-                ? 'bg-[#2A231C] text-[#F9EFE5] border-[#4A3B2C]'
+                ? 'bg-[#2A231C] text-[#FAF6EE] border-[#B54B32]/40'
                 : toast.type === 'error'
-                ? 'bg-[#2B1B1B] text-[#FDE8E8] border-[#4E2A2A]'
-                : 'bg-[#242426] text-[#F0EFF4] border-[#3C3B42]'
+                ? 'bg-[#2B1818] text-[#FAF6EE] border-[#B54B32]'
+                : 'bg-[#221E18] text-[#FAF6EE] border-[rgba(250,246,238,0.16)]'
             }`}
           >
-            {toast.type === 'success' && <CheckCircle2 size={15} className="text-emerald-400 shrink-0" />}
-            {toast.type === 'warning' && <AlertCircle size={15} className="text-amber-400 shrink-0" />}
-            {toast.type === 'error' && <AlertCircle size={15} className="text-rose-400 shrink-0" />}
-            {toast.type === 'info' && <Info size={15} className="text-sky-400 shrink-0" />}
+            {toast.type === 'success' && <CheckCircle2 size={15} className="text-[#35505F] shrink-0" />}
+            {toast.type === 'warning' && <AlertCircle size={15} className="text-[#B54B32] shrink-0" />}
+            {toast.type === 'error' && <AlertCircle size={15} className="text-[#B54B32] shrink-0" />}
+            {toast.type === 'info' && <Info size={15} className="text-[#FAF6EE] shrink-0" />}
             <span className="flex-1 font-medium">{toast.message}</span>
             <button
               onClick={() => removeToast(toast.id)}
-              className="p-0.5 hover:opacity-75 cursor-pointer opacity-50 shrink-0 ml-1"
+              className="p-0.5 hover:opacity-100 cursor-pointer opacity-60 shrink-0 ml-1"
             >
               <X size={12} />
             </button>

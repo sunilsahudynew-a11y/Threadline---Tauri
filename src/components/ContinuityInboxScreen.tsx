@@ -1,18 +1,14 @@
 import React, { useState } from 'react';
 import { ContinuityIssue, Scene } from '../types';
 import {
-  AlertCircle,
   CheckCircle2,
-  HelpCircle,
   ArrowRight,
-  ShieldAlert,
-  Clock,
   Sparkles,
   ExternalLink,
-  Filter,
-  Check,
   RefreshCw,
-  Plus
+  Plus,
+  Compass,
+  AlertTriangle
 } from 'lucide-react';
 
 interface ContinuityInboxScreenProps {
@@ -57,34 +53,34 @@ export const ContinuityInboxScreen: React.FC<ContinuityInboxScreenProps> = ({
     setTimeout(() => {
       setIsScanning(false);
       setScanMessage(
-        `Scanned ${scenes.length} scenes against Story Bible canon. 3 observations active; no new contradictory timeline breaches detected.`
+        `Scanned ${scenes.length} scenes against Codex lore. Active observations verified; no critical plot timeline breaches detected.`
       );
-    }, 800);
+    }, 700);
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-10">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <span className="text-[10px] font-bold tracking-widest text-[#AAA69F] uppercase font-mono">
+          <span className="text-[10px] font-mono font-semibold tracking-[0.14em] text-[#7A705F] uppercase">
             Evidence-Based Analysis
           </span>
-          <h2 className="text-2xl md:text-3xl font-serif text-[#1A1814] font-semibold mt-1">
+          <h1 className="text-2xl sm:text-3xl font-serif text-[#221E18] font-semibold mt-1">
             Continuity Inbox
-          </h2>
-          <p className="text-[#8C887F] text-xs mt-1">
-            Non-authoritative observations across chapters. Every inquiry presents side-by-side evidence so you make the ultimate narrative decision.
+          </h1>
+          <p className="text-[#7A705F] text-xs sm:text-sm mt-1 max-w-2xl leading-relaxed">
+            Non-authoritative observations across chapters. Every inquiry presents side-by-side textual evidence so you make the final authorial decision.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 flex-wrap">
           {onCreateIssue && (
             <button
               onClick={() => setShowLogModal(true)}
-              className="px-3.5 py-2 bg-white border border-[#EBE8E2] text-[#2D2A26] hover:bg-[#FAF9F5] rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+              className="px-3.5 py-2 bg-[#FAF6EE] border border-[rgba(34,30,24,0.12)] text-[#221E18] hover:bg-[#F1EAD9] rounded-[6px] text-xs font-semibold flex items-center gap-1.5 shadow-warm-sm transition-colors cursor-pointer min-h-[40px]"
             >
-              <Plus size={13} />
+              <Plus size={14} className="text-[#B54B32]" />
               <span>Log Inquiry</span>
             </button>
           )}
@@ -92,16 +88,16 @@ export const ContinuityInboxScreen: React.FC<ContinuityInboxScreenProps> = ({
           <button
             disabled={isScanning}
             onClick={handleRunRuleScan}
-            className="px-3.5 py-2 bg-[#2D2A26] text-white hover:bg-[#1A1814] disabled:opacity-50 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+            className="px-3.5 py-2 bg-[#221E18] text-[#FAF6EE] hover:bg-black disabled:opacity-50 rounded-[6px] text-xs font-semibold flex items-center gap-1.5 shadow-warm-sm transition-colors cursor-pointer min-h-[40px]"
           >
             {isScanning ? (
               <>
-                <RefreshCw size={13} className="animate-spin" />
+                <RefreshCw size={14} className="animate-spin" />
                 <span>Auditing Canon Rules...</span>
               </>
             ) : (
               <>
-                <Sparkles size={13} />
+                <Sparkles size={14} className="text-[#B54B32]" />
                 <span>Run Continuity Audit</span>
               </>
             )}
@@ -111,10 +107,10 @@ export const ContinuityInboxScreen: React.FC<ContinuityInboxScreenProps> = ({
 
       {/* Log Inquiry Modal */}
       {showLogModal && (
-        <div className="fixed inset-0 bg-stone-900/40 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-in fade-in">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-[#EBE8E2]">
-            <h3 className="font-serif font-bold text-[#1A1814] text-lg mb-1">Log Continuity Inquiry</h3>
-            <p className="text-xs text-[#8C887F] mb-4">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-in fade-in">
+          <div className="bg-[#FAF6EE] rounded-[8px] max-w-lg w-full p-6 shadow-warm-modal border border-[rgba(34,30,24,0.12)]">
+            <h3 className="font-serif font-bold text-[#221E18] text-lg mb-1">Log Continuity Inquiry</h3>
+            <p className="text-xs text-[#7A705F] mb-4">
               Document an inconsistency between two scene passages for future editorial review.
             </p>
 
@@ -156,7 +152,7 @@ export const ContinuityInboxScreen: React.FC<ContinuityInboxScreenProps> = ({
               className="space-y-3.5 text-xs"
             >
               <div>
-                <label className="block text-[10px] font-mono uppercase font-bold text-[#AAA69F] mb-1">
+                <label className="block text-[10px] font-mono uppercase font-bold text-[#7A705F] mb-1">
                   Inquiry Title
                 </label>
                 <input
@@ -165,12 +161,12 @@ export const ContinuityInboxScreen: React.FC<ContinuityInboxScreenProps> = ({
                   placeholder="e.g. Silas pocket watch discrepancy"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  className="w-full p-2 bg-[#FAF9F5] border border-[#EBE8E2] rounded-lg text-xs text-[#1A1814] focus:bg-white focus:outline-none"
+                  className="w-full p-2 bg-[#F1EAD9] border border-[rgba(34,30,24,0.12)] rounded-[6px] text-xs text-[#221E18] focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-mono uppercase font-bold text-[#AAA69F] mb-1">
+                <label className="block text-[10px] font-mono uppercase font-bold text-[#7A705F] mb-1">
                   Editorial Question
                 </label>
                 <textarea
@@ -179,19 +175,19 @@ export const ContinuityInboxScreen: React.FC<ContinuityInboxScreenProps> = ({
                   placeholder="e.g. Silas lost the gold watch in Chapter 1, but checks it in Chapter 4..."
                   value={newQuestion}
                   onChange={(e) => setNewQuestion(e.target.value)}
-                  className="w-full p-2 bg-[#FAF9F5] border border-[#EBE8E2] rounded-lg text-xs text-[#1A1814] focus:bg-white focus:outline-none"
+                  className="w-full p-2 bg-[#F1EAD9] border border-[rgba(34,30,24,0.12)] rounded-[6px] text-xs text-[#221E18] focus:outline-none"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[10px] font-mono uppercase font-bold text-[#AAA69F] mb-1">
+                  <label className="block text-[10px] font-mono uppercase font-bold text-[#7A705F] mb-1">
                     First Scene
                   </label>
                   <select
                     value={newSceneA}
                     onChange={(e) => setNewSceneA(e.target.value)}
-                    className="w-full p-2 bg-[#FAF9F5] border border-[#EBE8E2] rounded-lg text-xs text-[#1A1814]"
+                    className="w-full p-2 bg-[#F1EAD9] border border-[rgba(34,30,24,0.12)] rounded-[6px] text-xs text-[#221E18]"
                   >
                     {scenes.map((s) => (
                       <option key={s.id} value={s.id}>
@@ -204,18 +200,18 @@ export const ContinuityInboxScreen: React.FC<ContinuityInboxScreenProps> = ({
                     placeholder="Excerpt from Scene 1..."
                     value={newExcerptA}
                     onChange={(e) => setNewExcerptA(e.target.value)}
-                    className="w-full mt-1.5 p-1.5 bg-[#FAF9F5] border border-[#EBE8E2] rounded-lg text-[11px] text-[#1A1814]"
+                    className="w-full mt-1.5 p-1.5 bg-[#F1EAD9] border border-[rgba(34,30,24,0.12)] rounded-[6px] text-[11px] text-[#221E18]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-mono uppercase font-bold text-[#AAA69F] mb-1">
+                  <label className="block text-[10px] font-mono uppercase font-bold text-[#7A705F] mb-1">
                     Second Scene
                   </label>
                   <select
                     value={newSceneB}
                     onChange={(e) => setNewSceneB(e.target.value)}
-                    className="w-full p-2 bg-[#FAF9F5] border border-[#EBE8E2] rounded-lg text-xs text-[#1A1814]"
+                    className="w-full p-2 bg-[#F1EAD9] border border-[rgba(34,30,24,0.12)] rounded-[6px] text-xs text-[#221E18]"
                   >
                     {scenes.map((s) => (
                       <option key={s.id} value={s.id}>
@@ -228,22 +224,22 @@ export const ContinuityInboxScreen: React.FC<ContinuityInboxScreenProps> = ({
                     placeholder="Contradicting excerpt from Scene 2..."
                     value={newExcerptB}
                     onChange={(e) => setNewExcerptB(e.target.value)}
-                    className="w-full mt-1.5 p-1.5 bg-[#FAF9F5] border border-[#EBE8E2] rounded-lg text-[11px] text-[#1A1814]"
+                    className="w-full mt-1.5 p-1.5 bg-[#F1EAD9] border border-[rgba(34,30,24,0.12)] rounded-[6px] text-[11px] text-[#221E18]"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#EBE8E2]">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[rgba(34,30,24,0.12)]">
                 <button
                   type="button"
                   onClick={() => setShowLogModal(false)}
-                  className="px-3.5 py-1.5 rounded-lg border border-[#EBE8E2] hover:bg-[#FAF9F5] text-[#736F66]"
+                  className="px-3.5 py-1.5 rounded-[6px] border border-[rgba(34,30,24,0.12)] hover:bg-[#F1EAD9] text-[#7A705F] cursor-pointer min-h-[36px]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 rounded-lg bg-[#2D2A26] text-white hover:bg-[#1A1814] font-semibold shadow-2xs"
+                  className="px-4 py-1.5 rounded-[6px] bg-[#221E18] text-[#FAF6EE] hover:bg-black font-semibold shadow-warm-sm cursor-pointer min-h-[36px]"
                 >
                   Save Inquiry
                 </button>
@@ -254,180 +250,181 @@ export const ContinuityInboxScreen: React.FC<ContinuityInboxScreenProps> = ({
       )}
 
       {scanMessage && (
-        <div className="mb-6 p-3 bg-[#FAF9F5] rounded-lg border border-[#EBE8E2] text-xs text-[#6C6960] font-mono">
-          {scanMessage}
+        <div className="mb-6 p-3 bg-[#F1EAD9] rounded-[6px] border border-[rgba(34,30,24,0.12)] text-xs text-[#221E18] font-mono flex items-center gap-2">
+          <CheckCircle2 size={14} className="text-[#35505F] shrink-0" />
+          <span>{scanMessage}</span>
         </div>
       )}
 
       {/* Filter Tabs */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-2 border-b border-[#EBE8E2]">
-        <div className="flex gap-1 text-xs bg-[#F1F0EC] p-0.5 rounded-lg border border-[#EBE8E2] self-start">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-2 border-b border-[rgba(34,30,24,0.12)]">
+        <div className="flex gap-1 text-xs bg-[#F1EAD9] p-0.5 rounded-[6px] border border-[rgba(34,30,24,0.12)] self-start overflow-x-auto no-scrollbar">
           <button
             onClick={() => setFilter('open')}
-            className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
+            className={`px-3 py-1.5 rounded-[5px] font-medium transition-colors cursor-pointer min-h-[36px] whitespace-nowrap ${
               filter === 'open'
-                ? 'bg-white shadow-xs text-[#1A1814] font-bold'
-                : 'text-[#6C6960] hover:text-[#1A1814]'
+                ? 'bg-[#FAF6EE] shadow-warm-sm text-[#221E18] font-bold'
+                : 'text-[#7A705F] hover:text-[#221E18]'
             }`}
           >
             Needs Decision ({openCount})
           </button>
           <button
             onClick={() => setFilter('intentional')}
-            className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
+            className={`px-3 py-1.5 rounded-[5px] font-medium transition-colors cursor-pointer min-h-[36px] whitespace-nowrap ${
               filter === 'intentional'
-                ? 'bg-white shadow-xs text-[#1A1814] font-bold'
-                : 'text-[#6C6960] hover:text-[#1A1814]'
+                ? 'bg-[#FAF6EE] shadow-warm-sm text-[#221E18] font-bold'
+                : 'text-[#7A705F] hover:text-[#221E18]'
             }`}
           >
-            Marked Intentional (Subversions)
+            Marked Intentional
           </button>
           <button
             onClick={() => setFilter('dismissed')}
-            className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
+            className={`px-3 py-1.5 rounded-[5px] font-medium transition-colors cursor-pointer min-h-[36px] whitespace-nowrap ${
               filter === 'dismissed'
-                ? 'bg-white shadow-xs text-[#1A1814] font-bold'
-                : 'text-[#6C6960] hover:text-[#1A1814]'
+                ? 'bg-[#FAF6EE] shadow-warm-sm text-[#221E18] font-bold'
+                : 'text-[#7A705F] hover:text-[#221E18]'
             }`}
           >
             Dismissed
           </button>
           <button
             onClick={() => setFilter('all')}
-            className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
+            className={`px-3 py-1.5 rounded-[5px] font-medium transition-colors cursor-pointer min-h-[36px] whitespace-nowrap ${
               filter === 'all'
-                ? 'bg-white shadow-xs text-[#1A1814] font-bold'
-                : 'text-[#6C6960] hover:text-[#1A1814]'
+                ? 'bg-[#FAF6EE] shadow-warm-sm text-[#221E18] font-bold'
+                : 'text-[#7A705F] hover:text-[#221E18]'
             }`}
           >
             All Items ({issues.length})
           </button>
         </div>
 
-        <div className="text-[11px] text-[#AAA69F] italic">
+        <div className="text-[11px] text-[#7A705F] italic">
           Threadline never alters manuscript prose automatically.
         </div>
       </div>
 
       {/* Issues List */}
-      <div className="space-y-6">
+      <div className="space-y-4">
         {filteredIssues.length === 0 ? (
-          <div className="bg-white rounded-xl border border-[#EBE8E2] p-12 text-center">
-            <CheckCircle2 size={32} className="mx-auto text-emerald-600 mb-2 opacity-80" />
-            <h4 className="font-serif font-semibold text-[#1A1814] text-sm">Inbox Clear</h4>
-            <p className="text-[#8C887F] text-xs mt-1 max-w-sm mx-auto">
-              No items in this category. All identified timeline, character, and object cues are in harmony.
+          <div className="bg-[#F1EAD9] rounded-[8px] border border-[rgba(34,30,24,0.12)] p-12 text-center">
+            <CheckCircle2 size={32} className="mx-auto text-[#35505F] mb-2 opacity-80" />
+            <h4 className="font-serif font-semibold text-[#221E18] text-sm">Inbox Clear</h4>
+            <p className="text-[#7A705F] text-xs mt-1 max-w-sm mx-auto">
+              No items in this category. All identified timeline, character, and lore cues are in harmony.
             </p>
           </div>
         ) : (
           filteredIssues.map((issue) => (
             <div
               key={issue.id}
-              className="bg-white rounded-xl border border-[#EBE8E2] p-6 shadow-2xs space-y-4"
+              className="bg-[#F1EAD9] rounded-[8px] border border-[rgba(34,30,24,0.12)] p-5 sm:p-6 shadow-warm-sm space-y-4"
             >
               {/* Question Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#EBE8E2]">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[rgba(34,30,24,0.12)]">
                 <div className="flex items-center gap-2.5">
                   <span
                     className={`w-2.5 h-2.5 rounded-full ${
                       issue.status === 'open'
                         ? issue.severity === 'high'
-                          ? 'bg-amber-500'
-                          : 'bg-stone-400'
+                          ? 'bg-[#B54B32]'
+                          : 'bg-[#35505F]'
                         : issue.status === 'intentional'
-                        ? 'bg-emerald-500'
-                        : 'bg-stone-300'
+                        ? 'bg-[#35505F]'
+                        : 'bg-[#7A705F]/40'
                     }`}
                   />
-                  <h3 className="font-serif font-bold text-[#1A1814] text-base">{issue.title}</h3>
+                  <h3 className="font-serif font-bold text-[#221E18] text-base">{issue.title}</h3>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <span
-                    className={`text-[10px] px-2 py-0.5 rounded font-mono uppercase ${
+                    className={`text-[10px] px-2.5 py-0.5 rounded-full font-mono uppercase tracking-wider border ${
                       issue.status === 'open'
-                        ? 'bg-amber-100 text-amber-900'
+                        ? 'bg-[#B54B32]/10 text-[#B54B32] border-[#B54B32]/30'
                         : issue.status === 'intentional'
-                        ? 'bg-emerald-100 text-emerald-900'
-                        : 'bg-[#F1F0EC] text-[#6C6960]'
+                        ? 'bg-[#35505F]/10 text-[#35505F] border-[#35505F]/30'
+                        : 'bg-[#FAF6EE] text-[#7A705F] border-[rgba(34,30,24,0.12)]'
                     }`}
                   >
-                    {issue.status}
+                    {issue.status === 'open' ? 'Needs Decision' : issue.status}
                   </span>
                 </div>
               </div>
 
               {/* Inquiry Framing */}
-              <div className="text-xs text-[#1A1814] bg-[#FAF9F5] p-3.5 rounded-lg border border-[#EBE8E2] leading-relaxed font-serif">
-                <strong className="font-sans font-bold text-[#AAA69F] block text-[10px] uppercase font-mono mb-1">
+              <div className="text-xs text-[#221E18] bg-[#FAF6EE] p-3.5 rounded-[6px] border border-[rgba(34,30,24,0.12)] leading-relaxed font-serif">
+                <strong className="font-sans font-bold text-[#7A705F] block text-[10px] uppercase font-mono mb-1">
                   Continuity Inquiry:
                 </strong>
                 {issue.question}
               </div>
 
               {/* Side-by-Side Passages Comparison */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {/* Passage A */}
-                <div className="bg-[#FAF9F5] rounded-lg border border-[#EBE8E2] p-3.5 flex flex-col justify-between">
+                <div className="bg-[#FAF6EE] rounded-[6px] border border-[rgba(34,30,24,0.12)] p-3.5 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-[10px] font-bold uppercase font-mono text-[#AAA69F]">
+                      <span className="text-[10px] font-bold uppercase font-mono text-[#7A705F]">
                         Evidence Passage 1
                       </span>
                       <button
                         onClick={() => onNavigateToScene(issue.passageA.sceneId)}
-                        className="text-[11px] text-[#D4A373] hover:text-[#b88554] flex items-center gap-1 font-medium"
+                        className="text-[11px] text-[#B54B32] hover:text-[#9E3E27] flex items-center gap-1 font-medium cursor-pointer"
                       >
                         <span>{issue.passageA.sceneTitle}</span>
                         <ArrowRight size={11} />
                       </button>
                     </div>
-                    <p className="font-manuscript text-xs text-[#3C3933] italic leading-relaxed">
+                    <p className="font-mono text-xs text-[#221E18] italic leading-relaxed">
                       "{issue.passageA.excerpt}"
                     </p>
                   </div>
                 </div>
 
                 {/* Passage B */}
-                <div className="bg-[#FAF9F5] rounded-lg border border-[#EBE8E2] p-3.5 flex flex-col justify-between">
+                <div className="bg-[#FAF6EE] rounded-[6px] border border-[rgba(34,30,24,0.12)] p-3.5 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-[10px] font-bold uppercase font-mono text-[#AAA69F]">
+                      <span className="text-[10px] font-bold uppercase font-mono text-[#7A705F]">
                         Evidence Passage 2
                       </span>
                       <button
                         onClick={() => onNavigateToScene(issue.passageB.sceneId)}
-                        className="text-[11px] text-[#D4A373] hover:text-[#b88554] flex items-center gap-1 font-medium"
+                        className="text-[11px] text-[#B54B32] hover:text-[#9E3E27] flex items-center gap-1 font-medium cursor-pointer"
                       >
                         <span>{issue.passageB.sceneTitle}</span>
                         <ArrowRight size={11} />
                       </button>
                     </div>
-                    <p className="font-manuscript text-xs text-[#3C3933] italic leading-relaxed">
+                    <p className="font-mono text-xs text-[#221E18] italic leading-relaxed">
                       "{issue.passageB.excerpt}"
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* Action Buttons: Dismiss | Mark Intentional | Create Note | Jump */}
-              <div className="pt-3 border-t border-[#EBE8E2] flex flex-wrap items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-2">
+              {/* Action Buttons */}
+              <div className="pt-3 border-t border-[rgba(34,30,24,0.12)] flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2 flex-wrap">
                   <button
                     onClick={() => onUpdateIssue({ ...issue, status: 'intentional' })}
-                    className="px-3 py-1.5 rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 font-medium transition-colors"
+                    className="px-3 py-1.5 rounded-[5px] border border-[#35505F]/40 bg-[#35505F]/10 text-[#35505F] hover:bg-[#35505F]/20 font-medium transition-colors cursor-pointer min-h-[36px]"
                   >
                     Mark as Intentional (Subversion)
                   </button>
                   <button
                     onClick={() => onUpdateIssue({ ...issue, status: 'dismissed' })}
-                    className="px-3 py-1.5 rounded-lg border border-[#EBE8E2] bg-[#FAF9F5] hover:bg-[#F1F0EC] text-[#3C3933] font-medium transition-colors"
+                    className="px-3 py-1.5 rounded-[5px] border border-[rgba(34,30,24,0.12)] bg-[#FAF6EE] hover:bg-[#F1EAD9] text-[#7A705F] font-medium transition-colors cursor-pointer min-h-[36px]"
                   >
                     Dismiss
                   </button>
                   <button
                     onClick={() => onCreateNoteFromIssue(issue)}
-                    className="px-3 py-1.5 rounded-lg border border-[#EBE8E2] bg-[#FAF9F5] hover:bg-[#F1F0EC] text-[#3C3933] font-medium transition-colors"
+                    className="px-3 py-1.5 rounded-[5px] border border-[rgba(34,30,24,0.12)] bg-[#FAF6EE] hover:bg-[#F1EAD9] text-[#7A705F] font-medium transition-colors cursor-pointer min-h-[36px]"
                   >
                     + Note in Scratchpad
                   </button>
@@ -435,7 +432,7 @@ export const ContinuityInboxScreen: React.FC<ContinuityInboxScreenProps> = ({
 
                 <button
                   onClick={() => onNavigateToScene(issue.passageB.sceneId)}
-                  className="text-[#1A1814] hover:text-[#D4A373] font-medium flex items-center gap-1"
+                  className="text-[#221E18] hover:text-[#B54B32] font-medium flex items-center gap-1 cursor-pointer min-h-[36px]"
                 >
                   <span>Jump to Scene in Editor</span>
                   <ExternalLink size={12} />

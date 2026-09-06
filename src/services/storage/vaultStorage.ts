@@ -305,7 +305,7 @@ export async function writeBundleToVault(bundle: ProjectBundle): Promise<VaultSy
       return { success: false, message: 'No vault folder selected', timestamp };
     }
 
-    const vaultPath = rawVaultPath.replace(/[/\\]+$/, '');
+    const vaultPath = rawVaultPath.trim().replace(/^["']|["']$/g, '').replace(/[/\\]+$/, '');
 
     try {
       const { writeTextFile, mkdir, exists } = await import('@tauri-apps/plugin-fs');
@@ -317,15 +317,16 @@ export async function writeBundleToVault(bundle: ProjectBundle): Promise<VaultSy
       const notesDir = `${vaultPath}${sep}Notes`;
       const metaDir = `${vaultPath}${sep}.threadline`;
 
-      // Ensure directories exist
+      // Ensure root vault and subdirectories exist
+      const rootExists = await exists(vaultPath).catch(() => false);
+      if (!rootExists) {
+        await mkdir(vaultPath, { recursive: true });
+      }
+
       for (const dir of [manuscriptDir, bibleDir, cuttingDir, notesDir, metaDir]) {
-        try {
-          const dirExists = await exists(dir).catch(() => false);
-          if (!dirExists) {
-            await mkdir(dir, { recursive: true });
-          }
-        } catch {
-          // If already exists or mkdir succeeded recursively, proceed
+        const dirExists = await exists(dir).catch(() => false);
+        if (!dirExists) {
+          await mkdir(dir, { recursive: true });
         }
       }
 
@@ -377,12 +378,15 @@ export async function writeBundleToVault(bundle: ProjectBundle): Promise<VaultSy
       };
     } catch (e: any) {
       console.error('Tauri vault sync failed:', e);
-      const errMsg =
-        e?.message ||
-        (typeof e === 'string' ? e : null) ||
-        (e && typeof e === 'object' ? JSON.stringify(e) : null) ||
-        'File write failed';
-      return { success: false, message: errMsg, timestamp };
+      let errMsg = 'File write failed';
+      if (typeof e === 'string') {
+        errMsg = e;
+      } else if (e?.message) {
+        errMsg = e.message;
+      } else if (e && typeof e === 'object') {
+        errMsg = e.error || e.details || JSON.stringify(e);
+      }
+      return { success: false, message: `Sync error: ${errMsg}`, timestamp };
     }
   }
 

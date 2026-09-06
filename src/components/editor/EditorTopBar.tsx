@@ -12,8 +12,7 @@ import {
   MoreHorizontal,
   Copy,
   Trash2,
-  Files,
-  Tag
+  Files
 } from 'lucide-react';
 import { useToast } from '../Toast';
 
@@ -84,24 +83,24 @@ export const EditorTopBar: React.FC<EditorTopBarProps> = ({
 
   if (focusMode) {
     return (
-      <div className="flex items-center justify-between px-6 py-2.5 bg-white/90 backdrop-blur-xs border-b border-[#EBE8E2] select-none z-20">
+      <div className="flex items-center justify-between px-4 sm:px-6 py-2 bg-[#FAF6EE]/95 backdrop-blur-xs border-b border-[rgba(34,30,24,0.12)] select-none z-20">
         <div className="flex items-center gap-3">
-          <span className="font-serif text-sm font-semibold text-[#1A1814] truncate max-w-sm">
+          <span className="font-serif text-sm font-semibold text-[#221E18] truncate max-w-sm">
             {scene.chapterNumber ? `Ch. ${scene.chapterNumber} · ` : ''}{scene.title}
           </span>
-          <span className="text-[#EBE8E2]">·</span>
-          <span className="text-xs font-mono text-[#8C887F]">
+          <span className="text-[#7A705F]/40">·</span>
+          <span className="text-xs font-mono text-[#7A705F]">
             {scene.wordCount} words ({readingTimeMin}m read)
           </span>
-          <span className="text-[#EBE8E2]">·</span>
-          <span className="text-[10px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 uppercase tracking-wider font-mono">
+          <span className="text-[#7A705F]/40">·</span>
+          <span className="text-[10px] text-[#B54B32] bg-[#B54B32]/10 px-2 py-0.5 rounded-full border border-[#B54B32]/30 uppercase tracking-wider font-mono">
             Focus Mode Active
           </span>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={onToggleFocusMode}
-            className="text-xs font-medium text-[#2D2A26] hover:text-black px-3 py-1.5 rounded-lg border border-[#EBE8E2] bg-[#FAF9F5] shadow-2xs transition-colors flex items-center gap-1.5 cursor-pointer"
+            className="text-xs font-medium text-[#221E18] hover:text-black px-3 py-1.5 rounded-[6px] border border-[rgba(34,30,24,0.12)] bg-[#F1EAD9] shadow-warm-sm transition-colors flex items-center gap-1.5 cursor-pointer min-h-[36px]"
           >
             <EyeOff size={13} /> Exit Focus (Esc)
           </button>
@@ -111,16 +110,16 @@ export const EditorTopBar: React.FC<EditorTopBarProps> = ({
   }
 
   return (
-    <div className="h-10 border-b border-[#EBE8E2] bg-white px-4 md:px-6 flex items-center justify-between text-xs select-none shrink-0 z-10">
+    <div className="h-10 border-b border-[rgba(34,30,24,0.12)] bg-[#FAF6EE] px-3 sm:px-5 flex items-center justify-between text-xs select-none shrink-0 z-10">
       {/* LEFT: Outline toggle, scene navigation, scene status, word count */}
-      <div className="flex items-center gap-2 md:gap-3 overflow-hidden">
+      <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
         {/* Left Nav toggle */}
         <button
           onClick={onToggleLeftNav}
-          className={`p-1.5 rounded-md transition-colors cursor-pointer shrink-0 ${
-            leftNavOpen ? 'text-[#2D2A26] bg-[#F1F0EC]' : 'text-[#8C887F] hover:text-[#2D2A26]'
+          className={`p-1.5 rounded-[5px] transition-colors cursor-pointer shrink-0 min-h-[32px] min-w-[32px] flex items-center justify-center ${
+            leftNavOpen ? 'text-[#221E18] bg-[#F1EAD9]' : 'text-[#7A705F] hover:text-[#221E18]'
           }`}
-          title="Toggle Scene Outline Drawer"
+          title="Toggle Binder Outline"
         >
           <SplitSquareVertical size={14} />
         </button>
@@ -130,18 +129,18 @@ export const EditorTopBar: React.FC<EditorTopBarProps> = ({
           <button
             disabled={currentSceneIdx <= 0}
             onClick={() => onNavigateToScene(allScenes[currentSceneIdx - 1].id)}
-            className="p-1 rounded text-[#8C887F] hover:text-[#2D2A26] disabled:opacity-30 disabled:hover:text-[#8C887F] cursor-pointer disabled:cursor-not-allowed"
+            className="p-1 rounded text-[#7A705F] hover:text-[#221E18] disabled:opacity-30 disabled:hover:text-[#7A705F] cursor-pointer disabled:cursor-not-allowed min-h-[32px] min-w-[28px] flex items-center justify-center"
             title="Previous Scene"
           >
             <ChevronLeft size={14} />
           </button>
-          <span className="text-[11px] text-[#4A4741] font-mono tracking-tight font-medium px-1 truncate max-w-[160px] sm:max-w-[200px]">
+          <span className="text-[11px] text-[#221E18] font-mono tracking-tight font-medium px-1 truncate max-w-[140px] sm:max-w-[220px]">
             {scene.order}. {scene.title}
           </span>
           <button
             disabled={currentSceneIdx >= allScenes.length - 1}
             onClick={() => onNavigateToScene(allScenes[currentSceneIdx + 1].id)}
-            className="p-1 rounded text-[#8C887F] hover:text-[#2D2A26] disabled:opacity-30 disabled:hover:text-[#8C887F] cursor-pointer disabled:cursor-not-allowed"
+            className="p-1 rounded text-[#7A705F] hover:text-[#221E18] disabled:opacity-30 disabled:hover:text-[#7A705F] cursor-pointer disabled:cursor-not-allowed min-h-[32px] min-w-[28px] flex items-center justify-center"
             title="Next Scene"
           >
             <ChevronRight size={14} />
@@ -151,12 +150,12 @@ export const EditorTopBar: React.FC<EditorTopBarProps> = ({
         {/* Chapter Context Pill */}
         {scene.chapterNumber && (
           <div
-            className="hidden md:flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#FAF9F5] border border-[#EBE8E2] text-[10px] font-mono text-[#736F66] shrink-0"
+            className="hidden md:flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] bg-[#F1EAD9] border border-[rgba(34,30,24,0.12)] text-[10px] font-mono text-[#7A705F] shrink-0"
             title={scene.chapterTitle ? `Chapter ${scene.chapterNumber}: ${scene.chapterTitle}` : `Chapter ${scene.chapterNumber}`}
           >
-            <span className="font-semibold text-[#3C3933]">Ch. {scene.chapterNumber}</span>
+            <span className="font-semibold text-[#221E18]">Ch. {scene.chapterNumber}</span>
             {scene.chapterTitle && (
-              <span className="truncate max-w-[120px] text-[#8C887F] font-sans">
+              <span className="truncate max-w-[120px] text-[#7A705F] font-sans">
                 {scene.chapterTitle}
               </span>
             )}
@@ -170,32 +169,36 @@ export const EditorTopBar: React.FC<EditorTopBarProps> = ({
               onClick={() => setShowStatusMenu(!showStatusMenu)}
               className={`px-2 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider transition-colors cursor-pointer border ${
                 scene.status === 'complete'
-                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                  ? 'bg-[#221E18] text-[#FAF6EE] border-[#221E18]'
                   : scene.status === 'revised'
-                  ? 'bg-sky-50 text-sky-800 border-sky-200 hover:bg-sky-100'
-                  : 'bg-[#F2EFE9] text-[#736F66] border-[#E5E1D8] hover:bg-[#EBE8E2]'
+                  ? 'bg-[#B54B32] text-[#FAF6EE] border-[#B54B32]'
+                  : 'bg-[#35505F] text-[#FAF6EE] border-[#35505F]'
               }`}
               title="Change Scene Status"
             >
-              {scene.status}
+              {scene.status === 'complete' ? 'Final' : scene.status === 'revised' ? 'Revised' : 'Drafting'}
             </button>
 
             {showStatusMenu && (
-              <div className="absolute top-full left-0 mt-1 w-32 bg-white rounded-lg border border-[#EBE8E2] shadow-lg py-1 z-30 animate-in fade-in zoom-in-95 duration-100">
-                {(['draft', 'revised', 'complete'] as Scene['status'][]).map((st) => (
+              <div className="absolute top-full left-0 mt-1 w-36 bg-[#FAF6EE] rounded-[6px] border border-[rgba(34,30,24,0.12)] shadow-warm-modal py-1 z-30 animate-in fade-in duration-100">
+                {[
+                  { key: 'draft', label: 'Drafting' },
+                  { key: 'revised', label: 'Revised' },
+                  { key: 'complete', label: 'Final' }
+                ].map((st) => (
                   <button
-                    key={st}
+                    key={st.key}
                     onClick={() => {
-                      onUpdateScene({ status: st });
+                      onUpdateScene({ status: st.key as Scene['status'] });
                       setShowStatusMenu(false);
-                      showToast(`Scene marked as ${st}`);
+                      showToast(`Scene marked as ${st.label}`);
                     }}
-                    className={`w-full px-3 py-1.5 text-left text-xs capitalize flex items-center justify-between hover:bg-[#FAF9F5] ${
-                      scene.status === st ? 'font-bold text-[#1A1814]' : 'text-[#736F66]'
+                    className={`w-full px-3 py-1.5 text-left text-xs capitalize flex items-center justify-between hover:bg-[#F1EAD9] cursor-pointer min-h-[32px] ${
+                      scene.status === st.key ? 'font-bold text-[#221E18]' : 'text-[#7A705F]'
                     }`}
                   >
-                    <span>{st}</span>
-                    {scene.status === st && <Check size={12} />}
+                    <span>{st.label}</span>
+                    {scene.status === st.key && <Check size={12} className="text-[#B54B32]" />}
                   </button>
                 ))}
               </div>
@@ -203,44 +206,26 @@ export const EditorTopBar: React.FC<EditorTopBarProps> = ({
           </div>
         )}
 
-        {/* Chapter context badge */}
-        {(scene.chapterTitle || scene.chapterNumber) && (
-          <div className="hidden lg:flex items-center gap-1.5 shrink-0">
-            <span
-              className="text-[11px] font-mono text-stone-600 bg-stone-100 px-2 py-0.5 rounded border border-stone-200/80 truncate max-w-[170px]"
-              title={`Chapter ${scene.chapterNumber || ''}: ${scene.chapterTitle || ''}`}
-            >
-              Ch. {scene.chapterNumber || ''} {scene.chapterTitle ? `· ${scene.chapterTitle}` : ''}
-            </span>
-            {scene.actOrPhase && (
-              <span className="hidden xl:inline-block text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-amber-50 text-amber-900 border border-amber-200/70 truncate max-w-[120px]">
-                {scene.actOrPhase}
-              </span>
-            )}
-          </div>
-        )}
-
-        <div className="h-3 w-px bg-[#EBE8E2] hidden sm:block shrink-0" />
+        <div className="h-3 w-px bg-[rgba(34,30,24,0.12)] hidden sm:block shrink-0" />
 
         {/* Word count & Reading time */}
-        <span className="text-[#8C887F] font-mono text-[11px] hidden sm:inline shrink-0">
-          {scene.wordCount} words <span className="text-[#AAA69F]">·</span> {readingTimeMin}m read
+        <span className="text-[#7A705F] font-mono text-[11px] hidden sm:inline shrink-0">
+          {scene.wordCount} words <span className="opacity-40">·</span> {readingTimeMin}m read
         </span>
 
-        <div className="h-3 w-px bg-[#EBE8E2] hidden md:block shrink-0" />
+        <div className="h-3 w-px bg-[rgba(34,30,24,0.12)] hidden md:block shrink-0" />
 
-        <span className="text-emerald-700 hidden md:flex items-center gap-1 font-medium text-[11px] shrink-0">
+        <span className="text-[#35505F] hidden md:flex items-center gap-1 font-medium text-[11px] shrink-0">
           <Check size={12} /> {lastSavedText}
         </span>
       </div>
 
-      {/* RIGHT: Scene Actions menu, Search Toggle, Focus Mode, and Facts Drawer Toggle */}
+      {/* RIGHT: Scene Actions, Search, Focus Mode, Scene Facts Drawer */}
       <div className="flex items-center gap-1.5 shrink-0">
-        {/* Search Toggle in Scene */}
         <button
           onClick={onToggleSearch}
-          className={`p-1.5 rounded-md transition-colors cursor-pointer ${
-            showSearch ? 'bg-[#F1F0EC] text-[#2D2A26]' : 'text-[#8C887F] hover:text-[#2D2A26] hover:bg-[#FAF9F5]'
+          className={`p-1.5 rounded-[5px] transition-colors cursor-pointer min-h-[32px] min-w-[32px] flex items-center justify-center ${
+            showSearch ? 'bg-[#F1EAD9] text-[#221E18]' : 'text-[#7A705F] hover:text-[#221E18] hover:bg-[#F1EAD9]'
           }`}
           title="Search in current scene"
         >
@@ -251,19 +236,19 @@ export const EditorTopBar: React.FC<EditorTopBarProps> = ({
         <div className="relative" ref={actionsRef}>
           <button
             onClick={() => setShowSceneActions(!showSceneActions)}
-            className="p-1.5 rounded-md text-[#8C887F] hover:text-[#2D2A26] hover:bg-[#FAF9F5] transition-colors cursor-pointer"
+            className="p-1.5 rounded-[5px] text-[#7A705F] hover:text-[#221E18] hover:bg-[#F1EAD9] transition-colors cursor-pointer min-h-[32px] min-w-[32px] flex items-center justify-center"
             title="Scene Actions"
           >
             <MoreHorizontal size={14} />
           </button>
 
           {showSceneActions && (
-            <div className="absolute right-0 top-full mt-1 w-44 bg-white rounded-xl border border-[#EBE8E2] shadow-xl py-1 z-30 animate-in fade-in zoom-in-95 duration-100">
+            <div className="absolute right-0 top-full mt-1 w-44 bg-[#FAF6EE] rounded-[6px] border border-[rgba(34,30,24,0.12)] shadow-warm-modal py-1 z-30 animate-in fade-in duration-100">
               <button
                 onClick={handleCopyMarkdown}
-                className="w-full px-3 py-1.5 text-left text-xs text-[#2D2A26] hover:bg-[#FAF9F5] flex items-center gap-2 cursor-pointer"
+                className="w-full px-3 py-1.5 text-left text-xs text-[#221E18] hover:bg-[#F1EAD9] flex items-center gap-2 cursor-pointer min-h-[32px]"
               >
-                <Copy size={13} className="text-[#8C887F]" />
+                <Copy size={13} className="text-[#7A705F]" />
                 <span>Copy as Markdown</span>
               </button>
               {onDuplicateScene && (
@@ -272,14 +257,14 @@ export const EditorTopBar: React.FC<EditorTopBarProps> = ({
                     onDuplicateScene(scene.id);
                     setShowSceneActions(false);
                   }}
-                  className="w-full px-3 py-1.5 text-left text-xs text-[#2D2A26] hover:bg-[#FAF9F5] flex items-center gap-2 cursor-pointer"
+                  className="w-full px-3 py-1.5 text-left text-xs text-[#221E18] hover:bg-[#F1EAD9] flex items-center gap-2 cursor-pointer min-h-[32px]"
                 >
-                  <Files size={13} className="text-[#8C887F]" />
+                  <Files size={13} className="text-[#7A705F]" />
                   <span>Duplicate Scene</span>
                 </button>
               )}
               {onDeleteScene && allScenes.length > 1 && (
-                <div className="border-t border-[#EBE8E2] my-1 pt-1">
+                <div className="border-t border-[rgba(34,30,24,0.12)] my-1 pt-1">
                   <button
                     onClick={() => {
                       if (confirm(`Are you sure you want to delete scene "${scene.title}"?`)) {
@@ -287,7 +272,7 @@ export const EditorTopBar: React.FC<EditorTopBarProps> = ({
                       }
                       setShowSceneActions(false);
                     }}
-                    className="w-full px-3 py-1.5 text-left text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 cursor-pointer"
+                    className="w-full px-3 py-1.5 text-left text-xs text-[#B54B32] hover:bg-[#F1EAD9] flex items-center gap-2 cursor-pointer min-h-[32px]"
                   >
                     <Trash2 size={13} />
                     <span>Delete Scene</span>
@@ -298,12 +283,12 @@ export const EditorTopBar: React.FC<EditorTopBarProps> = ({
           )}
         </div>
 
-        <div className="h-3 w-px bg-[#EBE8E2] mx-0.5" />
+        <div className="h-3 w-px bg-[rgba(34,30,24,0.12)] mx-0.5" />
 
         {/* Focus Mode button */}
         <button
           onClick={onToggleFocusMode}
-          className="text-[#B37B47] hover:text-[#8F5A29] text-[11px] font-bold uppercase tracking-wider flex items-center gap-1 px-2 py-1 rounded-md transition-colors cursor-pointer"
+          className="text-[#B54B32] hover:text-[#9E3E27] text-[11px] font-bold uppercase tracking-wider flex items-center gap-1 px-2 py-1 rounded-[5px] transition-colors cursor-pointer min-h-[32px]"
           title="Distraction-free Focus Mode"
         >
           <Eye size={13} />
@@ -313,12 +298,12 @@ export const EditorTopBar: React.FC<EditorTopBarProps> = ({
         {/* Sidebar facts toggle */}
         <button
           onClick={onToggleSidebar}
-          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md font-medium text-xs transition-colors cursor-pointer ${
+          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-[5px] font-medium text-xs transition-colors cursor-pointer min-h-[32px] ${
             sidebarOpen
-              ? 'bg-[#F1F0EC] text-[#2D2A26] font-semibold'
-              : 'text-[#8C887F] hover:text-[#2D2A26] hover:bg-[#FAF9F5]'
+              ? 'bg-[#F1EAD9] text-[#221E18] font-semibold border border-[rgba(34,30,24,0.12)]'
+              : 'text-[#7A705F] hover:text-[#221E18] hover:bg-[#F1EAD9]'
           }`}
-          title="Toggle Story Bible Facts Drawer"
+          title="Toggle Codex Facts Drawer"
         >
           <Compass size={13} />
           <span className="hidden md:inline">Scene Facts</span>

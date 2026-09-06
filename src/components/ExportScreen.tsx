@@ -138,34 +138,34 @@ export const ExportScreen: React.FC<ExportScreenProps> = ({
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-10">
-      <div className="mb-8">
-        <span className="text-[10px] font-bold tracking-widest text-[#AAA69F] uppercase font-mono">
-          Manuscript Output
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-10 text-[#221E18]">
+      <div className="mb-6 sm:mb-8">
+        <span className="section-label block mb-1">
+          Manuscript Output &amp; Typesetting
         </span>
-        <h2 className="text-2xl md:text-3xl font-serif text-[#1A1814] font-semibold mt-1">
-          Export & Print Manuscript
+        <h2 className="text-2xl sm:text-3xl font-serif text-[#221E18] font-semibold">
+          Export &amp; Print Manuscript
         </h2>
-        <p className="text-[#8C887F] text-xs mt-1">
+        <p className="text-[#7A705F] text-xs sm:text-sm mt-1">
           Export your story in universal, future-proof plain text formats structured with chapters, acts, and scene beats.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-6 sm:mb-8">
         <button
           type="button"
           onClick={() => setFormat('markdown')}
-          className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
+          className={`p-4 rounded-[6px] border text-left transition-all cursor-pointer min-h-[44px] ${
             format === 'markdown'
-              ? 'border-[#D4A373] bg-[#FAF9F5] shadow-xs ring-1 ring-[#D4A373]/30'
-              : 'border-[#EBE8E2] bg-white hover:bg-[#FAF9F5]'
+              ? 'border-[#B54B32] bg-[#FAF6EE] shadow-warm-sm ring-1 ring-[#B54B32]/20'
+              : 'border-[rgba(34,30,24,0.12)] bg-[#F1EAD9]/40 hover:bg-[#F1EAD9]'
           }`}
         >
           <div className="flex items-center gap-2 mb-1.5">
-            <FileText size={16} className={format === 'markdown' ? 'text-[#D4A373]' : 'text-[#AAA69F]'} />
-            <span className="font-semibold text-xs text-[#1A1814]">Markdown (.md)</span>
+            <FileText size={16} className={format === 'markdown' ? 'text-[#B54B32]' : 'text-[#7A705F]'} />
+            <span className="font-semibold text-xs text-[#221E18]">Markdown (.md)</span>
           </div>
-          <p className="text-[11px] text-[#8C887F] leading-snug">
+          <p className="text-[11px] text-[#7A705F] leading-snug">
             Organized with Chapter headings, act indicators, and scene breaks.
           </p>
         </button>
@@ -173,17 +173,17 @@ export const ExportScreen: React.FC<ExportScreenProps> = ({
         <button
           type="button"
           onClick={() => setFormat('text')}
-          className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
+          className={`p-4 rounded-[6px] border text-left transition-all cursor-pointer min-h-[44px] ${
             format === 'text'
-              ? 'border-[#D4A373] bg-[#FAF9F5] shadow-xs ring-1 ring-[#D4A373]/30'
-              : 'border-[#EBE8E2] bg-white hover:bg-[#FAF9F5]'
+              ? 'border-[#B54B32] bg-[#FAF6EE] shadow-warm-sm ring-1 ring-[#B54B32]/20'
+              : 'border-[rgba(34,30,24,0.12)] bg-[#F1EAD9]/40 hover:bg-[#F1EAD9]'
           }`}
         >
           <div className="flex items-center gap-2 mb-1.5">
-            <FileText size={16} className={format === 'text' ? 'text-[#D4A373]' : 'text-[#AAA69F]'} />
-            <span className="font-semibold text-xs text-[#1A1814]">Plain Text (.txt)</span>
+            <FileText size={16} className={format === 'text' ? 'text-[#B54B32]' : 'text-[#7A705F]'} />
+            <span className="font-semibold text-xs text-[#221E18]">Plain Text (.txt)</span>
           </div>
-          <p className="text-[11px] text-[#8C887F] leading-snug">
+          <p className="text-[11px] text-[#7A705F] leading-snug">
             Pristine, unformatted standard typewriter manuscript chapter layout.
           </p>
         </button>
@@ -191,17 +191,17 @@ export const ExportScreen: React.FC<ExportScreenProps> = ({
         <button
           type="button"
           onClick={() => setFormat('json')}
-          className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
+          className={`p-4 rounded-[6px] border text-left transition-all cursor-pointer min-h-[44px] ${
             format === 'json'
-              ? 'border-[#D4A373] bg-[#FAF9F5] shadow-xs ring-1 ring-[#D4A373]/30'
-              : 'border-[#EBE8E2] bg-white hover:bg-[#FAF9F5]'
+              ? 'border-[#B54B32] bg-[#FAF6EE] shadow-warm-sm ring-1 ring-[#B54B32]/20'
+              : 'border-[rgba(34,30,24,0.12)] bg-[#F1EAD9]/40 hover:bg-[#F1EAD9]'
           }`}
         >
           <div className="flex items-center gap-2 mb-1.5">
-            <Code size={16} className={format === 'json' ? 'text-[#D4A373]' : 'text-[#AAA69F]'} />
-            <span className="font-semibold text-xs text-[#1A1814]">Full Archive (JSON)</span>
+            <Code size={16} className={format === 'json' ? 'text-[#B54B32]' : 'text-[#7A705F]'} />
+            <span className="font-semibold text-xs text-[#221E18]">Full Archive (JSON)</span>
           </div>
-          <p className="text-[11px] text-[#8C887F] leading-snug">
+          <p className="text-[11px] text-[#7A705F] leading-snug">
             Complete backup including chapters, scenes, bible canon, and threads.
           </p>
         </button>
@@ -209,57 +209,57 @@ export const ExportScreen: React.FC<ExportScreenProps> = ({
         <button
           type="button"
           onClick={() => setFormat('print')}
-          className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
+          className={`p-4 rounded-[6px] border text-left transition-all cursor-pointer min-h-[44px] ${
             format === 'print'
-              ? 'border-[#D4A373] bg-[#FAF9F5] shadow-xs ring-1 ring-[#D4A373]/30'
-              : 'border-[#EBE8E2] bg-white hover:bg-[#FAF9F5]'
+              ? 'border-[#B54B32] bg-[#FAF6EE] shadow-warm-sm ring-1 ring-[#B54B32]/20'
+              : 'border-[rgba(34,30,24,0.12)] bg-[#F1EAD9]/40 hover:bg-[#F1EAD9]'
           }`}
         >
           <div className="flex items-center gap-2 mb-1.5">
-            <Printer size={16} className={format === 'print' ? 'text-[#D4A373]' : 'text-[#AAA69F]'} />
-            <span className="font-semibold text-xs text-[#1A1814]">Print / PDF Layout</span>
+            <Printer size={16} className={format === 'print' ? 'text-[#B54B32]' : 'text-[#7A705F]'} />
+            <span className="font-semibold text-xs text-[#221E18]">Print / PDF Proof</span>
           </div>
-          <p className="text-[11px] text-[#8C887F] leading-snug">
+          <p className="text-[11px] text-[#7A705F] leading-snug">
             Formatted book proof view ready for paper or saving to PDF.
           </p>
         </button>
       </div>
 
       {/* Export Options & Actions */}
-      <div className="bg-white p-6 rounded-xl border border-[#EBE8E2] shadow-2xs mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <label className="flex items-center gap-2 text-xs text-[#3C3933] cursor-pointer">
+      <div className="bg-[#FAF6EE] p-5 sm:p-6 rounded-[6px] border border-[rgba(34,30,24,0.12)] shadow-warm-sm mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <label className="flex items-center gap-2.5 text-xs text-[#221E18] cursor-pointer select-none">
           <input
             type="checkbox"
             checked={includeMetadata}
             onChange={(e) => setIncludeMetadata(e.target.checked)}
-            className="rounded border-[#AAA69F] text-[#1A1814] focus:ring-0"
+            className="rounded border-[rgba(34,30,24,0.2)] text-[#B54B32] focus:ring-0 accent-[#B54B32]"
           />
-          <span>Include scene metadata (premise, POV, time) as editorial headers</span>
+          <span className="font-medium">Include scene metadata (premise, POV, time) as editorial headers</span>
         </label>
 
         <div className="flex items-center gap-3">
           {format === 'print' ? (
             <button
               onClick={handlePrint}
-              className="px-5 py-2.5 bg-[#2D2A26] hover:bg-[#1A1814] text-white rounded-lg text-xs font-semibold flex items-center gap-2 shadow-2xs transition-colors cursor-pointer"
+              className="px-4 py-2 bg-[#221E18] hover:bg-black text-[#FAF6EE] rounded-[6px] text-xs font-semibold flex items-center gap-2 shadow-warm-sm transition-colors cursor-pointer min-h-[40px]"
             >
               <Printer size={14} />
-              <span>Open System Print / Save PDF Dialog</span>
+              <span>Print / Save PDF</span>
             </button>
           ) : (
             <button
               onClick={handleDownload}
-              className="px-5 py-2.5 bg-[#2D2A26] hover:bg-[#1A1814] text-white rounded-lg text-xs font-semibold flex items-center gap-2 shadow-2xs transition-colors cursor-pointer"
+              className="px-4 py-2 bg-[#B54B32] hover:bg-[#9E3E27] text-[#FAF6EE] rounded-[6px] text-xs font-semibold flex items-center gap-2 shadow-warm-sm transition-colors cursor-pointer min-h-[40px]"
             >
               {downloadSuccess ? (
                 <>
-                  <Check size={14} className="text-emerald-400" />
+                  <Check size={14} className="text-[#FAF6EE]" />
                   <span>File Downloaded</span>
                 </>
               ) : (
                 <>
                   <Download size={14} />
-                  <span>Download {format.toUpperCase()} File</span>
+                  <span>Download {format.toUpperCase()}</span>
                 </>
               )}
             </button>
@@ -268,27 +268,27 @@ export const ExportScreen: React.FC<ExportScreenProps> = ({
       </div>
 
       {/* Live Manuscript Preview */}
-      <div className="bg-white rounded-xl border border-[#EBE8E2] p-8 shadow-2xs">
-        <div className="flex items-center justify-between mb-4 pb-2 border-b border-[#EBE8E2]">
-          <span className="text-[10px] uppercase font-bold text-[#AAA69F] font-mono flex items-center gap-1.5">
+      <div className="bg-[#FAF6EE] rounded-[6px] border border-[rgba(34,30,24,0.12)] p-6 sm:p-8 shadow-warm-sm">
+        <div className="flex items-center justify-between mb-4 pb-2.5 border-b border-[rgba(34,30,24,0.12)]">
+          <span className="text-[10px] uppercase font-bold text-[#7A705F] font-mono flex items-center gap-1.5">
             <Eye size={12} /> Live Preview Output ({effectiveChapters.length} Chapters)
           </span>
-          <span className="text-xs text-[#8C887F] font-mono">
+          <span className="text-xs text-[#7A705F] font-mono">
             {scenes.reduce((a, s) => a + s.wordCount, 0).toLocaleString()} words
           </span>
         </div>
 
-        <div className="max-h-[500px] overflow-y-auto p-4 bg-[#FAF9F5] rounded-lg border border-[#EBE8E2]">
+        <div className="max-h-[500px] overflow-y-auto p-4 bg-[#F1EAD9]/50 rounded-[5px] border border-[rgba(34,30,24,0.08)]">
           {format === 'json' ? (
-            <pre className="text-[11px] font-mono text-[#3C3933] whitespace-pre-wrap">
+            <pre className="text-[11px] font-mono text-[#221E18] whitespace-pre-wrap">
               {generateJSON()}
             </pre>
           ) : format === 'text' ? (
-            <pre className="text-xs font-mono text-[#1A1814] whitespace-pre-wrap leading-relaxed">
+            <pre className="text-xs font-mono text-[#221E18] whitespace-pre-wrap leading-relaxed">
               {generatePlainText()}
             </pre>
           ) : (
-            <div className="font-manuscript text-sm text-[#1A1814] whitespace-pre-wrap leading-loose">
+            <div className="font-serif text-sm text-[#221E18] whitespace-pre-wrap leading-loose">
               {generateMarkdown()}
             </div>
           )}

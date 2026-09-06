@@ -2,47 +2,76 @@
 
 @layer base {
   :root {
-    /* Threadline Brand Core Palette (Page 08) */
-    --bg-paper: #FAF6EE;        /* Manuscript Paper - primary background */
-    --bg-aged: #F1EAD9;         /* Aged Paper - secondary surface, cards, panels */
-    --text-ink: #221E18;        /* Manuscript Ink - primary text */
-    --text-muted: #7A705F;      /* Ink Muted - secondary text, captions, metadata */
-    --border-paper: #E5DEC9;    /* Warm rule / divider */
-    --border-subtle: #EBE5D5;   /* Subtle divider */
+    /* Threadline Brand Core Palette (Brand v1.0) */
+    --paper-primary: #FAF6EE;       /* Manuscript Paper - primary background */
+    --paper-secondary: #F1EAD9;     /* Aged Paper - cards, panels, drawers */
+    --ink-primary: #221E18;         /* Manuscript Ink - primary text (13.6:1 AAA) */
+    --ink-muted: #7A705F;           /* Ink Muted - secondary text, captions, metadata (4.6:1 AA) */
+    --hairline-border: rgba(34, 30, 24, 0.12); /* 1px muted hairline rule */
+    --hairline-subtle: rgba(34, 30, 24, 0.08); /* Faint divider */
 
-    /* Threadline Brand Accents (Page 08) */
-    --accent-wax: #B54B32;      /* Wax Seal - CTAs, active states, knot mark */
-    --accent-blue: #35505F;     /* Focus Blue - secondary accent, links, focus states */
+    /* Threadline Brand Accents */
+    --accent-wax-seal: #B54B32;     /* Wax Seal - CTAs, active nav, knot mark, "Revised" status */
+    --accent-focus-blue: #35505F;   /* Focus Blue - links, focus rings, "Drafting" status */
 
-    /* Scene Status Colors (Page 09) */
-    --status-idea: #857C90;     /* Idea - Still forming */
-    --status-drafting: #C88A2E; /* Drafting - In motion */
-    --status-revised: #35505F;  /* Revised - Refined */
-    --status-final: #3C6E47;    /* Final - Complete, permanent */
+    /* Brand Status Color Mapping (Explicit assignment per Brand v1.0) */
+    --status-idea: #7A705F;         /* Idea - Still forming (ink.muted) */
+    --status-drafting: #35505F;     /* Drafting - In motion (accent.focusBlue) */
+    --status-revised: #B54B32;      /* Revised - Refined (accent.waxSeal) */
+    --status-final: #221E18;        /* Final - Complete, permanent (ink.primary) */
 
-    /* Legacy compatibility mappings */
-    --bg-canvas: #FAF6EE;
-    --bg-surface: #FAF6EE;
-    --bg-card: #F1EAD9;
-    --bg-soft: #F1EAD9;
-    --border-theme: #E5DEC9;
-    --text-primary: #221E18;
-    --text-body: #221E18;
-    --text-subtle: #7A705F;
-    --dark-primary: #221E18;
-    --accent-gold: #B54B32;
-    --accent-sand: #F1EAD9;
+    /* Compatibility variables */
+    --bg-paper: #FAF6EE;
+    --bg-aged: #F1EAD9;
+    --text-ink: #221E18;
+    --text-muted: #7A705F;
+    --border-paper: rgba(34, 30, 24, 0.12);
+    --border-subtle: rgba(34, 30, 24, 0.08);
+    --accent-wax: #B54B32;
+    --accent-blue: #35505F;
+  }
+
+  /* Lamplight Low-Light Reading & Writing Theme (§7.2 of Revamp Report) */
+  .theme-lamplight,
+  html.theme-lamplight,
+  body.theme-lamplight {
+    --paper-primary: #191714;
+    --paper-secondary: #24201C;
+    --ink-primary: #FAF6EE;
+    --ink-muted: #A39885;
+    --hairline-border: rgba(250, 246, 238, 0.12);
+    --hairline-subtle: rgba(250, 246, 238, 0.08);
+    --accent-wax-seal: #B54B32;
+    --accent-focus-blue: #5B8399;
+
+    --status-idea: #A39885;
+    --status-drafting: #5B8399;
+    --status-revised: #B54B32;
+    --status-final: #FAF6EE;
+
+    --bg-paper: #191714;
+    --bg-aged: #24201C;
+    --text-ink: #FAF6EE;
+    --text-muted: #A39885;
+    --border-paper: rgba(250, 246, 238, 0.12);
+    --border-subtle: rgba(250, 246, 238, 0.08);
+    --accent-wax: #B54B32;
+    --accent-blue: #5B8399;
+
+    background-color: #191714;
+    color: #FAF6EE;
   }
 
   body {
-    background-color: #FAF6EE;
-    color: #221E18;
+    background-color: var(--paper-primary);
+    color: var(--ink-primary);
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     letter-spacing: -0.011em;
+    min-height: 100vh;
   }
 }
 
-/* Typography Hierarchy (Page 10) */
+/* Typography Hierarchy */
 .font-serif,
 .font-editorial {
   font-family: 'Fraunces', Georgia, serif;
@@ -63,7 +92,7 @@
   font-family: 'Fraunces', Georgia, serif;
 }
 
-/* Section label per brand guideline: Inter 600, 11/1, tracking +0.16em */
+/* Section label per brand guideline: Inter 600, 11px, tracking +0.16em */
 .section-label {
   font-family: 'Inter', sans-serif;
   font-size: 11px;
@@ -71,16 +100,50 @@
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #7A705F;
+  color: var(--ink-muted);
 }
 
-/* Soft warm-toned shadow per Page 11: paper doesn't float; only dragged cards & modals */
+/* Line length rule (§3.2): 50-75 characters per line */
+.prose-line-length {
+  max-width: 68ch;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Elevation tokens (§3.3): flat by default; raised only for dragged card / modal */
+.elevation-flat {
+  box-shadow: none;
+}
+
 .shadow-warm-sm {
-  box-shadow: 0 1px 3px rgba(34, 30, 24, 0.05), 0 1px 2px rgba(34, 30, 24, 0.03);
+  box-shadow: 0 1px 3px rgba(34, 30, 24, 0.06), 0 1px 2px rgba(34, 30, 24, 0.03);
 }
 
 .shadow-warm-modal {
-  box-shadow: 0 10px 25px -5px rgba(34, 30, 24, 0.12), 0 8px 10px -6px rgba(34, 30, 24, 0.06);
+  box-shadow: 0 12px 32px -4px rgba(34, 30, 24, 0.16), 0 4px 12px -2px rgba(34, 30, 24, 0.08);
+}
+
+.theme-lamplight .shadow-warm-sm {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+.theme-lamplight .shadow-warm-modal {
+  box-shadow: 0 14px 36px -4px rgba(0, 0, 0, 0.6), 0 4px 12px -2px rgba(0, 0, 0, 0.4);
+}
+
+/* Radius token (§3.3): 6px soft radius */
+.radius-card {
+  border-radius: 6px;
+}
+
+/* Motion token (§3.3 & §7.4): 200-300ms ease, instant when reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Hide scrollbar for focused writing while keeping ability to scroll */
@@ -101,17 +164,17 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(122, 112, 95, 0.2);
+  background: rgba(122, 112, 95, 0.25);
   border-radius: 9999px;
   transition: background-color 0.2s ease;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(122, 112, 95, 0.4);
+  background: rgba(122, 112, 95, 0.45);
 }
 
 .scrollbar-subtle {
   scrollbar-width: thin;
-  scrollbar-color: rgba(122, 112, 95, 0.2) transparent;
+  scrollbar-color: rgba(122, 112, 95, 0.25) transparent;
 }
 .scrollbar-subtle::-webkit-scrollbar {
   width: 4px;
@@ -120,57 +183,20 @@
   background: transparent;
 }
 .scrollbar-subtle::-webkit-scrollbar-thumb {
-  background: rgba(122, 112, 95, 0.18);
+  background: rgba(122, 112, 95, 0.22);
   border-radius: 9999px;
 }
 .scrollbar-subtle:hover::-webkit-scrollbar-thumb {
-  background: rgba(122, 112, 95, 0.35);
+  background: rgba(122, 112, 95, 0.4);
 }
 
-/* Custom manuscript highlights using brand tones */
-mark.hl-yellow {
-  background-color: #F6EEDA;
-  color: #C88A2E;
-  padding: 0.1em 0.3em;
-  border-radius: 0.25rem;
-  border: 1px solid rgba(200, 138, 46, 0.2);
-}
-mark.hl-mint {
-  background-color: #E5EFE7;
-  color: #3C6E47;
-  padding: 0.1em 0.3em;
-  border-radius: 0.25rem;
-  border: 1px solid rgba(60, 110, 71, 0.2);
-}
-mark.hl-rose {
-  background-color: #F8EBE8;
-  color: #B54B32;
-  padding: 0.1em 0.3em;
-  border-radius: 0.25rem;
-  border: 1px solid rgba(181, 75, 50, 0.2);
-}
-mark.hl-blue {
-  background-color: #E5ECF0;
-  color: #35505F;
-  padding: 0.1em 0.3em;
-  border-radius: 0.25rem;
-  border: 1px solid rgba(53, 80, 95, 0.2);
-}
-mark.hl-purple {
-  background-color: #EDE8F2;
-  color: #857C90;
-  padding: 0.1em 0.3em;
-  border-radius: 0.25rem;
-  border: 1px solid rgba(133, 124, 144, 0.2);
-}
-
-/* Rich Live Markdown Editor Canvas Typography (Page 10: Editorial Serif - Fraunces) */
+/* Rich Live Markdown Editor Canvas Typography */
 .editor-rich-surface {
   outline: none;
   min-height: 520px;
   word-wrap: break-word;
   white-space: pre-wrap;
-  color: #221E18;
+  color: var(--ink-primary);
 }
 
 .editor-rich-surface:focus {
@@ -184,7 +210,7 @@ mark.hl-purple {
   font-weight: 600;
   margin-top: 1.75rem;
   margin-bottom: 0.75rem;
-  color: #221E18;
+  color: var(--ink-primary);
   letter-spacing: -0.02em;
 }
 
@@ -195,7 +221,7 @@ mark.hl-purple {
   font-weight: 500;
   margin-top: 1.4rem;
   margin-bottom: 0.5rem;
-  color: #221E18;
+  color: var(--ink-primary);
   letter-spacing: -0.015em;
 }
 
@@ -206,24 +232,24 @@ mark.hl-purple {
   font-weight: 500;
   margin-top: 1.15rem;
   margin-bottom: 0.4rem;
-  color: #221E18;
+  color: var(--ink-primary);
 }
 
 .editor-rich-surface p {
-  margin-bottom: 1.1rem;
-  color: #221E18;
-  line-height: 1.7;
+  margin-bottom: 1.15rem;
+  color: var(--ink-primary);
+  line-height: 1.75;
 }
 
 .editor-rich-surface blockquote {
-  border-left: 2.5px solid #B54B32;
-  padding: 0.45rem 0.6rem 0.45rem 1.1rem;
+  border-left: 2.5px solid var(--accent-wax-seal);
+  padding: 0.5rem 0.75rem 0.5rem 1.15rem;
   margin: 1.35rem 0;
   font-style: italic;
-  color: #221E18;
-  background-color: #F1EAD9;
-  border-top-right-radius: 0.375rem;
-  border-bottom-right-radius: 0.375rem;
+  color: var(--ink-primary);
+  background-color: var(--paper-secondary);
+  border-top-right-radius: 6px;
+  border-bottom-right-radius: 6px;
 }
 
 .editor-rich-surface hr {
@@ -239,7 +265,7 @@ mark.hl-purple {
   display: block;
   font-family: 'Fraunces', Georgia, serif;
   letter-spacing: 0.6em;
-  color: #7A705F;
+  color: var(--ink-muted);
   font-size: 0.95rem;
 }
 
@@ -247,14 +273,14 @@ mark.hl-purple {
   list-style-type: disc;
   padding-left: 1.5rem;
   margin: 0.75rem 0;
-  color: #221E18;
+  color: var(--ink-primary);
 }
 
 .editor-rich-surface ol {
   list-style-type: decimal;
   padding-left: 1.5rem;
   margin: 0.75rem 0;
-  color: #221E18;
+  color: var(--ink-primary);
 }
 
 .editor-rich-surface li {
@@ -264,30 +290,59 @@ mark.hl-purple {
 .editor-rich-surface strong,
 .editor-rich-surface b {
   font-weight: 700;
-  color: #221E18;
+  color: var(--ink-primary);
 }
 
 .editor-rich-surface em,
 .editor-rich-surface i {
   font-style: italic;
-  color: #221E18;
+  color: var(--ink-primary);
 }
 
 .editor-rich-surface del,
 .editor-rich-surface s {
   text-decoration: line-through;
-  color: #7A705F;
+  color: var(--ink-muted);
 }
 
 .editor-rich-surface code {
   font-family: 'Courier Prime', monospace;
   font-size: 0.9em;
-  background-color: #F1EAD9;
+  background-color: var(--paper-secondary);
   padding: 0.15em 0.35em;
-  border-radius: 0.25rem;
-  color: #221E18;
-  border: 1px solid #E5DEC9;
+  border-radius: 4px;
+  color: var(--ink-primary);
+  border: 1px solid var(--hairline-border);
 }
 
-
-
+/* Lamplight Mode Overrides for Hardcoded Background/Border Utilities */
+.theme-lamplight .bg-\[\#FAF6EE\] {
+  background-color: #191714 !important;
+}
+.theme-lamplight .bg-\[\#F1EAD9\] {
+  background-color: #24201C !important;
+}
+.theme-lamplight .text-\[\#221E18\] {
+  color: #FAF6EE !important;
+}
+.theme-lamplight .text-\[\#7A705F\] {
+  color: #A39885 !important;
+}
+.theme-lamplight .border-\[\#E5DEC9\] {
+  border-color: rgba(250, 246, 238, 0.12) !important;
+}
+.theme-lamplight .border-\[\#EBE8E2\] {
+  border-color: rgba(250, 246, 238, 0.12) !important;
+}
+.theme-lamplight .bg-\[\#FAF9F5\] {
+  background-color: #201D19 !important;
+}
+.theme-lamplight .bg-white {
+  background-color: #24201C !important;
+}
+.theme-lamplight .text-\[\#1A1814\] {
+  color: #FAF6EE !important;
+}
+.theme-lamplight .text-\[\#8C887F\] {
+  color: #A39885 !important;
+}

@@ -168,14 +168,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-stone-900/40 backdrop-blur-xs animate-in fade-in duration-100">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/40 backdrop-blur-xs animate-fade-in">
       <div
-        className="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-[#EBE8E2] overflow-hidden flex flex-col max-h-[75vh]"
+        className="bg-[#FAF6EE] w-full max-w-xl rounded-[6px] shadow-warm-modal border border-[rgba(34,30,24,0.16)] overflow-hidden flex flex-col max-h-[75vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search Input Bar */}
-        <div className="flex items-center px-4 py-3.5 border-b border-[#EBE8E2] gap-3">
-          <Search size={18} className="text-[#8C887F] shrink-0" />
+        <div className="flex items-center px-4 py-3.5 border-b border-[rgba(34,30,24,0.12)] gap-3 bg-[#F1EAD9]/50">
+          <Search size={18} className="text-[#7A705F] shrink-0" />
           <input
             ref={inputRef}
             type="text"
@@ -186,9 +186,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             }}
             onKeyDown={handleKeyDown}
             placeholder="Search manuscript scenes, Story Bible, commands..."
-            className="w-full text-sm bg-transparent border-0 focus:outline-none text-[#1A1814] placeholder-[#AAA69F]"
+            className="w-full text-sm bg-transparent border-0 focus:outline-none text-[#221E18] placeholder-[#7A705F]"
           />
-          <kbd className="text-[10px] font-mono bg-[#F2EFE9] text-[#736F66] px-1.5 py-0.5 rounded border border-[#E5E1D8]">
+          <kbd className="text-[10px] font-mono bg-[#FAF6EE] text-[#7A705F] px-1.5 py-0.5 rounded-[4px] border border-[rgba(34,30,24,0.16)]">
             ESC
           </kbd>
         </div>
@@ -196,7 +196,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         {/* Results List */}
         <div className="overflow-y-auto p-2 space-y-1">
           {filtered.length === 0 ? (
-            <div className="py-12 text-center text-xs text-[#AAA69F]">
+            <div className="py-12 text-center text-xs text-[#7A705F]">
               No matches found for "{query}".
             </div>
           ) : (
@@ -208,24 +208,24 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                   key={item.id}
                   onClick={() => handleSelect(item)}
                   onMouseEnter={() => setSelectedIndex(idx)}
-                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left transition-colors cursor-pointer ${
-                    isSelected ? 'bg-[#2D2A26] text-white shadow-xs' : 'text-[#2D2A26] hover:bg-[#FAF9F5]'
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-[5px] text-left transition-colors cursor-pointer ${
+                    isSelected ? 'bg-[#221E18] text-[#FAF6EE] shadow-warm-sm' : 'text-[#221E18] hover:bg-[#F1EAD9]/60'
                   }`}
                 >
                   <div className="flex items-center gap-3 min-w-0 pr-2">
                     <div
-                      className={`p-1.5 rounded-lg shrink-0 ${
-                        isSelected ? 'bg-[#3E3A35] text-[#F3EFE6]' : 'bg-[#F2EFE9] text-[#736F66]'
+                      className={`p-1.5 rounded-[4px] shrink-0 ${
+                        isSelected ? 'bg-[#353029] text-[#FAF6EE]' : 'bg-[#F1EAD9] text-[#7A705F]'
                       }`}
                     >
                       <Icon size={14} />
                     </div>
                     <div className="min-w-0">
-                      <div className="text-xs font-medium truncate">{item.title}</div>
+                      <div className="text-xs font-semibold truncate">{item.title}</div>
                       {'subtitle' in item && item.subtitle && (
                         <div
                           className={`text-[11px] truncate ${
-                            isSelected ? 'text-[#C9C5BC]' : 'text-[#8C887F]'
+                            isSelected ? 'text-[#FAF6EE]/80' : 'text-[#7A705F]'
                           }`}
                         >
                           {item.subtitle}
@@ -236,14 +236,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                   <div className="flex items-center gap-2 shrink-0">
                     <span
                       className={`text-[10px] font-mono uppercase tracking-wider ${
-                        isSelected ? 'text-[#AAA69F]' : 'text-[#B0ACA5]'
+                        isSelected ? 'text-[#FAF6EE]/70' : 'text-[#7A705F]'
                       }`}
                     >
                       {item.category}
                     </span>
                     <ArrowRight
                       size={12}
-                      className={isSelected ? 'text-[#D4C3A3]' : 'text-transparent'}
+                      className={isSelected ? 'text-[#B54B32]' : 'text-transparent'}
                     />
                   </div>
                 </button>
@@ -253,16 +253,16 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         </div>
 
         {/* Footer shortcuts helper */}
-        <div className="px-4 py-2 border-t border-[#EBE8E2] bg-[#FAF9F5] flex items-center justify-between text-[10px] font-mono text-[#AAA69F]">
+        <div className="px-4 py-2.5 border-t border-[rgba(34,30,24,0.12)] bg-[#F1EAD9]/60 flex items-center justify-between text-[10px] font-mono text-[#7A705F]">
           <div className="flex items-center gap-3">
             <span>
-              <kbd className="bg-white px-1 py-0.5 rounded border border-[#EBE8E2]">↑↓</kbd> Navigate
+              <kbd className="bg-[#FAF6EE] px-1 py-0.5 rounded-[3px] border border-[rgba(34,30,24,0.16)] text-[#221E18]">↑↓</kbd> Navigate
             </span>
             <span>
-              <kbd className="bg-white px-1 py-0.5 rounded border border-[#EBE8E2]">↵</kbd> Select
+              <kbd className="bg-[#FAF6EE] px-1 py-0.5 rounded-[3px] border border-[rgba(34,30,24,0.16)] text-[#221E18]">↵</kbd> Select
             </span>
           </div>
-          <span>Threadline Quick Navigator</span>
+          <span>Threadline Command Navigator</span>
         </div>
       </div>
     </div>
