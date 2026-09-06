@@ -44,6 +44,54 @@ export const INITIAL_CHAPTERS: Chapter[] = [
     actOrPhase: 'Act I: The Crossing',
     description: 'Silas tracks the wounded courier through the fog of Quay 4 to discover who commanded the casting of the forbidden alloy.',
     sceneIds: ['scene-3']
+  },
+  {
+    id: 'chap-3',
+    number: 3,
+    title: "The Alchemist's Kiln",
+    actOrPhase: 'Act II: Confrontation',
+    description: 'Silas infiltrates the Old Foundry under the Charles Bridge to uncover the secret guild forge creating reverse escapements.',
+    sceneIds: []
+  },
+  {
+    id: 'chap-4',
+    number: 4,
+    title: 'The Reverse Pendulum',
+    actOrPhase: 'Act II: Confrontation',
+    description: 'Midpoint pivot: Silas discovers the automaton does not merely predict disaster—it triggers the clocktower collapse.',
+    sceneIds: []
+  },
+  {
+    id: 'chap-5',
+    number: 5,
+    title: "The Grand Censor's Raid",
+    actOrPhase: 'Act II: Confrontation',
+    description: 'The Imperial Guard seals the guild quarters; Silas loses his workshop and archivist Julian Croft is arrested.',
+    sceneIds: []
+  },
+  {
+    id: 'chap-6',
+    number: 6,
+    title: 'The Broken Escapement',
+    actOrPhase: 'Act II: Confrontation',
+    description: 'Dark Night of the Soul: Trapped in the flooded sewers beneath Quay 4 with the copper sphere ticking backward.',
+    sceneIds: []
+  },
+  {
+    id: 'chap-7',
+    number: 7,
+    title: 'The Solstice Clock',
+    actOrPhase: 'Act III: Resolution',
+    description: 'Climax: Silas scales the Great Astronomical Dial to halt the reverse gear before the final eclipse hour strikes.',
+    sceneIds: []
+  },
+  {
+    id: 'chap-8',
+    number: 8,
+    title: 'The Quiet Meridian',
+    actOrPhase: 'Act III: Resolution',
+    description: 'Resolution: The restored municipal dial rings true noon; the transformed artisan returns to his workbench.',
+    sceneIds: []
   }
 ];
 
@@ -56,6 +104,7 @@ export const INITIAL_SCENES: Scene[] = [
     chapterNumber: 1,
     chapterTitle: "The Artisan's Warning",
     actOrPhase: 'Act I: Setup',
+    narrativeBeat: '1. Opening Image & Status Quo',
     premise: 'Silas is visited at dawn by a courier bearing an untraceable copper sphere inscribed with a temporal warning.',
     characters: ['Silas Vance', 'Courier Maren'],
     location: 'Old Town Clocktower Workshop',
@@ -95,6 +144,7 @@ Inside the pouch lay an unstamped copper sphere, no larger than a pigeon’s egg
     chapterNumber: 1,
     chapterTitle: "The Artisan's Warning",
     actOrPhase: 'Act I: Setup',
+    narrativeBeat: '2. The Catalyst & Inciting Incident',
     premise: 'Silas visits the Imperial Metallurgical Vaults to assay the alloy, but his archivist ally reacts with pure dread.',
     characters: ['Silas Vance', 'Archivist Julian Croft'],
     location: 'The Imperial Metallurgical Vaults',
@@ -128,6 +178,7 @@ Julian touched the sphere with a gloved thumb. "Then your courier is either a gh
     chapterNumber: 2,
     chapterTitle: 'The Salt Barges at Midnight',
     actOrPhase: 'Act I: The Crossing',
+    narrativeBeat: '4. Crossing the Threshold (Plot Point 1)',
     premise: 'Silas tracks Maren to the salt barges to force the truth, but finds her wounded and terrified.',
     characters: ['Silas Vance', 'Courier Maren'],
     location: 'Lower River Docks, Quay 4',
@@ -465,6 +516,22 @@ export const SECOND_PROJECT_BUNDLE: ProjectBundle = {
       actOrPhase: 'Phase 1: Deep Descent',
       description: 'Dr. Maya Lin and Chief Engineer Thorne pilot the Hadal-IV submersible into the unmapped abyssal depths.',
       sceneIds: ['trench-scene-1', 'trench-scene-2']
+    },
+    {
+      id: 't-chap-2',
+      number: 2,
+      title: 'Resonance & Rupture',
+      actOrPhase: 'Phase 2: Abyssal Rift',
+      description: 'The bathyscaphe crosses the seismic trench threshold as electrical systems fail under artificial harmonic strain.',
+      sceneIds: []
+    },
+    {
+      id: 't-chap-3',
+      number: 3,
+      title: 'The Monolith at Horizon Zero',
+      actOrPhase: 'Phase 3: The Abyssal Convergence',
+      description: 'Climax and ascent: Unlocking the seabed spire before oxygen depletion seals their fate.',
+      sceneIds: []
     }
   ],
   scenes: [
@@ -476,6 +543,7 @@ export const SECOND_PROJECT_BUNDLE: ProjectBundle = {
       chapterNumber: 1,
       chapterTitle: 'Descent to the Hadal Ridge',
       actOrPhase: 'Phase 1: Deep Descent',
+      narrativeBeat: '1. Opening Image & Acoustic Hook',
       premise: 'Establish isolation, extreme pressure environment, and first detection of anomalous acoustic waveform.',
       characters: ['Dr. Maya Lin', 'Chief Engineer Thorne'],
       location: 'Bathyscaphe Hadal-IV Cockpit',
@@ -524,6 +592,7 @@ Nothing in this trench vibrates in sine waves.`
       chapterNumber: 1,
       chapterTitle: 'Descent to the Hadal Ridge',
       actOrPhase: 'Phase 1: Deep Descent',
+      narrativeBeat: '2. The Catalyst & Anomaly Discovery',
       premise: 'Maya analyzes the basalt core sample and realizes the geological anomaly is artificial.',
       characters: ['Dr. Maya Lin'],
       location: 'Hadal-IV Hyperbaric Glovebox',

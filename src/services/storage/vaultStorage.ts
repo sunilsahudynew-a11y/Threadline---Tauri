@@ -83,6 +83,7 @@ export function sceneToMarkdownFile(scene: Scene): string {
     scene.chapterId ? `chapterId: ${JSON.stringify(scene.chapterId)}` : null,
     scene.chapterTitle ? `chapterTitle: ${JSON.stringify(scene.chapterTitle)}` : null,
     scene.actOrPhase ? `actOrPhase: ${JSON.stringify(scene.actOrPhase)}` : null,
+    scene.narrativeBeat ? `narrativeBeat: ${JSON.stringify(scene.narrativeBeat)}` : null,
     `status: ${JSON.stringify(scene.status || 'draft')}`,
     `pov: ${JSON.stringify(scene.pov || '')}`,
     `location: ${JSON.stringify(scene.location || '')}`,
@@ -155,6 +156,7 @@ export function markdownFileToScene(raw: string, fallbackId: string, defaultOrde
     chapterId: meta.chapterId,
     chapterTitle: meta.chapterTitle,
     actOrPhase: meta.actOrPhase,
+    narrativeBeat: meta.narrativeBeat,
     status: meta.status || 'draft',
     pov: meta.pov || '',
     characters: Array.isArray(meta.characters) ? meta.characters : [],
@@ -384,7 +386,7 @@ export async function writeBundleToVault(bundle: ProjectBundle): Promise<VaultSy
       } else if (e?.message) {
         errMsg = e.message;
       } else if (e && typeof e === 'object') {
-        errMsg = e.error || e.details || JSON.stringify(e);
+        errMsg = e.error || e.details || (e.toString !== Object.prototype.toString ? e.toString() : JSON.stringify(e));
       }
       return { success: false, message: `Sync error: ${errMsg}`, timestamp };
     }

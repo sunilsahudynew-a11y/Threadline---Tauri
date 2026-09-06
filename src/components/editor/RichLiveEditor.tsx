@@ -33,6 +33,7 @@ export interface RichEditorHandle {
   applyHighlight: (colorKey?: string) => void;
   insertSceneBreak: () => void;
   focus: () => void;
+  flush: () => string;
 }
 
 interface RichLiveEditorProps {
@@ -73,7 +74,8 @@ export const RichLiveEditor = forwardRef<RichEditorHandle, RichLiveEditorProps>(
     ref
   ) => {
     const editorRef = useRef<HTMLDivElement>(null);
-    const lastSavedMarkdownRef = useRef<string>(initialMarkdown);
+    const lastSavedMarkdownRef = useRef<string | null>(null);
+    const currentSceneIdRef = useRef<string | null>(null);
     const isComposingRef = useRef<boolean>(false);
 
     // Slash command popup state
@@ -86,15 +88,22 @@ export const RichLiveEditor = forwardRef<RichEditorHandle, RichLiveEditorProps>(
     const [selectionText, setSelectionText] = useState('');
     const [selectionPos, setSelectionPos] = useState<{ top: number; left: number } | undefined>(undefined);
 
-    // Synchronize HTML into editor when sceneId changes or external changes occur (Undo/Redo)
+    // Synchronize HTML into editor on mount, when sceneId changes, or when external changes occur (Undo/Redo/AI)
     useEffect(() => {
-      if (editorRef.current && initialMarkdown !== lastSavedMarkdownRef.current) {
+      if (!editorRef.current) return;
+
+      const isMount = lastSavedMarkdownRef.current === null;
+      const isSceneChange = currentSceneIdRef.current !== sceneId;
+      const isExternalChange = !isMount && !isSceneChange && initialMarkdown !== lastSavedMarkdownRef.current;
+
+      if (isMount || isSceneChange || isExternalChange) {
         const isFocused = document.activeElement === editorRef.current;
         editorRef.current.innerHTML = markdownToHtml(initialMarkdown);
         lastSavedMarkdownRef.current = initialMarkdown;
+        currentSceneIdRef.current = sceneId;
 
-        // If editor was focused during undo/redo, preserve focus and position caret cleanly at the end
-        if (isFocused) {
+        // If editor was focused during external change or undo/redo, preserve focus and position caret cleanly at the end
+        if (isFocused && isExternalChange) {
           editorRef.current.focus();
           try {
             const range = document.createRange();
@@ -116,20 +125,31 @@ export const RichLiveEditor = forwardRef<RichEditorHandle, RichLiveEditorProps>(
       const html = editorRef.current.innerHTML;
       const md = htmlToMarkdown(html);
       if (md !== lastSavedMarkdownRef.current) {
-        const prev = lastSavedMarkdownRef.current;
+        const prev = lastSavedMarkdownRef.current ?? '';
         lastSavedMarkdownRef.current = md;
         onChangeMarkdown(md, prev);
       }
     }, [onChangeMarkdown]);
 
-    // Imperative handle for parent formatting controls
+    // Imperative handle for parent formatting controls and instant content flush
     useImperativeHandle(ref, () => ({
       focus: () => {
         editorRef.current?.focus();
       },
+      flush: () => {
+        if (!editorRef.current) return lastSavedMarkdownRef.current || '';
+        const html = editorRef.current.innerHTML;
+        const md = htmlToMarkdown(html);
+        if (md !== lastSavedMarkdownRef.current) {
+          const prev = lastSavedMarkdownRef.current ?? '';
+          lastSavedMarkdownRef.current = md;
+          onChangeMarkdown(md, prev);
+        }
+        return md;
+      },
       applyFormat: (prefix: string, suffix = prefix) => {
         if (pushSnapshot) {
-          pushSnapshot(lastSavedMarkdownRef.current);
+          pushSnapshot(lastSavedMarkdownRef.current ?? '');
         }
         editorRef.current?.focus();
         if (prefix === '**') {
@@ -192,6 +212,201 @@ export const RichLiveEditor = forwardRef<RichEditorHandle, RichLiveEditorProps>(
       }
     }));
 
+    // Ref to store slash range so clicking the menu never loses the insertion target
+    const slashRangeRef = useRef<{
+      textNode: Node;
+      slashIdx: number;
+      queryLen: number;
+    } | null>(null);
+
+    // Execute slash command deterministically on DOM and sync markdown
+    const executeSlashCommand = (cmdId: string) => {
+      if (pushSnapshot) {
+        pushSnapshot(lastSavedMarkdownRef.current);
+      }
+
+      const editor = editorRef.current;
+      if (!editor) return;
+
+      editor.focus();
+
+      // Retrieve the slash location from ref or active selection
+      let textNode: Node | null = null;
+      let slashIdx = -1;
+      let queryLen = slashQuery.length;
+
+      if (slashRangeRef.current && editor.contains(slashRangeRef.current.textNode)) {
+        textNode = slashRangeRef.current.textNode;
+        slashIdx = slashRangeRef.current.slashIdx;
+        queryLen = slashRangeRef.current.queryLen;
+      } else {
+        const sel = window.getSelection();
+        if (sel && sel.anchorNode && editor.contains(sel.anchorNode)) {
+          textNode = sel.anchorNode;
+          const text = textNode.textContent || '';
+          slashIdx = text.lastIndexOf('/', sel.anchorOffset - 1);
+        }
+      }
+
+      if (!textNode || slashIdx === -1) {
+        setSlashMenuOpen(false);
+        return;
+      }
+
+      // Find enclosing block inside editor
+      let currentBlock: HTMLElement | null = null;
+      let curr: Node | null = textNode;
+      while (curr && curr !== editor) {
+        if (curr.nodeType === Node.ELEMENT_NODE) {
+          const tag = (curr as HTMLElement).tagName.toLowerCase();
+          if (['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'li', 'div'].includes(tag)) {
+            currentBlock = curr as HTMLElement;
+            break;
+          }
+        }
+        curr = curr.parentNode;
+      }
+
+      // Remove the slash and query from the text
+      const fullText = textNode.textContent || '';
+      const textBefore = fullText.slice(0, slashIdx);
+      const textAfter = fullText.slice(slashIdx + 1 + queryLen);
+      textNode.textContent = textBefore + textAfter;
+
+      // Determine remaining text in current block
+      const remainingBlockText = currentBlock
+        ? (currentBlock.textContent || '').trim()
+        : (textBefore + textAfter).trim();
+
+      const setCaretAtEnd = (el: Node) => {
+        try {
+          const range = document.createRange();
+          range.selectNodeContents(el);
+          range.collapse(false);
+          const sel = window.getSelection();
+          if (sel) {
+            sel.removeAllRanges();
+            sel.addRange(range);
+          }
+        } catch {}
+      };
+
+      const selectNode = (el: Node) => {
+        try {
+          const range = document.createRange();
+          range.selectNodeContents(el);
+          const sel = window.getSelection();
+          if (sel) {
+            sel.removeAllRanges();
+            sel.addRange(range);
+          }
+        } catch {}
+      };
+
+      if (cmdId === 'h1' || cmdId === 'h2' || cmdId === 'h3') {
+        const newEl = document.createElement(cmdId);
+        if (remainingBlockText) {
+          newEl.textContent = remainingBlockText;
+        } else {
+          newEl.innerHTML = '<br>';
+        }
+        if (currentBlock && currentBlock !== editor) {
+          currentBlock.replaceWith(newEl);
+        } else {
+          editor.appendChild(newEl);
+        }
+        setCaretAtEnd(newEl);
+      } else if (cmdId === 'quote') {
+        const bq = document.createElement('blockquote');
+        const p = document.createElement('p');
+        if (remainingBlockText) {
+          p.textContent = remainingBlockText;
+        } else {
+          p.innerHTML = '<br>';
+        }
+        bq.appendChild(p);
+        if (currentBlock && currentBlock !== editor) {
+          currentBlock.replaceWith(bq);
+        } else {
+          editor.appendChild(bq);
+        }
+        setCaretAtEnd(p);
+      } else if (cmdId === 'bullet') {
+        const ul = document.createElement('ul');
+        const li = document.createElement('li');
+        if (remainingBlockText) {
+          li.textContent = remainingBlockText;
+        } else {
+          li.innerHTML = '<br>';
+        }
+        ul.appendChild(li);
+        if (currentBlock && currentBlock !== editor) {
+          currentBlock.replaceWith(ul);
+        } else {
+          editor.appendChild(ul);
+        }
+        setCaretAtEnd(li);
+      } else if (cmdId === 'number') {
+        const ol = document.createElement('ol');
+        const li = document.createElement('li');
+        if (remainingBlockText) {
+          li.textContent = remainingBlockText;
+        } else {
+          li.innerHTML = '<br>';
+        }
+        ol.appendChild(li);
+        if (currentBlock && currentBlock !== editor) {
+          currentBlock.replaceWith(ol);
+        } else {
+          editor.appendChild(ol);
+        }
+        setCaretAtEnd(li);
+      } else if (cmdId === 'divider') {
+        const hr = document.createElement('hr');
+        const nextP = document.createElement('p');
+        nextP.innerHTML = '<br>';
+        if (currentBlock && currentBlock !== editor) {
+          currentBlock.replaceWith(hr);
+          hr.after(nextP);
+        } else {
+          editor.appendChild(hr);
+          editor.appendChild(nextP);
+        }
+        setCaretAtEnd(nextP);
+      } else if (cmdId === 'bold') {
+        const strong = document.createElement('strong');
+        strong.textContent = 'bold text';
+        const range = document.createRange();
+        range.setStart(textNode, Math.min(slashIdx, (textNode.textContent || '').length));
+        range.collapse(true);
+        range.insertNode(strong);
+        selectNode(strong);
+      } else if (cmdId === 'italic') {
+        const em = document.createElement('em');
+        em.textContent = 'italic text';
+        const range = document.createRange();
+        range.setStart(textNode, Math.min(slashIdx, (textNode.textContent || '').length));
+        range.collapse(true);
+        range.insertNode(em);
+        selectNode(em);
+      } else if (cmdId === 'highlight') {
+        const mark = document.createElement('mark');
+        mark.className = 'hl-yellow';
+        mark.textContent = 'highlighted text';
+        const range = document.createRange();
+        range.setStart(textNode, Math.min(slashIdx, (textNode.textContent || '').length));
+        range.collapse(true);
+        range.insertNode(mark);
+        selectNode(mark);
+      }
+
+      slashRangeRef.current = null;
+      setSlashMenuOpen(false);
+
+      // Immediately sync markdown so the editor and parent are in sync
+      syncToMarkdown();
+    };
+
     // Slash command definitions
     const slashCommands: SlashCommand[] = [
       {
@@ -200,11 +415,7 @@ export const RichLiveEditor = forwardRef<RichEditorHandle, RichLiveEditorProps>(
         description: 'Major chapter or scene title',
         icon: <Heading1 size={15} />,
         keywords: ['h1', 'heading', 'chapter', 'title', 'hea', 'head'],
-        action: () => {
-          document.execCommand('formatBlock', false, '<h1>');
-          setSlashMenuOpen(false);
-          syncToMarkdown();
-        }
+        action: () => executeSlashCommand('h1')
       },
       {
         id: 'h2',
@@ -212,11 +423,7 @@ export const RichLiveEditor = forwardRef<RichEditorHandle, RichLiveEditorProps>(
         description: 'Section break or narrative sequence',
         icon: <Heading2 size={15} />,
         keywords: ['h2', 'heading', 'section', 'subtitle', 'hea', 'head'],
-        action: () => {
-          document.execCommand('formatBlock', false, '<h2>');
-          setSlashMenuOpen(false);
-          syncToMarkdown();
-        }
+        action: () => executeSlashCommand('h2')
       },
       {
         id: 'h3',
@@ -224,11 +431,7 @@ export const RichLiveEditor = forwardRef<RichEditorHandle, RichLiveEditorProps>(
         description: 'Small subsection or scene beat',
         icon: <Heading3 size={15} />,
         keywords: ['h3', 'heading', 'subsection', 'beat', 'hea', 'head'],
-        action: () => {
-          document.execCommand('formatBlock', false, '<h3>');
-          setSlashMenuOpen(false);
-          syncToMarkdown();
-        }
+        action: () => executeSlashCommand('h3')
       },
       {
         id: 'quote',
@@ -236,11 +439,7 @@ export const RichLiveEditor = forwardRef<RichEditorHandle, RichLiveEditorProps>(
         description: 'Passage, dialogue, or excerpt',
         icon: <Quote size={15} />,
         keywords: ['quote', 'blockquote', 'letter'],
-        action: () => {
-          document.execCommand('formatBlock', false, '<blockquote>');
-          setSlashMenuOpen(false);
-          syncToMarkdown();
-        }
+        action: () => executeSlashCommand('quote')
       },
       {
         id: 'bullet',
@@ -248,11 +447,7 @@ export const RichLiveEditor = forwardRef<RichEditorHandle, RichLiveEditorProps>(
         description: 'Unordered list of clues or items',
         icon: <List size={15} />,
         keywords: ['bullet', 'list', 'item'],
-        action: () => {
-          document.execCommand('insertUnorderedList', false);
-          setSlashMenuOpen(false);
-          syncToMarkdown();
-        }
+        action: () => executeSlashCommand('bullet')
       },
       {
         id: 'number',
@@ -260,11 +455,7 @@ export const RichLiveEditor = forwardRef<RichEditorHandle, RichLiveEditorProps>(
         description: 'Sequentially ordered list',
         icon: <ListOrdered size={15} />,
         keywords: ['number', 'ordered', 'list'],
-        action: () => {
-          document.execCommand('insertOrderedList', false);
-          setSlashMenuOpen(false);
-          syncToMarkdown();
-        }
+        action: () => executeSlashCommand('number')
       },
       {
         id: 'divider',
@@ -272,11 +463,7 @@ export const RichLiveEditor = forwardRef<RichEditorHandle, RichLiveEditorProps>(
         description: 'Ornamental scene separator (* * *)',
         icon: <Sparkles size={15} />,
         keywords: ['break', 'divider', 'separator', 'scene'],
-        action: () => {
-          document.execCommand('insertHorizontalRule', false);
-          setSlashMenuOpen(false);
-          syncToMarkdown();
-        }
+        action: () => executeSlashCommand('divider')
       },
       {
         id: 'highlight',
@@ -284,23 +471,7 @@ export const RichLiveEditor = forwardRef<RichEditorHandle, RichLiveEditorProps>(
         description: 'Warm amber highlighter mark',
         icon: <Highlighter size={15} />,
         keywords: ['highlight', 'mark', 'amber', 'yellow'],
-        action: () => {
-          const sel = window.getSelection();
-          if (sel && sel.rangeCount > 0) {
-            const range = sel.getRangeAt(0);
-            const mark = document.createElement('mark');
-            mark.className = 'hl-yellow';
-            try {
-              range.surroundContents(mark);
-            } catch {
-              const contents = range.extractContents();
-              mark.appendChild(contents);
-              range.insertNode(mark);
-            }
-          }
-          setSlashMenuOpen(false);
-          syncToMarkdown();
-        }
+        action: () => executeSlashCommand('highlight')
       },
       {
         id: 'bold',
@@ -308,11 +479,7 @@ export const RichLiveEditor = forwardRef<RichEditorHandle, RichLiveEditorProps>(
         description: 'Heavy emphasis (**text**)',
         icon: <Bold size={15} />,
         keywords: ['bold', 'strong', 'emphasis'],
-        action: () => {
-          document.execCommand('bold', false);
-          setSlashMenuOpen(false);
-          syncToMarkdown();
-        }
+        action: () => executeSlashCommand('bold')
       },
       {
         id: 'italic',
@@ -320,11 +487,7 @@ export const RichLiveEditor = forwardRef<RichEditorHandle, RichLiveEditorProps>(
         description: 'Subtle emphasis (*text*)',
         icon: <Italic size={15} />,
         keywords: ['italic', 'emphasis', 'voice'],
-        action: () => {
-          document.execCommand('italic', false);
-          setSlashMenuOpen(false);
-          syncToMarkdown();
-        }
+        action: () => executeSlashCommand('italic')
       }
     ];
 
@@ -338,27 +501,6 @@ export const RichLiveEditor = forwardRef<RichEditorHandle, RichLiveEditorProps>(
         cmd.keywords.some((k) => k.includes(q))
       );
     });
-
-    // Remove the slash and search query from document before executing command
-    const deleteSlashQuery = () => {
-      const sel = window.getSelection();
-      if (!sel || !sel.anchorNode) return;
-      const textNode = sel.anchorNode;
-      const text = textNode.textContent || '';
-      const offset = sel.anchorOffset;
-      const slashIdx = text.lastIndexOf('/', offset - 1);
-      if (slashIdx !== -1) {
-        const queryLen = slashQuery.length;
-        textNode.textContent = text.slice(0, slashIdx) + text.slice(slashIdx + 1 + queryLen);
-        try {
-          const range = document.createRange();
-          range.setStart(textNode, Math.min(slashIdx, (textNode.textContent || '').length));
-          range.collapse(true);
-          sel.removeAllRanges();
-          sel.addRange(range);
-        } catch {}
-      }
-    };
 
     // Check if cursor is at /query and update the Notion slash menu position & filter query
     const updateSlashState = useCallback(() => {
@@ -384,9 +526,14 @@ export const RichLiveEditor = forwardRef<RichEditorHandle, RichLiveEditorProps>(
         const query = match[1];
         setSlashQuery(query);
 
-        // Find slash character rect
+        // Find slash character rect and record range reference
         const slashIdx = beforeCursor.lastIndexOf('/');
         if (slashIdx !== -1) {
+          slashRangeRef.current = {
+            textNode,
+            slashIdx,
+            queryLen: query.length
+          };
           try {
             const charRange = document.createRange();
             charRange.setStart(textNode, slashIdx);
@@ -453,14 +600,7 @@ export const RichLiveEditor = forwardRef<RichEditorHandle, RichLiveEditorProps>(
         if (e.key === 'Enter') {
           e.preventDefault();
           if (filteredSlashCommands[selectedIndex]) {
-            if (pushSnapshot) {
-              pushSnapshot(lastSavedMarkdownRef.current);
-            }
-            // Delete the typed /query before applying command
-            deleteSlashQuery();
             filteredSlashCommands[selectedIndex].action();
-            setSlashMenuOpen(false);
-            syncToMarkdown();
           }
           return;
         }
@@ -472,6 +612,17 @@ export const RichLiveEditor = forwardRef<RichEditorHandle, RichLiveEditorProps>(
       }
 
       // 2. Keyboard shortcuts
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        syncToMarkdown();
+        return;
+      }
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        document.execCommand('insertText', false, '    ');
+        syncToMarkdown();
+        return;
+      }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'b') {
         e.preventDefault();
         if (pushSnapshot) {
@@ -650,6 +801,36 @@ export const RichLiveEditor = forwardRef<RichEditorHandle, RichLiveEditorProps>(
         ? 'text-base leading-[1.75]'
         : 'text-lg leading-[1.85]';
 
+    // Listen to window beforeunload and unmount to guarantee zero data loss
+    useEffect(() => {
+      const handleBeforeUnload = () => {
+        if (editorRef.current) {
+          const html = editorRef.current.innerHTML;
+          const md = htmlToMarkdown(html);
+          if (lastSavedMarkdownRef.current !== null && md !== lastSavedMarkdownRef.current) {
+            onChangeMarkdown(md, lastSavedMarkdownRef.current);
+          }
+        }
+      };
+
+      window.addEventListener('beforeunload', handleBeforeUnload);
+      return () => {
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+        // Flush any unsaved changes on component unmount
+        if (editorRef.current) {
+          const html = editorRef.current.innerHTML;
+          const md = htmlToMarkdown(html);
+          if (lastSavedMarkdownRef.current !== null && md !== lastSavedMarkdownRef.current) {
+            // Guard against accidental blank overwriting on detached node
+            if (md === '' && (lastSavedMarkdownRef.current || '').trim().length > 0 && document.activeElement !== editorRef.current) {
+              return;
+            }
+            onChangeMarkdown(md, lastSavedMarkdownRef.current);
+          }
+        }
+      };
+    }, [onChangeMarkdown]);
+
     return (
       <div className="relative w-full">
         {/* Smooth Notion Slash Command Menu */}
@@ -659,13 +840,7 @@ export const RichLiveEditor = forwardRef<RichEditorHandle, RichLiveEditorProps>(
             selectedIndex={selectedIndex}
             position={slashMenuPos}
             onSelectCommand={(cmd) => {
-              if (pushSnapshot) {
-                pushSnapshot(lastSavedMarkdownRef.current);
-              }
-              deleteSlashQuery();
               cmd.action();
-              setSlashMenuOpen(false);
-              syncToMarkdown();
             }}
             onClose={() => setSlashMenuOpen(false)}
             commands={filteredSlashCommands}
@@ -728,6 +903,14 @@ export const RichLiveEditor = forwardRef<RichEditorHandle, RichLiveEditorProps>(
           suppressContentEditableWarning
           onInput={handleInput}
           onKeyDown={handleKeyDown}
+          onBlur={syncToMarkdown}
+          onCompositionStart={() => {
+            isComposingRef.current = true;
+          }}
+          onCompositionEnd={() => {
+            isComposingRef.current = false;
+            syncToMarkdown();
+          }}
           className={`editor-rich-surface w-full bg-transparent focus:outline-none text-[#33312D] ${fontClass} ${sizeClass}`}
           role="textbox"
           aria-multiline="true"

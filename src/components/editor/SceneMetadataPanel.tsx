@@ -183,6 +183,17 @@ export const SceneMetadataPanel: React.FC<SceneMetadataPanelProps> = ({
                   className="w-full p-1.5 bg-[#FAF6EE] border border-[rgba(34,30,24,0.12)] rounded-[4px] text-xs text-[#221E18]"
                 />
               </div>
+
+              <div>
+                <span className="text-[#7A705F] text-[10px] block mb-0.5">Dramatic Beat:</span>
+                <input
+                  type="text"
+                  value={scene.narrativeBeat || ''}
+                  onChange={(e) => onUpdateScene({ narrativeBeat: e.target.value })}
+                  placeholder="e.g. 1. Opening Image &amp; Status Quo"
+                  className="w-full p-1.5 bg-[#FAF6EE] border border-[rgba(34,30,24,0.12)] rounded-[4px] text-xs text-[#221E18]"
+                />
+              </div>
             </div>
           )}
         </div>

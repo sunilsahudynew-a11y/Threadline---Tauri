@@ -26,6 +26,7 @@ export interface FrontmatterScene {
   chapterNumber?: number;
   chapterTitle?: string;
   actOrPhase?: string;
+  narrativeBeat?: string;
   status: 'draft' | 'revised' | 'complete';
   pov: string;
   characters: string[];

@@ -44,10 +44,10 @@ interface StoryBibleScreenProps {
 }
 
 export const StoryBibleScreen: React.FC<StoryBibleScreenProps> = ({
-  entities,
-  threads,
-  events,
-  scenes,
+  entities = [],
+  threads = [],
+  events = [],
+  scenes = [],
   onUpdateEntity,
   onCreateEntity,
   onDeleteEntity,
@@ -63,7 +63,13 @@ export const StoryBibleScreen: React.FC<StoryBibleScreenProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [selectedEntityId, setSelectedEntityId] = useState<string>(entities[0]?.id || '');
+
+  const safeEntities = Array.isArray(entities) ? entities : [];
+  const safeThreads = Array.isArray(threads) ? threads : [];
+  const safeEvents = Array.isArray(events) ? events : [];
+  const safeScenes = Array.isArray(scenes) ? scenes : [];
+
+  const [selectedEntityId, setSelectedEntityId] = useState<string>(() => safeEntities[0]?.id || '');
   
   // Mobile / Tablet push-view state (Revamp Report §5.4)
   const [showMobileProfile, setShowMobileProfile] = useState<boolean>(false);
@@ -72,17 +78,39 @@ export const StoryBibleScreen: React.FC<StoryBibleScreenProps> = ({
   const [newFactText, setNewFactText] = useState('');
 
   // Filtered Entities
-  const filteredEntities = entities.filter((ent) => {
+  const filteredEntities = safeEntities.filter((ent) => {
     const matchesSearch =
       ent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ent.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (ent.description && ent.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
       ent.canonicalFacts?.some((f) => f.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesType = filterType === 'all' || ent.type === filterType;
     const matchesStatus = filterStatus === 'all' || ent.status === filterStatus;
     return matchesSearch && matchesType && matchesStatus;
   });
 
-  const selectedEntity = entities.find((e) => e.id === selectedEntityId) || entities[0];
+  const selectedEntity = safeEntities.find((e) => e.id === selectedEntityId) || safeEntities[0];
+
+  const handleCreateDefaultEntity = (type: EntityType = 'character') => {
+    const labels: Record<EntityType, string> = {
+      character: 'New Character',
+      place: 'New Location',
+      object: 'New Artifact',
+      organization: 'New Faction',
+      concept: 'New Lore Concept'
+    };
+    const newEnt: Entity = {
+      id: 'ent-' + Date.now(),
+      name: labels[type] || 'New Entity',
+      type,
+      status: 'tentative',
+      description: 'Canonical notes, history, or appearance...',
+      canonicalFacts: ['Initial established fact'],
+      linkedSceneIds: []
+    };
+    onCreateEntity(newEnt);
+    setSelectedEntityId(newEnt.id);
+    setShowMobileProfile(true);
+  };
 
   const handleAddFact = () => {
     if (!selectedEntity || !newFactText.trim()) return;
@@ -127,39 +155,39 @@ export const StoryBibleScreen: React.FC<StoryBibleScreenProps> = ({
                 setActiveTab('entities');
                 setShowMobileProfile(false);
               }}
-              className={`px-3 py-1.5 rounded-[5px] transition-all cursor-pointer min-h-[36px] ${
+              className={`px-3 py-1.5 rounded-[5px] text-xs font-medium transition-colors duration-150 cursor-pointer min-h-[36px] border ${
                 activeTab === 'entities'
-                  ? 'bg-[#FAF6EE] text-[#221E18] font-semibold shadow-warm-sm border border-[rgba(34,30,24,0.08)]'
-                  : 'text-[#7A705F] hover:text-[#221E18]'
+                  ? 'bg-[#FAF6EE] text-[#221E18] shadow-warm-sm border-[rgba(34,30,24,0.12)]'
+                  : 'text-[#7A705F] hover:text-[#221E18] border-transparent'
               }`}
             >
-              Entities ({entities.length})
+              Entities ({safeEntities.length})
             </button>
             <button
               onClick={() => {
                 setActiveTab('threads');
                 setShowMobileProfile(false);
               }}
-              className={`px-3 py-1.5 rounded-[5px] transition-all cursor-pointer min-h-[36px] ${
+              className={`px-3 py-1.5 rounded-[5px] text-xs font-medium transition-colors duration-150 cursor-pointer min-h-[36px] border ${
                 activeTab === 'threads'
-                  ? 'bg-[#FAF6EE] text-[#221E18] font-semibold shadow-warm-sm border border-[rgba(34,30,24,0.08)]'
-                  : 'text-[#7A705F] hover:text-[#221E18]'
+                  ? 'bg-[#FAF6EE] text-[#221E18] shadow-warm-sm border-[rgba(34,30,24,0.12)]'
+                  : 'text-[#7A705F] hover:text-[#221E18] border-transparent'
               }`}
             >
-              Threads ({threads.length})
+              Threads ({safeThreads.length})
             </button>
             <button
               onClick={() => {
                 setActiveTab('events');
                 setShowMobileProfile(false);
               }}
-              className={`px-3 py-1.5 rounded-[5px] transition-all cursor-pointer min-h-[36px] ${
+              className={`px-3 py-1.5 rounded-[5px] text-xs font-medium transition-colors duration-150 cursor-pointer min-h-[36px] border ${
                 activeTab === 'events'
-                  ? 'bg-[#FAF6EE] text-[#221E18] font-semibold shadow-warm-sm border border-[rgba(34,30,24,0.08)]'
-                  : 'text-[#7A705F] hover:text-[#221E18]'
+                  ? 'bg-[#FAF6EE] text-[#221E18] shadow-warm-sm border-[rgba(34,30,24,0.12)]'
+                  : 'text-[#7A705F] hover:text-[#221E18] border-transparent'
               }`}
             >
-              Timeline ({events.length})
+              Timeline ({safeEvents.length})
             </button>
           </div>
 
@@ -256,9 +284,31 @@ export const StoryBibleScreen: React.FC<StoryBibleScreenProps> = ({
             {/* Entities List */}
             <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
               {filteredEntities.length === 0 ? (
-                <div className="p-8 text-center bg-[#F1EAD9]/60 rounded-[6px] border border-[rgba(34,30,24,0.12)] text-xs text-[#7A705F]">
-                  <p className="font-serif italic text-sm text-[#221E18] mb-1">Your story starts here.</p>
-                  <p>Pin your first character or lore entry to begin building your canon.</p>
+                <div className="p-6 text-center bg-[#F1EAD9]/60 rounded-[6px] border border-[rgba(34,30,24,0.12)] text-xs text-[#7A705F] space-y-3">
+                  <div>
+                    <p className="font-serif italic text-sm text-[#221E18] mb-1">Your Codex is ready for entries.</p>
+                    <p>Pin characters, locations, factions, and world facts to anchor your canon.</p>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 justify-center pt-1">
+                    <button
+                      onClick={() => handleCreateDefaultEntity('character')}
+                      className="px-2.5 py-1 bg-[#FAF6EE] hover:bg-[#FAF6EE]/80 border border-[rgba(34,30,24,0.15)] rounded-[4px] text-[11px] font-medium text-[#221E18] cursor-pointer"
+                    >
+                      + Character
+                    </button>
+                    <button
+                      onClick={() => handleCreateDefaultEntity('place')}
+                      className="px-2.5 py-1 bg-[#FAF6EE] hover:bg-[#FAF6EE]/80 border border-[rgba(34,30,24,0.15)] rounded-[4px] text-[11px] font-medium text-[#221E18] cursor-pointer"
+                    >
+                      + Location
+                    </button>
+                    <button
+                      onClick={() => handleCreateDefaultEntity('concept')}
+                      className="px-2.5 py-1 bg-[#FAF6EE] hover:bg-[#FAF6EE]/80 border border-[rgba(34,30,24,0.15)] rounded-[4px] text-[11px] font-medium text-[#221E18] cursor-pointer"
+                    >
+                      + Lore / Magic
+                    </button>
+                  </div>
                 </div>
               ) : (
                 filteredEntities.map((entity) => {
@@ -456,8 +506,16 @@ export const StoryBibleScreen: React.FC<StoryBibleScreenProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="p-12 text-center bg-[#F1EAD9]/50 rounded-[6px] border border-[rgba(34,30,24,0.12)] text-xs text-[#7A705F]">
-                Select an entity to view its dossier and canonical presence.
+              <div className="p-12 text-center bg-[#F1EAD9]/50 rounded-[6px] border border-[rgba(34,30,24,0.12)] text-xs text-[#7A705F] space-y-3">
+                <p className="font-serif italic text-base text-[#221E18]">Select an entity or create a new entry.</p>
+                <p>Track canon, traits, confirmed facts, and bidirectional scene appearances in this dossier.</p>
+                <button
+                  onClick={() => handleCreateDefaultEntity('character')}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] bg-[#B54B32] text-[#FAF6EE] text-xs font-semibold hover:bg-[#9E3E27] cursor-pointer"
+                >
+                  <Plus size={14} />
+                  <span>Create First Entry</span>
+                </button>
               </div>
             )}
           </div>
@@ -469,56 +527,81 @@ export const StoryBibleScreen: React.FC<StoryBibleScreenProps> = ({
       {/* ========================================================================= */}
       {activeTab === 'threads' && (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {threads.map((thread) => (
-              <div
-                key={thread.id}
-                className="bg-[#F1EAD9] p-4 rounded-[6px] border border-[rgba(34,30,24,0.12)] space-y-3 shadow-warm-sm"
+          {safeThreads.length === 0 ? (
+            <div className="p-12 text-center bg-[#F1EAD9]/50 rounded-[6px] border border-[rgba(34,30,24,0.12)] text-xs text-[#7A705F] space-y-3 max-w-lg mx-auto">
+              <GitBranch className="w-8 h-8 text-[#35505F] mx-auto opacity-70" />
+              <p className="font-serif italic text-base text-[#221E18]">No narrative threads established yet.</p>
+              <p>Threads weave thematic conflicts, subplots, and mystery arcs across scenes in your manuscript.</p>
+              <button
+                onClick={() => {
+                  const newTh: Thread = {
+                    id: 'th-' + Date.now(),
+                    title: 'Main Conflict Arc',
+                    description: 'The core dramatic question driving the manuscript...',
+                    status: 'active',
+                    color: '#35505F',
+                    linkedSceneIds: []
+                  };
+                  onCreateThread(newTh);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] bg-[#35505F] text-[#FAF6EE] text-xs font-semibold hover:bg-[#2A404D] cursor-pointer"
               >
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="w-2.5 h-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: thread.color || '#35505F' }}
-                    />
-                    <input
-                      type="text"
-                      value={thread.title}
-                      onChange={(e) => onUpdateThread({ ...thread, title: e.target.value })}
-                      className="font-serif font-semibold text-sm text-[#221E18] bg-transparent border-b border-transparent hover:border-[rgba(34,30,24,0.2)] focus:outline-none"
-                    />
+                <Plus size={14} />
+                <span>Create Narrative Thread</span>
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {safeThreads.map((thread) => (
+                <div
+                  key={thread.id}
+                  className="bg-[#F1EAD9] p-4 rounded-[6px] border border-[rgba(34,30,24,0.12)] space-y-3 shadow-warm-sm"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: thread.color || '#35505F' }}
+                      />
+                      <input
+                        type="text"
+                        value={thread.title}
+                        onChange={(e) => onUpdateThread({ ...thread, title: e.target.value })}
+                        className="font-serif font-semibold text-sm text-[#221E18] bg-transparent border-b border-transparent hover:border-[rgba(34,30,24,0.2)] focus:outline-none"
+                      />
+                    </div>
+                    <button
+                      onClick={() => onDeleteThread(thread.id)}
+                      className="text-[#7A705F] hover:text-[#B54B32] p-1 cursor-pointer"
+                    >
+                      <Trash2 size={13} />
+                    </button>
                   </div>
-                  <button
-                    onClick={() => onDeleteThread(thread.id)}
-                    className="text-[#7A705F] hover:text-[#B54B32] p-1 cursor-pointer"
-                  >
-                    <Trash2 size={13} />
-                  </button>
-                </div>
 
-                <textarea
-                  value={thread.description}
-                  onChange={(e) => onUpdateThread({ ...thread, description: e.target.value })}
-                  rows={2}
-                  className="w-full bg-[#FAF6EE] border border-[rgba(34,30,24,0.12)] rounded-[6px] p-2 text-xs text-[#221E18] focus:outline-none"
-                  placeholder="Thematic core or conflict trajectory..."
-                />
+                  <textarea
+                    value={thread.description}
+                    onChange={(e) => onUpdateThread({ ...thread, description: e.target.value })}
+                    rows={2}
+                    className="w-full bg-[#FAF6EE] border border-[rgba(34,30,24,0.12)] rounded-[6px] p-2 text-xs text-[#221E18] focus:outline-none"
+                    placeholder="Thematic core or conflict trajectory..."
+                  />
 
-                <div className="flex items-center justify-between text-[11px] text-[#7A705F] pt-2 border-t border-[rgba(34,30,24,0.08)]">
-                  <select
-                    value={thread.status}
-                    onChange={(e) => onUpdateThread({ ...thread, status: e.target.value as any })}
-                    className="bg-[#FAF6EE] border border-[rgba(34,30,24,0.12)] rounded px-2 py-0.5 text-xs text-[#221E18]"
-                  >
-                    <option value="active">Active Arc</option>
-                    <option value="resolved">Resolved</option>
-                    <option value="dormant">Dormant</option>
-                  </select>
-                  <span>{thread.linkedSceneIds?.length || 0} scenes linked</span>
+                  <div className="flex items-center justify-between text-[11px] text-[#7A705F] pt-2 border-t border-[rgba(34,30,24,0.08)]">
+                    <select
+                      value={thread.status}
+                      onChange={(e) => onUpdateThread({ ...thread, status: e.target.value as any })}
+                      className="bg-[#FAF6EE] border border-[rgba(34,30,24,0.12)] rounded px-2 py-0.5 text-xs text-[#221E18]"
+                    >
+                      <option value="active">Active Arc</option>
+                      <option value="resolved">Resolved</option>
+                      <option value="dormant">Dormant</option>
+                    </select>
+                    <span>{thread.linkedSceneIds?.length || 0} scenes linked</span>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -527,41 +610,65 @@ export const StoryBibleScreen: React.FC<StoryBibleScreenProps> = ({
       {/* ========================================================================= */}
       {activeTab === 'events' && (
         <div className="space-y-4">
-          <div className="relative border-l-2 border-[#35505F]/30 ml-4 space-y-6 py-2">
-            {events.map((ev) => (
-              <div key={ev.id} className="relative pl-6">
-                {/* Node dot */}
-                <div className="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-[#FAF6EE] border-2 border-[#35505F] flex items-center justify-center">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#35505F]" />
-                </div>
-
-                <div className="bg-[#F1EAD9] p-4 rounded-[6px] border border-[rgba(34,30,24,0.12)] space-y-2 shadow-warm-sm">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-mono text-[#35505F] font-semibold">{ev.time}</span>
-                      <span>·</span>
-                      <input
-                        type="text"
-                        value={ev.title}
-                        onChange={(e) => onUpdateEvent({ ...ev, title: e.target.value })}
-                        className="font-serif font-semibold text-sm text-[#221E18] bg-transparent border-b border-transparent hover:border-[rgba(34,30,24,0.2)] focus:outline-none"
-                      />
-                    </div>
-                    {onDeleteEvent && (
-                      <button
-                        onClick={() => onDeleteEvent(ev.id)}
-                        className="text-[#7A705F] hover:text-[#B54B32] p-1 cursor-pointer"
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    )}
+          {safeEvents.length === 0 ? (
+            <div className="p-12 text-center bg-[#F1EAD9]/50 rounded-[6px] border border-[rgba(34,30,24,0.12)] text-xs text-[#7A705F] space-y-3 max-w-lg mx-auto">
+              <Calendar className="w-8 h-8 text-[#35505F] mx-auto opacity-70" />
+              <p className="font-serif italic text-base text-[#221E18]">Story chronology is empty.</p>
+              <p>Record key timeline milestones, world events, and turning points in chronological order.</p>
+              <button
+                onClick={() => {
+                  const newEv: StoryEvent = {
+                    id: 'ev-' + Date.now(),
+                    title: 'Opening Inciting Incident',
+                    time: 'Day 1, Dawn',
+                    participants: [],
+                    consequences: 'The world changes irreversibly...'
+                  };
+                  onCreateEvent(newEv);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] bg-[#35505F] text-[#FAF6EE] text-xs font-semibold hover:bg-[#2A404D] cursor-pointer"
+              >
+                <Plus size={14} />
+                <span>Record Timeline Event</span>
+              </button>
+            </div>
+          ) : (
+            <div className="relative border-l-2 border-[#35505F]/30 ml-4 space-y-6 py-2">
+              {safeEvents.map((ev) => (
+                <div key={ev.id} className="relative pl-6">
+                  {/* Node dot */}
+                  <div className="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-[#FAF6EE] border-2 border-[#35505F] flex items-center justify-center">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#35505F]" />
                   </div>
 
-                  <p className="text-xs text-[#7A705F]">{ev.consequences}</p>
+                  <div className="bg-[#F1EAD9] p-4 rounded-[6px] border border-[rgba(34,30,24,0.12)] space-y-2 shadow-warm-sm">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-mono text-[#35505F] font-semibold">{ev.time}</span>
+                        <span>·</span>
+                        <input
+                          type="text"
+                          value={ev.title}
+                          onChange={(e) => onUpdateEvent({ ...ev, title: e.target.value })}
+                          className="font-serif font-semibold text-sm text-[#221E18] bg-transparent border-b border-transparent hover:border-[rgba(34,30,24,0.2)] focus:outline-none"
+                        />
+                      </div>
+                      {onDeleteEvent && (
+                        <button
+                          onClick={() => onDeleteEvent(ev.id)}
+                          className="text-[#7A705F] hover:text-[#B54B32] p-1 cursor-pointer"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      )}
+                    </div>
+
+                    <p className="text-xs text-[#7A705F]">{ev.consequences}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

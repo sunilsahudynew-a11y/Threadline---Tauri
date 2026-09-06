@@ -141,30 +141,30 @@ export const RevisionsScreen: React.FC<RevisionsScreenProps> = ({
         <div className="bg-[#F1EAD9] p-0.5 rounded-[6px] flex text-xs font-medium border border-[rgba(34,30,24,0.12)] self-start overflow-x-auto no-scrollbar">
           <button
             onClick={() => setActiveTab('passes')}
-            className={`px-3 py-1.5 rounded-[5px] transition-all cursor-pointer min-h-[36px] whitespace-nowrap ${
+            className={`px-3 py-1.5 rounded-[5px] text-xs font-medium transition-colors duration-150 cursor-pointer min-h-[36px] whitespace-nowrap border ${
               activeTab === 'passes'
-                ? 'bg-[#FAF6EE] shadow-warm-sm text-[#221E18] font-bold'
-                : 'text-[#7A705F] hover:text-[#221E18]'
+                ? 'bg-[#FAF6EE] shadow-warm-sm text-[#221E18] border-[rgba(34,30,24,0.12)]'
+                : 'text-[#7A705F] hover:text-[#221E18] border-transparent'
             }`}
           >
             Named Passes ({revisionPasses.length})
           </button>
           <button
             onClick={() => setActiveTab('snapshots')}
-            className={`px-3 py-1.5 rounded-[5px] transition-all cursor-pointer min-h-[36px] whitespace-nowrap ${
+            className={`px-3 py-1.5 rounded-[5px] text-xs font-medium transition-colors duration-150 cursor-pointer min-h-[36px] whitespace-nowrap border ${
               activeTab === 'snapshots'
-                ? 'bg-[#FAF6EE] shadow-warm-sm text-[#221E18] font-bold'
-                : 'text-[#7A705F] hover:text-[#221E18]'
+                ? 'bg-[#FAF6EE] shadow-warm-sm text-[#221E18] border-[rgba(34,30,24,0.12)]'
+                : 'text-[#7A705F] hover:text-[#221E18] border-transparent'
             }`}
           >
             Snapshots &amp; Diffs ({snapshots.length})
           </button>
           <button
             onClick={() => setActiveTab('cutting-room')}
-            className={`px-3 py-1.5 rounded-[5px] transition-all cursor-pointer min-h-[36px] whitespace-nowrap ${
+            className={`px-3 py-1.5 rounded-[5px] text-xs font-medium transition-colors duration-150 cursor-pointer min-h-[36px] whitespace-nowrap border ${
               activeTab === 'cutting-room'
-                ? 'bg-[#FAF6EE] shadow-warm-sm text-[#221E18] font-bold'
-                : 'text-[#7A705F] hover:text-[#221E18]'
+                ? 'bg-[#FAF6EE] shadow-warm-sm text-[#221E18] border-[rgba(34,30,24,0.12)]'
+                : 'text-[#7A705F] hover:text-[#221E18] border-transparent'
             }`}
           >
             Cutting Room ({cuttingRoom.length})

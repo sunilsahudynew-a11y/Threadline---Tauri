@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Project,
   ProjectBundle,
@@ -57,6 +57,9 @@ function loadProjectBundle(projId: string): ProjectBundle {
       if (parsed && parsed.project) {
         return {
           ...parsed,
+          entities: Array.isArray(parsed.entities) && parsed.entities.length > 0 ? parsed.entities : INITIAL_ENTITIES,
+          threads: Array.isArray(parsed.threads) && parsed.threads.length > 0 ? parsed.threads : INITIAL_THREADS,
+          events: Array.isArray(parsed.events) ? parsed.events : INITIAL_EVENTS,
           chapters: ensureChapters(parsed.scenes || [], parsed.chapters)
         };
       }
@@ -146,9 +149,11 @@ function ThreadlineApp() {
     return 'home';
   });
 
-  // Synchronize browser history / URL with /landing
+  // Synchronize browser history / URL with /landing and reset scroll to top smoothly
   useEffect(() => {
     if (typeof window === 'undefined') return;
+
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
 
     if (currentScreen === 'landing') {
       if (window.location.pathname !== '/landing') {
@@ -237,6 +242,7 @@ function ThreadlineApp() {
   const [aiAuditLogs, setAiAuditLogs] = useState<AIAuditLog[]>(initialBundle.aiAuditLogs);
 
   const [lastSavedText, setLastSavedText] = useState('Saved locally');
+  const saveTimerRef = useRef<any>(null);
 
   // Dedicated Folder Vault Storage State (Obsidian-Style)
   const [vaultInfo, setVaultInfo] = useState<VaultInfo | null>(null);
@@ -714,12 +720,13 @@ function ThreadlineApp() {
   };
 
   // Scene Update Handler with automatic Word Count Calculation
-  const handleUpdateActiveScene = (updatedFields: Partial<Scene>) => {
+  const handleUpdateActiveScene = (updatedFields: Partial<Scene>, targetSceneId?: string) => {
+    const targetId = targetSceneId || activeScene.id;
     setLastSavedText('Saving...');
 
     setScenes((prev) =>
       prev.map((s) => {
-        if (s.id !== activeScene.id) return s;
+        if (s.id !== targetId) return s;
         const merged = { ...s, ...updatedFields };
         if (updatedFields.proseContent !== undefined) {
           const words = updatedFields.proseContent.trim()
@@ -734,11 +741,14 @@ function ThreadlineApp() {
     // Update project timestamp
     setProject((prev) => ({
       ...prev,
-      lastActiveSceneId: activeScene.id,
+      lastActiveSceneId: targetId,
       updatedAt: new Date().toISOString()
     }));
 
-    setTimeout(() => {
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+    }
+    saveTimerRef.current = setTimeout(() => {
       setLastSavedText('Saved locally');
     }, 400);
   };
@@ -1193,7 +1203,7 @@ function ThreadlineApp() {
             }}
             onNavigateToRevisions={() => setCurrentScreen('revisions')}
             onNavigateToContinuity={() => setCurrentScreen('continuity')}
-            onNavigateToBible={() => setCurrentScreen('bible')}
+            onNavigateToBible={() => setCurrentScreen('codex')}
             onStartNewProject={() => setCurrentScreen('new-project')}
             onNavigateToProjects={() => setCurrentScreen('projects')}
             onAddScene={handleAddScene}
@@ -1219,7 +1229,7 @@ function ThreadlineApp() {
               showToast(`Added "${entity.name}" to Story Bible`);
             }}
             onLogAiAction={(log) => setAiAuditLogs((prev) => [log, ...prev])}
-            onOpenStoryBible={() => setCurrentScreen('bible')}
+            onOpenStoryBible={() => setCurrentScreen('codex')}
             onDuplicateScene={handleDuplicateScene}
             onDeleteScene={handleDeleteScene}
             onAddChapter={handleAddChapter}
@@ -1229,7 +1239,7 @@ function ThreadlineApp() {
           />
         )}
 
-        {currentScreen === 'bible' && (
+        {(currentScreen === 'codex' || currentScreen === 'bible') && (
           <StoryBibleScreen
             entities={entities}
             threads={threads}
@@ -1279,6 +1289,7 @@ function ThreadlineApp() {
           <DashboardScreen
             project={project}
             scenes={scenes}
+            chapters={chapters}
             threads={threads}
             notes={notes}
             entities={entities}
@@ -1288,6 +1299,14 @@ function ThreadlineApp() {
             }}
             onReorderScenes={(reordered) => setScenes(reordered)}
             onAddScene={handleAddScene}
+            onAddSceneToChapter={handleAddSceneToChapter}
+            onAddChapter={handleAddChapter}
+            onUpdateChapter={handleUpdateChapter}
+            onDeleteChapter={handleDeleteChapter}
+            onUpdateChapters={setChapters}
+            onUpdateScene={(targetSceneId, updatedFields) => {
+              handleUpdateActiveScene(updatedFields, targetSceneId);
+            }}
             onUpdateNote={(updated) =>
               setNotes((prev) => prev.map((n) => (n.id === updated.id ? updated : n)))
             }

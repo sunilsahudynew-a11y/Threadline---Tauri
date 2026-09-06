@@ -57,6 +57,7 @@ export interface Scene {
   chapterNumber?: number;
   chapterTitle?: string;
   actOrPhase?: string;
+  narrativeBeat?: string;
   proseContent: string;
   premise: string;
   characters: string[];

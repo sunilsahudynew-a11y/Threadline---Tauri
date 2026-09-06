@@ -155,10 +155,10 @@ export const Navigation: React.FC<NavigationProps> = ({
                   id={`nav-tab-${item.screen}`}
                   key={item.screen}
                   onClick={() => onNavigate(item.screen)}
-                  className={`h-8 flex items-center gap-1.5 px-2.5 rounded-[6px] text-xs font-medium transition-all shrink-0 cursor-pointer min-h-[32px] ${
+                  className={`h-8 flex items-center gap-1.5 px-2.5 rounded-[6px] text-xs font-medium border shrink-0 cursor-pointer min-h-[32px] transition-colors duration-150 ${
                     isActive
-                      ? 'bg-[#F1EAD9] text-[#221E18] font-semibold border border-[rgba(34,30,24,0.12)] shadow-warm-sm'
-                      : 'text-[#7A705F] hover:text-[#221E18] hover:bg-[#F1EAD9]/60'
+                      ? 'bg-[#F1EAD9] text-[#221E18] font-medium border-[rgba(34,30,24,0.12)] shadow-warm-sm'
+                      : 'text-[#7A705F] hover:text-[#221E18] hover:bg-[#F1EAD9]/60 border-transparent'
                   }`}
                 >
                   <Icon size={13} className={isActive ? 'text-[#B54B32]' : 'text-[#7A705F]'} />
@@ -374,7 +374,7 @@ export const Navigation: React.FC<NavigationProps> = ({
               id={`mobile-tab-${item.screen}`}
               key={item.screen}
               onClick={() => onNavigate(item.screen)}
-              className={`flex-1 flex flex-col items-center justify-center h-full min-h-[44px] cursor-pointer transition-colors ${
+              className={`flex-1 flex flex-col items-center justify-center h-full min-h-[44px] cursor-pointer transition-colors duration-150 ${
                 isActive ? 'text-[#B54B32]' : 'text-[#7A705F] hover:text-[#221E18]'
               }`}
             >
@@ -386,7 +386,7 @@ export const Navigation: React.FC<NavigationProps> = ({
                   </span>
                 )}
               </div>
-              <span className={`text-[10px] mt-1 font-sans ${isActive ? 'font-semibold' : 'font-medium'}`}>
+              <span className="text-[10px] mt-1 font-sans font-medium">
                 {item.label}
               </span>
             </button>

@@ -140,39 +140,39 @@ export const ManuscriptCanvas: React.FC<ManuscriptCanvasProps> = ({
       ? 'text-base leading-[1.75]'
       : 'text-lg leading-[1.85]';
 
-  // Render purely the full preview when in 'preview' mode
-  if (viewMode === 'preview') {
-    return (
-      <div className="flex-1 overflow-y-auto no-scrollbar bg-[#FAF6EE] py-8">
-        <MarkdownPreview
-          title={scene.title}
-          content={scene.proseContent}
-          fontSize={fontSize}
-          fontFamily={fontFamily}
-          sceneOrder={scene.order}
-          wordCount={scene.wordCount}
-          isFullPreview={true}
-        />
-      </div>
-    );
-  }
-
   return (
-    <div className="flex-1 flex overflow-hidden bg-[#FAF6EE] relative">
+    <div className={`flex-1 flex ${viewMode === 'split' ? 'flex-col md:flex-row' : ''} overflow-hidden bg-[#FAF6EE] relative`}>
       {/* TYPEWRITER MODE BADGE (No horizontal line - smooth document shift on newline) */}
-      {typewriterMode && (
-        <div className="absolute top-3 right-6 z-20 pointer-events-none flex items-center gap-1.5 px-2.5 py-1 bg-[#F1EAD9] rounded-full border border-[#E5DEC9] text-[11px] font-mono text-[#221E18] shadow-warm-sm select-none animate-in fade-in">
+      {typewriterMode && viewMode !== 'preview' && (
+        <div className="absolute top-3 right-4 sm:right-6 z-20 pointer-events-none flex items-center gap-1.5 px-2.5 py-1 bg-[#F1EAD9] rounded-full border border-[#E5DEC9] text-[10px] sm:text-[11px] font-mono text-[#221E18] shadow-warm-sm select-none animate-in fade-in">
           <span className="w-1.5 h-1.5 rounded-full bg-[#B54B32] animate-pulse" />
           <span>Typewriter Mode</span>
         </div>
       )}
 
-      {/* WRITING SURFACE (Visible in 'write' and 'split' modes) */}
+      {/* FULL PREVIEW SURFACE (When in 'preview' mode) */}
+      {viewMode === 'preview' && (
+        <div className="flex-1 overflow-y-auto no-scrollbar bg-[#FAF6EE] py-8 animate-in fade-in duration-150">
+          <MarkdownPreview
+            title={scene.title}
+            content={scene.proseContent}
+            fontSize={fontSize}
+            fontFamily={fontFamily}
+            sceneOrder={scene.order}
+            wordCount={scene.wordCount}
+            isFullPreview={true}
+          />
+        </div>
+      )}
+
+      {/* WRITING SURFACE (Visible in 'write' and 'split' modes, kept mounted but hidden in 'preview' to preserve editor state/DOM) */}
       <div
         ref={scrollContainerRef}
-        className={`flex-1 overflow-y-auto no-scrollbar px-6 md:px-12 flex justify-center selection:bg-[#F1EAD9] selection:text-[#221E18] relative ${
-          typewriterMode ? 'pt-8 pb-[70vh]' : 'pt-8 pb-48'
-        } ${viewMode === 'split' ? 'border-r border-[#E5DEC9]' : ''}`}
+        className={`${
+          viewMode === 'preview' ? 'hidden' : 'flex-1'
+        } overflow-y-auto no-scrollbar px-3.5 sm:px-6 md:px-12 flex justify-center selection:bg-[#F1EAD9] selection:text-[#221E18] relative ${
+          typewriterMode ? 'pt-6 sm:pt-8 pb-[70vh]' : 'pt-6 sm:pt-8 pb-36 sm:pb-48'
+        } ${viewMode === 'split' ? 'border-b md:border-b-0 md:border-r border-[#E5DEC9]' : ''}`}
       >
         <div
           className={`w-full transition-all ${
@@ -214,7 +214,7 @@ export const ManuscriptCanvas: React.FC<ManuscriptCanvasProps> = ({
               type="text"
               value={scene.title}
               onChange={(e) => onUpdateScene({ title: e.target.value })}
-              className="w-full text-3xl md:text-4xl font-serif font-semibold text-[#221E18] bg-transparent border-0 focus:outline-none placeholder-[#7A705F]/50 tracking-tight"
+              className="w-full text-2xl sm:text-3xl md:text-4xl font-serif font-semibold text-[#221E18] bg-transparent border-0 focus:outline-none placeholder-[#7A705F]/50 tracking-tight"
               placeholder="Scene Title..."
             />
           </div>
@@ -361,7 +361,7 @@ export const ManuscriptCanvas: React.FC<ManuscriptCanvasProps> = ({
 
       {/* LIVE MARKDOWN PREVIEW COLUMN (Visible in 'split' mode) */}
       {viewMode === 'split' && (
-        <div className="flex-1 overflow-hidden bg-[#FAF9F5] border-l border-[#EBE8E2]/60 animate-in fade-in duration-200">
+        <div className="flex-1 overflow-y-auto no-scrollbar bg-[#FAF9F5] border-t md:border-t-0 md:border-l border-[#E5DEC9] animate-in fade-in duration-200 min-h-[250px]">
           <MarkdownPreview
             title={scene.title}
             content={scene.proseContent}

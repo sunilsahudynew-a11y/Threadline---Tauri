@@ -109,19 +109,19 @@ export const EditorFormatBar: React.FC<EditorFormatBarProps> = ({
 
   return (
     <div
-      className={`border-b border-[#E5DEC9] bg-[#FAF6EE]/95 backdrop-blur-xs px-4 md:px-8 py-1.5 flex flex-wrap items-center justify-between gap-2 text-xs select-none transition-all z-20 ${
+      className={`border-b border-[#E5DEC9] bg-[#FAF6EE]/95 backdrop-blur-xs px-2.5 sm:px-4 md:px-8 py-1 flex items-center justify-between gap-2 text-xs select-none transition-all z-20 overflow-x-auto no-scrollbar scroll-smooth whitespace-nowrap ${
         focusMode ? 'opacity-0 hover:opacity-100 duration-200 fixed top-0 left-0 right-0 shadow-warm-modal' : ''
       }`}
     >
       {/* LEFT: Core Formatting Controls */}
-      <div className="flex items-center gap-1 flex-wrap">
+      <div className="flex items-center gap-1 shrink-0">
         {/* Undo / Redo */}
         <div className="flex items-center gap-0.5 pr-1 border-r border-[#E5DEC9]">
           <button
             type="button"
             disabled={!canUndo}
             onClick={onUndo}
-            className="p-1.5 text-[#7A705F] hover:text-[#221E18] hover:bg-[#F1EAD9] rounded transition-colors disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-[#7A705F] cursor-pointer disabled:cursor-not-allowed relative group"
+            className="p-1.5 text-[#7A705F] hover:text-[#221E18] hover:bg-[#F1EAD9] rounded transition-colors disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-[#7A705F] cursor-pointer disabled:cursor-not-allowed min-h-[32px] min-w-[30px] flex items-center justify-center relative group"
             title={canUndo ? `Undo (Ctrl+Z) · ${undoCount} action${undoCount === 1 ? '' : 's'} available` : 'Undo (Ctrl+Z)'}
           >
             <Undo2 size={14} />
@@ -130,7 +130,7 @@ export const EditorFormatBar: React.FC<EditorFormatBarProps> = ({
             type="button"
             disabled={!canRedo}
             onClick={onRedo}
-            className="p-1.5 text-[#7A705F] hover:text-[#221E18] hover:bg-[#F1EAD9] rounded transition-colors disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-[#7A705F] cursor-pointer disabled:cursor-not-allowed relative group"
+            className="p-1.5 text-[#7A705F] hover:text-[#221E18] hover:bg-[#F1EAD9] rounded transition-colors disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-[#7A705F] cursor-pointer disabled:cursor-not-allowed min-h-[32px] min-w-[30px] flex items-center justify-center relative group"
             title={canRedo ? `Redo (Ctrl+Shift+Z / Ctrl+Y) · ${redoCount} action${redoCount === 1 ? '' : 's'} available` : 'Redo (Ctrl+Shift+Z / Ctrl+Y)'}
           >
             <Redo2 size={14} />
@@ -395,7 +395,7 @@ export const EditorFormatBar: React.FC<EditorFormatBarProps> = ({
       </div>
 
       {/* RIGHT: Surface Switcher (Live vs Syntax), Typewriter Mode, Session Timer, and Segmented View Switcher */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 shrink-0">
         {/* LIVE PREVIEW VS SYNTAX SWITCHER */}
         {onChangeEditorSurface && viewMode !== 'preview' && (
           <div className="flex items-center bg-[#F1EAD9] p-0.5 rounded-lg border border-[#E5DEC9]">

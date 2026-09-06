@@ -62,10 +62,21 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
   onDeleteChapter,
   onAddSceneToChapter
 }) => {
-  // Focus Mode & Sidebar states
+  // Focus Mode & Sidebar states (default closed on mobile/tablet to ensure spacious canvas)
+  const [isSmallScreen, setIsSmallScreen] = useState(() => typeof window !== 'undefined' && window.innerWidth < 1024);
   const [focusMode, setFocusMode] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [leftNavOpen, setLeftNavOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 1024);
+  const [leftNavOpen, setLeftNavOpen] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 1024);
+
+  // Resize listener for responsive layout adjustments
+  useEffect(() => {
+    const handleResize = () => {
+      const small = window.innerWidth < 1024;
+      setIsSmallScreen(small);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // View Mode: 'write' | 'split' | 'preview'
   const [viewMode, setViewMode] = useState<EditorViewMode>('write');
@@ -212,6 +223,20 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
     setSelectedText('');
     setSelectionRange(null);
   };
+
+  // Safe scene navigation that flushes any pending editor keystrokes first
+  const handleSafeNavigateToScene = useCallback(
+    (targetSceneId: string) => {
+      if (richEditorRef.current?.flush) {
+        const latest = richEditorRef.current.flush();
+        if (latest !== scene.proseContent) {
+          onUpdateScene({ proseContent: latest });
+        }
+      }
+      onNavigateToScene(targetSceneId);
+    },
+    [onNavigateToScene, scene.proseContent, onUpdateScene]
+  );
 
   // Search occurrence counter
   useEffect(() => {
@@ -508,7 +533,7 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
         onToggleLeftNav={() => setLeftNavOpen(!leftNavOpen)}
         onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         onToggleSearch={() => setShowSearch(!showSearch)}
-        onNavigateToScene={onNavigateToScene}
+        onNavigateToScene={handleSafeNavigateToScene}
         onUpdateScene={onUpdateScene}
         onDuplicateScene={onDuplicateScene}
         onDeleteScene={onDeleteScene}
@@ -570,16 +595,55 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
 
       {/* MAIN CANVAS BODY: 3-PANE MODULAR LAYOUT */}
       <div className="flex-1 flex overflow-hidden relative">
-        {/* LEFT OUTLINE DRAWER */}
-        {leftNavOpen && !focusMode && (
-          <SceneOutlineDrawer
-            scene={scene}
-            allScenes={allScenes}
-            chapters={chapters}
-            threads={threads}
-            onNavigateToScene={onNavigateToScene}
-            onAddScene={onAddSceneToChapter ? () => onAddSceneToChapter(scene.chapterId || '') : undefined}
-          />
+        {/* LEFT OUTLINE DRAWER (Static column on desktop, slide-over overlay sheet on mobile/tablet) */}
+        {isSmallScreen ? (
+          leftNavOpen && !focusMode && (
+            <div className="fixed inset-0 z-50 flex animate-in fade-in duration-150">
+              <div
+                className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
+                onClick={() => setLeftNavOpen(false)}
+              />
+              <div className="relative z-10 w-80 max-w-[85vw] h-full bg-[#FAF6EE] shadow-warm-modal flex flex-col animate-in slide-in-from-left duration-200 border-r border-[rgba(34,30,24,0.12)]">
+                <div className="p-2.5 border-b border-[rgba(34,30,24,0.12)] flex items-center justify-between bg-[#F1EAD9]">
+                  <span className="text-xs font-mono font-semibold uppercase text-[#7A705F] px-2">Binder Outline</span>
+                  <button
+                    onClick={() => setLeftNavOpen(false)}
+                    className="p-1 rounded-[5px] text-[#7A705F] hover:text-[#221E18] min-h-[32px] min-w-[32px] flex items-center justify-center cursor-pointer"
+                    title="Close outline"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+                <div className="flex-1 overflow-y-auto">
+                  <SceneOutlineDrawer
+                    scene={scene}
+                    allScenes={allScenes}
+                    chapters={chapters}
+                    threads={threads}
+                    onNavigateToScene={(id) => {
+                      handleSafeNavigateToScene(id);
+                      setLeftNavOpen(false);
+                    }}
+                    onAddScene={onAddSceneToChapter ? () => {
+                      onAddSceneToChapter(scene.chapterId || '');
+                      setLeftNavOpen(false);
+                    } : undefined}
+                  />
+                </div>
+              </div>
+            </div>
+          )
+        ) : (
+          leftNavOpen && !focusMode && (
+            <SceneOutlineDrawer
+              scene={scene}
+              allScenes={allScenes}
+              chapters={chapters}
+              threads={threads}
+              onNavigateToScene={handleSafeNavigateToScene}
+              onAddScene={onAddSceneToChapter ? () => onAddSceneToChapter(scene.chapterId || '') : undefined}
+            />
+          )
         )}
 
         {/* CENTER WRITING CANVAS & LIVE PREVIEW */}
@@ -623,22 +687,54 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
           totalScenes={allScenes.length}
           focusMode={focusMode}
           showSearch={showSearch}
-          onPrevScene={() => onNavigateToScene(allScenes[Math.max(0, currentSceneIdx - 1)].id)}
-          onNextScene={() => onNavigateToScene(allScenes[Math.min(allScenes.length - 1, currentSceneIdx + 1)].id)}
+          onPrevScene={() => handleSafeNavigateToScene(allScenes[Math.max(0, currentSceneIdx - 1)].id)}
+          onNextScene={() => handleSafeNavigateToScene(allScenes[Math.min(allScenes.length - 1, currentSceneIdx + 1)].id)}
           onToggleSearch={() => setShowSearch(!showSearch)}
           onToggleFocusMode={() => setFocusMode(!focusMode)}
           onOpenAIPanel={() => setShowAIPanel(true)}
         />
 
-        {/* RIGHT METADATA & STORY BIBLE PANEL */}
-        {sidebarOpen && !focusMode && (
-          <SceneMetadataPanel
-            scene={scene}
-            sceneEntities={sceneEntities}
-            chapters={chapters}
-            onUpdateScene={onUpdateScene}
-            onCreateChapter={onAddChapter ? (c) => onAddChapter(c.title, c.actOrPhase) : undefined}
-          />
+        {/* RIGHT METADATA & STORY BIBLE PANEL (Static column on desktop, slide-over overlay sheet on mobile/tablet) */}
+        {isSmallScreen ? (
+          sidebarOpen && !focusMode && (
+            <div className="fixed inset-0 z-50 flex justify-end animate-in fade-in duration-150">
+              <div
+                className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
+                onClick={() => setSidebarOpen(false)}
+              />
+              <div className="relative z-10 w-80 max-w-[85vw] h-full bg-[#FAF6EE] shadow-warm-modal flex flex-col animate-in slide-in-from-right duration-200 border-l border-[rgba(34,30,24,0.12)]">
+                <div className="p-2.5 border-b border-[rgba(34,30,24,0.12)] flex items-center justify-between bg-[#F1EAD9]">
+                  <span className="text-xs font-mono font-semibold uppercase text-[#7A705F] px-2">Scene Facts &amp; Structure</span>
+                  <button
+                    onClick={() => setSidebarOpen(false)}
+                    className="p-1 rounded-[5px] text-[#7A705F] hover:text-[#221E18] min-h-[32px] min-w-[32px] flex items-center justify-center cursor-pointer"
+                    title="Close scene facts"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+                <div className="flex-1 overflow-y-auto">
+                  <SceneMetadataPanel
+                    scene={scene}
+                    sceneEntities={sceneEntities}
+                    chapters={chapters}
+                    onUpdateScene={onUpdateScene}
+                    onCreateChapter={onAddChapter ? (c) => onAddChapter(c.title, c.actOrPhase) : undefined}
+                  />
+                </div>
+              </div>
+            </div>
+          )
+        ) : (
+          sidebarOpen && !focusMode && (
+            <SceneMetadataPanel
+              scene={scene}
+              sceneEntities={sceneEntities}
+              chapters={chapters}
+              onUpdateScene={onUpdateScene}
+              onCreateChapter={onAddChapter ? (c) => onAddChapter(c.title, c.actOrPhase) : undefined}
+            />
+          )
         )}
       </div>
 
