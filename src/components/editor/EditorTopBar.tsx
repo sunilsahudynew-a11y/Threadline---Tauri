@@ -12,7 +12,8 @@ import {
   MoreHorizontal,
   Copy,
   Trash2,
-  Files
+  Files,
+  History
 } from 'lucide-react';
 import { useToast } from '../Toast';
 
@@ -28,6 +29,8 @@ interface EditorTopBarProps {
   onToggleFocusMode: () => void;
   onToggleLeftNav: () => void;
   onToggleSidebar: () => void;
+  onToggleHistory?: () => void;
+  activeMetadataTab?: 'facts' | 'history';
   onToggleSearch: () => void;
   onNavigateToScene: (sceneId: string) => void;
   onUpdateScene?: (fields: Partial<Scene>) => void;
@@ -47,6 +50,8 @@ export const EditorTopBar: React.FC<EditorTopBarProps> = ({
   onToggleFocusMode,
   onToggleLeftNav,
   onToggleSidebar,
+  onToggleHistory,
+  activeMetadataTab = 'facts',
   onToggleSearch,
   onNavigateToScene,
   onUpdateScene,
@@ -110,7 +115,7 @@ export const EditorTopBar: React.FC<EditorTopBarProps> = ({
   }
 
   return (
-    <div className="h-10 border-b border-[rgba(34,30,24,0.12)] bg-[#FAF6EE] px-3 sm:px-5 flex items-center justify-between text-xs select-none shrink-0 z-10">
+    <div className="h-10 border-b border-[rgba(34,30,24,0.12)] bg-[#FAF6EE] px-3 sm:px-5 flex items-center justify-between text-xs select-none shrink-0 relative z-30">
       {/* LEFT: Outline toggle, scene navigation, scene status, word count */}
       <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
         {/* Left Nav toggle */}
@@ -180,7 +185,7 @@ export const EditorTopBar: React.FC<EditorTopBarProps> = ({
             </button>
 
             {showStatusMenu && (
-              <div className="absolute top-full left-0 mt-1 w-36 bg-[#FAF6EE] rounded-[6px] border border-[rgba(34,30,24,0.12)] shadow-warm-modal py-1 z-30 animate-in fade-in duration-100">
+              <div className="absolute top-full left-0 mt-1.5 w-36 bg-[#FAF6EE] rounded-[6px] border border-[rgba(34,30,24,0.15)] shadow-warm-modal py-1 z-50 animate-in fade-in duration-100">
                 {[
                   { key: 'draft', label: 'Drafting' },
                   { key: 'revised', label: 'Revised' },
@@ -236,14 +241,19 @@ export const EditorTopBar: React.FC<EditorTopBarProps> = ({
         <div className="relative" ref={actionsRef}>
           <button
             onClick={() => setShowSceneActions(!showSceneActions)}
-            className="p-1.5 rounded-[5px] text-[#7A705F] hover:text-[#221E18] hover:bg-[#F1EAD9] transition-colors cursor-pointer min-h-[32px] min-w-[32px] flex items-center justify-center"
+            className={`p-1.5 rounded-[5px] transition-colors cursor-pointer min-h-[32px] min-w-[32px] flex items-center justify-center ${
+              showSceneActions
+                ? 'bg-[#F1EAD9] text-[#221E18] shadow-2xs'
+                : 'text-[#7A705F] hover:text-[#221E18] hover:bg-[#F1EAD9]'
+            }`}
             title="Scene Actions"
+            aria-expanded={showSceneActions}
           >
             <MoreHorizontal size={14} />
           </button>
 
           {showSceneActions && (
-            <div className="absolute right-0 top-full mt-1 w-44 bg-[#FAF6EE] rounded-[6px] border border-[rgba(34,30,24,0.12)] shadow-warm-modal py-1 z-30 animate-in fade-in duration-100">
+            <div className="absolute right-0 top-full mt-1.5 w-48 bg-[#FAF6EE] rounded-[6px] border border-[rgba(34,30,24,0.15)] shadow-warm-modal py-1 z-50 animate-in fade-in duration-100">
               <button
                 onClick={handleCopyMarkdown}
                 className="w-full px-3 py-1.5 text-left text-xs text-[#221E18] hover:bg-[#F1EAD9] flex items-center gap-2 cursor-pointer min-h-[32px]"
@@ -299,7 +309,7 @@ export const EditorTopBar: React.FC<EditorTopBarProps> = ({
         <button
           onClick={onToggleSidebar}
           className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-[5px] font-medium text-xs transition-colors cursor-pointer min-h-[32px] ${
-            sidebarOpen
+            sidebarOpen && activeMetadataTab === 'facts'
               ? 'bg-[#F1EAD9] text-[#221E18] font-semibold border border-[rgba(34,30,24,0.12)]'
               : 'text-[#7A705F] hover:text-[#221E18] hover:bg-[#F1EAD9]'
           }`}
@@ -308,6 +318,27 @@ export const EditorTopBar: React.FC<EditorTopBarProps> = ({
           <Compass size={13} />
           <span className="hidden md:inline">Scene Facts</span>
         </button>
+
+        {/* History direct toggle button */}
+        {onToggleHistory && (
+          <button
+            onClick={onToggleHistory}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[5px] font-medium text-xs transition-colors cursor-pointer min-h-[32px] ${
+              sidebarOpen && activeMetadataTab === 'history'
+                ? 'bg-[#F1EAD9] text-[#221E18] font-semibold border border-[rgba(34,30,24,0.12)]'
+                : 'text-[#7A705F] hover:text-[#221E18] hover:bg-[#F1EAD9]'
+            }`}
+            title="Inspect Scene Version History"
+          >
+            <History size={13} className={sidebarOpen && activeMetadataTab === 'history' ? 'text-[#B54B32]' : 'text-[#7A705F]'} />
+            <span className="hidden md:inline">History</span>
+            {(scene.versions || []).length > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full bg-[#B54B32] text-[#FAF6EE] text-[9px] font-mono font-bold">
+                {(scene.versions || []).length}
+              </span>
+            )}
+          </button>
+        )}
       </div>
     </div>
   );

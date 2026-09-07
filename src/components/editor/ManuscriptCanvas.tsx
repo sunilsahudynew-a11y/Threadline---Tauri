@@ -141,7 +141,7 @@ export const ManuscriptCanvas: React.FC<ManuscriptCanvasProps> = ({
       : 'text-lg leading-[1.85]';
 
   return (
-    <div className={`flex-1 flex ${viewMode === 'split' ? 'flex-col md:flex-row' : ''} overflow-hidden bg-[#FAF6EE] relative`}>
+    <div className={`flex-1 min-h-0 h-full max-h-full flex ${viewMode === 'split' ? 'flex-col md:flex-row' : ''} overflow-hidden bg-[#FAF6EE] relative`}>
       {/* TYPEWRITER MODE BADGE (No horizontal line - smooth document shift on newline) */}
       {typewriterMode && viewMode !== 'preview' && (
         <div className="absolute top-3 right-4 sm:right-6 z-20 pointer-events-none flex items-center gap-1.5 px-2.5 py-1 bg-[#F1EAD9] rounded-full border border-[#E5DEC9] text-[10px] sm:text-[11px] font-mono text-[#221E18] shadow-warm-sm select-none animate-in fade-in">
@@ -152,7 +152,7 @@ export const ManuscriptCanvas: React.FC<ManuscriptCanvasProps> = ({
 
       {/* FULL PREVIEW SURFACE (When in 'preview' mode) */}
       {viewMode === 'preview' && (
-        <div className="flex-1 overflow-y-auto no-scrollbar bg-[#FAF6EE] py-8 animate-in fade-in duration-150">
+        <div className="flex-1 min-h-0 h-full flex flex-col bg-[#FAF6EE] animate-in fade-in duration-150">
           <MarkdownPreview
             title={scene.title}
             content={scene.proseContent}
@@ -170,7 +170,7 @@ export const ManuscriptCanvas: React.FC<ManuscriptCanvasProps> = ({
         ref={scrollContainerRef}
         className={`${
           viewMode === 'preview' ? 'hidden' : 'flex-1'
-        } overflow-y-auto no-scrollbar px-3.5 sm:px-6 md:px-12 flex justify-center selection:bg-[#F1EAD9] selection:text-[#221E18] relative ${
+        } min-h-0 h-full overflow-y-auto overscroll-contain scrollbar-subtle px-3.5 sm:px-6 md:px-12 flex justify-center selection:bg-[#F1EAD9] selection:text-[#221E18] relative ${
           typewriterMode ? 'pt-6 sm:pt-8 pb-[70vh]' : 'pt-6 sm:pt-8 pb-36 sm:pb-48'
         } ${viewMode === 'split' ? 'border-b md:border-b-0 md:border-r border-[#E5DEC9]' : ''}`}
       >
@@ -209,12 +209,12 @@ export const ManuscriptCanvas: React.FC<ManuscriptCanvasProps> = ({
           )}
 
           {/* SCENE TITLE HEADER */}
-          <div className="mb-6">
+          <div className="pt-8 sm:pt-12 mb-8 text-center">
             <input
               type="text"
               value={scene.title}
               onChange={(e) => onUpdateScene({ title: e.target.value })}
-              className="w-full text-2xl sm:text-3xl md:text-4xl font-serif font-semibold text-[#221E18] bg-transparent border-0 focus:outline-none placeholder-[#7A705F]/50 tracking-tight"
+              className="w-full text-center text-2xl sm:text-3xl md:text-4xl font-serif font-semibold text-[#221E18] bg-transparent border-0 focus:outline-none placeholder-[#7A705F]/50 tracking-tight"
               placeholder="Scene Title..."
             />
           </div>
@@ -361,7 +361,7 @@ export const ManuscriptCanvas: React.FC<ManuscriptCanvasProps> = ({
 
       {/* LIVE MARKDOWN PREVIEW COLUMN (Visible in 'split' mode) */}
       {viewMode === 'split' && (
-        <div className="flex-1 overflow-y-auto no-scrollbar bg-[#FAF9F5] border-t md:border-t-0 md:border-l border-[#E5DEC9] animate-in fade-in duration-200 min-h-[250px]">
+        <div className="flex-1 min-h-0 h-full flex flex-col bg-[#FAF9F5] border-t md:border-t-0 md:border-l border-[#E5DEC9] animate-in fade-in duration-200 min-h-[250px]">
           <MarkdownPreview
             title={scene.title}
             content={scene.proseContent}

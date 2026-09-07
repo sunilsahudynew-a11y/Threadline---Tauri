@@ -48,50 +48,18 @@ export const INITIAL_CHAPTERS: Chapter[] = [
   {
     id: 'chap-3',
     number: 3,
-    title: "The Alchemist's Kiln",
+    title: 'The Subterranean Foundry',
     actOrPhase: 'Act II: Confrontation',
-    description: 'Silas infiltrates the Old Foundry under the Charles Bridge to uncover the secret guild forge creating reverse escapements.',
-    sceneIds: []
+    description: 'Silas infiltrates the Old Foundry under the Charles Bridge to uncover the secret guild kiln creating reverse escapements.',
+    sceneIds: ['scene-4']
   },
   {
     id: 'chap-4',
     number: 4,
-    title: 'The Reverse Pendulum',
-    actOrPhase: 'Act II: Confrontation',
-    description: 'Midpoint pivot: Silas discovers the automaton does not merely predict disaster—it triggers the clocktower collapse.',
-    sceneIds: []
-  },
-  {
-    id: 'chap-5',
-    number: 5,
-    title: "The Grand Censor's Raid",
-    actOrPhase: 'Act II: Confrontation',
-    description: 'The Imperial Guard seals the guild quarters; Silas loses his workshop and archivist Julian Croft is arrested.',
-    sceneIds: []
-  },
-  {
-    id: 'chap-6',
-    number: 6,
-    title: 'The Broken Escapement',
-    actOrPhase: 'Act II: Confrontation',
-    description: 'Dark Night of the Soul: Trapped in the flooded sewers beneath Quay 4 with the copper sphere ticking backward.',
-    sceneIds: []
-  },
-  {
-    id: 'chap-7',
-    number: 7,
-    title: 'The Solstice Clock',
+    title: 'The Meridian Escapement',
     actOrPhase: 'Act III: Resolution',
-    description: 'Climax: Silas scales the Great Astronomical Dial to halt the reverse gear before the final eclipse hour strikes.',
-    sceneIds: []
-  },
-  {
-    id: 'chap-8',
-    number: 8,
-    title: 'The Quiet Meridian',
-    actOrPhase: 'Act III: Resolution',
-    description: 'Resolution: The restored municipal dial rings true noon; the transformed artisan returns to his workbench.',
-    sceneIds: []
+    description: 'Climax & Resolution: Silas scales the Astronomical Clocktower dial to halt the backward gear before true noon.',
+    sceneIds: ['scene-5']
   }
 ];
 
@@ -120,6 +88,24 @@ export const INITIAL_SCENES: Scene[] = [
         note: 'Check if Bohemian clocksmiths used mutton tallow or whale spermaceti in the 1890s.',
         author: 'Writer Note',
         timestamp: 'Yesterday at 3:15 PM'
+      }
+    ],
+    versions: [
+      {
+        id: 'ver-s1-early',
+        timestamp: '2026-08-10T15:20:00.000Z',
+        title: '1. The Escapement in the Mist',
+        wordCount: 512,
+        label: 'First draft outline beat',
+        proseContent: `The cold had set deep into the granite flags before Silas Vance struck his match. The Old Town tower hummed around him. Above his skull, the crown wheel turned once every minute. A sharp rap struck the street door. Four measured strikes. Inside the dropped pouch lay an unstamped copper sphere, stamped: Do not wind past the equinox.`
+      },
+      {
+        id: 'ver-s1-sensory',
+        timestamp: '2026-08-11T09:45:00.000Z',
+        title: '1. The Escapement in the Mist',
+        wordCount: 680,
+        label: 'Sensory expansion & tallow atmosphere',
+        proseContent: `The cold had set deep into the granite flags before Silas Vance struck his first sulphur match.\n\nThe Old Town tower hummed around him—an old, hollow ribcage of cedar joists and damp lime plaster. Above his skull, the forty-tooth crown wheel turned once every seventy heartbeats, releasing a heavy brass cough into the flue of the chimney.\n\nA sharp rap struck the lower street door. Four measured strikes, followed by the drag of an iron-tipped boot heel.\n\nInside the pouch lay an unstamped copper sphere, no larger than a pigeon’s egg. Stamped along its equator was a single instruction: Do not wind past the equinox.`
       }
     ],
     proseContent: `The cold had set deep into the granite flags before Silas Vance struck his first sulphur match. 
@@ -154,6 +140,16 @@ Inside the pouch lay an unstamped copper sphere, no larger than a pigeon’s egg
     wordCount: 885,
     notes: 'Julian Croft should embody bureaucratic caution. Emphasize the bone micrometer and the ink blot.',
     comments: [],
+    versions: [
+      {
+        id: 'ver-s2-draft',
+        timestamp: '2026-08-11T16:10:00.000Z',
+        title: '2. The Ministry of Calipers',
+        wordCount: 620,
+        label: 'Initial dialogue draft',
+        proseContent: `The Ministry vaults smelled of vinegar, sulphur, and rotting ledger calfskin.\n\nJulian Croft was measuring the thickness of an import seal with a micrometer crafted from blackened whalebone.\n\n"You brought untreated copper into the basement, Silas," Julian said softly without shifting his loupe.\n\nSilas placed the egg on the green blotting felt. "Tell me which foundry cast the seam."\n\nJulian froze. "Where did you get this? The Royal Foundry decommissioned this die fifty years ago."`
+      }
+    ],
     proseContent: `The Ministry vaults smelled of vinegar, sulphur, and rotting ledger calfskin. 
 
 Julian Croft did not look up when Silas approached the high copper clerk’s desk. He was measuring the thickness of an import seal with a micrometer crafted from blackened whalebone.
@@ -188,6 +184,7 @@ Julian touched the sphere with a gloved thumb. "Then your courier is either a gh
     wordCount: 685,
     notes: 'Silas has never held a weapon; his only improvised tool is an adjustable brass spanner.',
     comments: [],
+    versions: [],
     proseContent: `The salt barges sat low in the black current like waterlogged coffins. 
 
 Silas kept his hand buried inside his greatcoat pocket, wrapped around the cold teeth of an adjustable spanner. It was the only implement he possessed with weight enough to simulate courage. The river fog tasted of coal smoke and wet bilge.
@@ -201,6 +198,66 @@ A single lantern flickered between two stacks of tarred hemp rope. Maren was kno
 Maren spat out the frayed hemp. When she turned, her face was drawn pale by the paraffin flame, a dark crescent of dried blood behind her ear.
 
 "No one had the stamps, Silas. The sphere wasn't cast fifty years ago." She stepped into the lantern light, trembling. "It was cast this morning at the Old Foundry."`
+  },
+  {
+    id: 'scene-4',
+    title: '4. The Subterranean Foundry',
+    order: 4,
+    chapterId: 'chap-3',
+    chapterNumber: 3,
+    chapterTitle: 'The Subterranean Foundry',
+    actOrPhase: 'Act II: Confrontation',
+    narrativeBeat: '7. Midpoint Reversal',
+    premise: 'Silas descends beneath the stone bridge into the illicit clockmaker foundry and discovers the reverse escapement.',
+    characters: ['Silas Vance'],
+    location: 'Vaults beneath Charles Bridge',
+    time: 'Two in the morning',
+    pov: 'Silas Vance (Third Limited)',
+    status: 'draft',
+    wordCount: 710,
+    notes: 'The reverberation of the bellows against the stone arches sets the rhythmic tone.',
+    comments: [],
+    versions: [],
+    proseContent: `The stone vaults beneath the fourth bridge pier were never dry. Water seeped between the Romanesque voussoirs, carrying lime stalactites that clicked against Silas’s felt bowler as he stooped.
+
+Through the archway glowed a dull cherry hue. The kiln was small, vented through an abandoned chimney flue directly into the river fog.
+
+On the iron cooling rack lay seven identical copper spheres. In the centre sat an escapement wheel, cut with backwards-leaning ratchet teeth.
+
+Silas took a wooden pin from his pocket and gently urged the wheel clockwise. The pallets seized instantly with a dry screech. He pressed counter-clockwise: the escapement hummed into motion, turning backward with unnatural, fluid ease.
+
+"They aren't building a timer," Silas whispered to the damp bricks. "They are unwinding the municipal standard."`
+  },
+  {
+    id: 'scene-5',
+    title: '5. The Meridian Escapement',
+    order: 5,
+    chapterId: 'chap-4',
+    chapterNumber: 4,
+    chapterTitle: 'The Meridian Escapement',
+    actOrPhase: 'Act III: Resolution',
+    narrativeBeat: '11. Climax & Resolution',
+    premise: 'Silas scales the Astronomical Dial face and locks the true escapement pin as noon strikes across Prague.',
+    characters: ['Silas Vance', 'Archivist Julian Croft'],
+    location: 'Astronomical Clocktower Dial Face',
+    time: 'High noon, clear autumn sky',
+    pov: 'Silas Vance (Third Limited)',
+    status: 'complete',
+    wordCount: 650,
+    notes: 'Culmination of Silas’s craftsmanship: no violence, pure horological precision under pressure.',
+    comments: [],
+    versions: [],
+    proseContent: `The wind above the Old Town square was cold enough to stiffen the grease in Silas's pocket watch.
+
+Below him, five thousand faces were tilted toward the astronomical dial, waiting for the hourly procession of the Apostles. Silas wedged his knees against the lead flashing of the zodiac ring.
+
+Behind the copper plate, the counter-wheel was vibrating, straining against the central arbor to force the sun pointer backward toward midnight.
+
+Silas reached into his breast pocket and drew the hardened steel taper pin Master Bron had gifted him thirty years before. His left thumb trembled once, then steadied as his fingertips found the alignment hole on the bevel gear.
+
+"True solar noon," he whispered.
+
+With a clean strike of his brass spanner, he drove the taper pin through both wheels. The reverse train shrieked and locked solid. A heartbeat later, the great municipal hammer struck the overhead bell with a resounding, golden chime.`
   }
 ];
 
@@ -733,7 +790,6 @@ Maya. Look out the bow port. Now.`
 };
 
 export const INITIAL_PROJECTS: Project[] = [
-  INITIAL_PROJECT,
-  SECOND_PROJECT_BUNDLE.project
+  INITIAL_PROJECT
 ];
 

@@ -95,27 +95,16 @@ export const RichLiveEditor = forwardRef<RichEditorHandle, RichLiveEditorProps>(
       const isMount = lastSavedMarkdownRef.current === null;
       const isSceneChange = currentSceneIdRef.current !== sceneId;
       const isExternalChange = !isMount && !isSceneChange && initialMarkdown !== lastSavedMarkdownRef.current;
+      const isFocused = editorRef.current ? editorRef.current.contains(document.activeElement) : false;
 
-      if (isMount || isSceneChange || isExternalChange) {
-        const isFocused = document.activeElement === editorRef.current;
+      // When the user is actively typing/focused inside this editor, do NOT blast innerHTML unless it's a scene change
+      if (isMount || isSceneChange || (isExternalChange && !isFocused)) {
         editorRef.current.innerHTML = markdownToHtml(initialMarkdown);
         lastSavedMarkdownRef.current = initialMarkdown;
         currentSceneIdRef.current = sceneId;
-
-        // If editor was focused during external change or undo/redo, preserve focus and position caret cleanly at the end
-        if (isFocused && isExternalChange) {
-          editorRef.current.focus();
-          try {
-            const range = document.createRange();
-            range.selectNodeContents(editorRef.current);
-            range.collapse(false);
-            const sel = window.getSelection();
-            if (sel) {
-              sel.removeAllRanges();
-              sel.addRange(range);
-            }
-          } catch (e) {}
-        }
+      } else if (isExternalChange && isFocused) {
+        // Just track the latest initialMarkdown if it differs so we don't desync
+        lastSavedMarkdownRef.current = initialMarkdown;
       }
     }, [initialMarkdown, sceneId]);
 

@@ -49,6 +49,15 @@ export interface SceneComment {
   timestamp: string;
 }
 
+export interface SceneVersion {
+  id: string;
+  timestamp: string;
+  title: string;
+  proseContent: string;
+  wordCount: number;
+  label?: string; // e.g., "Manual snapshot", "Auto-saved revision", "Pre-restore backup"
+}
+
 export interface Scene {
   id: string;
   title: string;
@@ -68,6 +77,7 @@ export interface Scene {
   wordCount: number;
   notes: string;
   comments: SceneComment[];
+  versions?: SceneVersion[];
 }
 
 export interface ContinuityIssue {

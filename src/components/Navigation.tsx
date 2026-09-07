@@ -26,6 +26,11 @@ import { Project } from '../types';
 import { VaultInfo } from '../services/storage/vaultTypes';
 import { ThreadlineBadge } from './common/ThreadlineLogo';
 
+export { NotionSidebar } from './NotionSidebar';
+export type { NotionSidebarProps } from './NotionSidebar';
+export { NotionTopBar } from './NotionTopBar';
+export type { NotionTopBarProps } from './NotionTopBar';
+
 export type ScreenType =
   | 'projects'
   | 'home'
@@ -364,7 +369,7 @@ export const Navigation: React.FC<NavigationProps> = ({
       {/* ========================================================================= */}
       <nav
         id="mobile-bottom-tab-bar"
-        className="md:hidden fixed bottom-0 left-0 right-0 z-40 h-14 bg-[#FAF6EE] border-t border-[rgba(34,30,24,0.12)] flex items-center justify-around px-2 select-none shadow-warm-modal"
+        className="md:hidden fixed bottom-3 inset-x-3 z-40 h-14 bg-[#FAF6EE]/95 backdrop-blur-md border border-[rgba(34,30,24,0.16)] rounded-[14px] flex items-center justify-around px-2 select-none shadow-warm-lg"
       >
         {mobileTabItems.map((item) => {
           const isActive = normalizedScreen === item.screen;

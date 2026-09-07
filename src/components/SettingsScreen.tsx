@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AIAuditLog } from '../types';
 import { VaultInfo } from '../services/storage/vaultTypes';
+import { ThemeConfig, ThemeFamily, ThemeMode, AVAILABLE_THEMES, getSavedTheme, applyThemeToDOM } from '../services/theme/themeConfig';
 import {
   ShieldCheck,
   Lock,
@@ -16,7 +17,10 @@ import {
   FolderOpen,
   FolderSync,
   HardDrive,
-  CheckCircle2
+  CheckCircle2,
+  Palette,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 interface SettingsScreenProps {
@@ -26,6 +30,11 @@ interface SettingsScreenProps {
   onExportFullArchive: () => void;
   vaultInfo?: VaultInfo | null;
   onOpenVaultManager?: () => void;
+  onOpenTour?: () => void;
+  themeConfig?: ThemeConfig;
+  onSelectThemeFamily?: (family: ThemeFamily) => void;
+  onSelectThemeMode?: (mode: ThemeMode) => void;
+  onToggleTheme?: () => void;
 }
 
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({
@@ -34,9 +43,38 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   onClearAllData,
   onExportFullArchive,
   vaultInfo,
-  onOpenVaultManager
+  onOpenVaultManager,
+  onOpenTour,
+  themeConfig: propThemeConfig,
+  onSelectThemeFamily,
+  onSelectThemeMode,
+  onToggleTheme
 }) => {
   const [resetConfirm, setResetConfirm] = useState(false);
+  
+  // Local fallback if not provided via props
+  const [localThemeConfig, setLocalThemeConfig] = useState<ThemeConfig>(() => getSavedTheme());
+  const activeConfig = propThemeConfig || localThemeConfig;
+
+  const handleChooseFamily = (family: ThemeFamily) => {
+    if (onSelectThemeFamily) {
+      onSelectThemeFamily(family);
+    } else {
+      const next = { ...localThemeConfig, family };
+      setLocalThemeConfig(next);
+      applyThemeToDOM(next);
+    }
+  };
+
+  const handleChooseMode = (mode: ThemeMode) => {
+    if (onSelectThemeMode) {
+      onSelectThemeMode(mode);
+    } else {
+      const next = { ...localThemeConfig, mode };
+      setLocalThemeConfig(next);
+      applyThemeToDOM(next);
+    }
+  };
 
   const isVaultConnected = vaultInfo && vaultInfo.mode !== 'browser-cached';
 
@@ -44,17 +82,119 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-10 text-[#221E18]">
       <div className="mb-6 sm:mb-8">
         <span className="section-label block mb-1">
-          Security &amp; Sovereignty
+          Preferences &amp; Sovereignty
         </span>
         <h2 className="text-2xl sm:text-3xl font-serif text-[#221E18] font-semibold">
-          Settings &amp; Vault Sovereignty
+          Studio Settings &amp; Themes
         </h2>
         <p className="text-[#7A705F] text-xs sm:text-sm mt-1">
-          Complete creative sovereignty. Your words remain strictly your own.
+          Customize workspace aesthetic palettes, dark/light modes, and vault sovereignty.
         </p>
       </div>
 
       <div className="space-y-6">
+        {/* Workspace Theme & Appearance Section */}
+        <div className="bg-[#FAF6EE] rounded-[6px] border border-[rgba(34,30,24,0.12)] p-5 sm:p-6 shadow-warm-sm space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[rgba(34,30,24,0.1)] pb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-[5px] bg-[#F1EAD9] text-[#B54B32] border border-[rgba(34,30,24,0.1)]">
+                <Palette size={18} />
+              </div>
+              <div>
+                <h3 className="font-serif font-bold text-[#221E18] text-base">
+                  Workspace Appearance &amp; Themes
+                </h3>
+                <p className="text-xs text-[#7A705F] mt-0.5">
+                  Select your preferred aesthetic design language and dark or light contrast.
+                </p>
+              </div>
+            </div>
+
+            {/* Dark / Light Toggle Switch */}
+            <div className="flex items-center gap-1 p-1 bg-[#F1EAD9] rounded-[6px] border border-[rgba(34,30,24,0.12)] self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={() => handleChooseMode('light')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-xs font-medium transition-all cursor-pointer ${
+                  activeConfig.mode === 'light'
+                    ? 'bg-[#FAF6EE] text-[#221E18] shadow-xs'
+                    : 'text-[#7A705F] hover:text-[#221E18]'
+                }`}
+              >
+                <Sun size={13} className={activeConfig.mode === 'light' ? 'text-amber-600' : ''} />
+                <span>Light</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleChooseMode('dark')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-xs font-medium transition-all cursor-pointer ${
+                  activeConfig.mode === 'dark'
+                    ? 'bg-[#221E18] text-[#FAF6EE] shadow-xs'
+                    : 'text-[#7A705F] hover:text-[#221E18]'
+                }`}
+              >
+                <Moon size={13} className={activeConfig.mode === 'dark' ? 'text-indigo-300' : ''} />
+                <span>Dark</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Theme Family Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+            {AVAILABLE_THEMES.map((theme) => {
+              const isSelected = activeConfig.family === theme.id;
+              const previewBg = activeConfig.mode === 'dark' ? theme.darkBg : theme.lightBg;
+              const previewAccent = activeConfig.mode === 'dark' ? theme.darkAccent : theme.lightAccent;
+
+              return (
+                <button
+                  key={theme.id}
+                  type="button"
+                  onClick={() => handleChooseFamily(theme.id)}
+                  className={`p-4 rounded-[6px] border text-left transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden ${
+                    isSelected
+                      ? 'border-[#B54B32] bg-[#F1EAD9]/60 shadow-warm-sm ring-2 ring-[#B54B32]/30'
+                      : 'border-[rgba(34,30,24,0.12)] bg-[#FAF6EE] hover:bg-[#F1EAD9]/40'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <span className="font-serif font-bold text-sm text-[#221E18]">
+                        {theme.name}
+                      </span>
+                      {isSelected && (
+                        <span className="flex items-center gap-1 text-[10px] font-mono font-semibold text-[#B54B32] bg-[#B54B32]/10 px-2 py-0.5 rounded">
+                          <Check size={11} /> Active
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-[#7A705F] leading-relaxed mb-3">
+                      {theme.description}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-[rgba(34,30,24,0.08)]">
+                    <span className="text-[10px] font-mono text-[#7A705F]">
+                      {theme.fontBadge}
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <div
+                        className="w-4 h-4 rounded-full border border-black/15 shadow-xs"
+                        style={{ backgroundColor: previewBg }}
+                        title="Canvas surface color"
+                      />
+                      <div
+                        className="w-4 h-4 rounded-full border border-black/15 shadow-xs"
+                        style={{ backgroundColor: previewAccent }}
+                        title="Accent color"
+                      />
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
         {/* Privacy Declaration Card */}
         <div className="bg-[#F1EAD9] border border-[rgba(34,30,24,0.16)] rounded-[6px] p-5 sm:p-6 shadow-warm-sm">
           <div className="flex items-start gap-3.5">
@@ -183,6 +323,28 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   </div>
                 </div>
               ))
+            )}
+          </div>
+        </div>
+
+        {/* Studio Tour & Onboarding Card */}
+        <div className="bg-[#FAF6EE] rounded-[6px] border border-[rgba(34,30,24,0.12)] p-5 sm:p-6 shadow-warm-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="font-serif font-bold text-[#221E18] text-base">
+                Onboarding &amp; Studio Tour
+              </h3>
+              <p className="text-xs text-[#7A705F] mt-0.5">
+                Re-take the interactive orientation walkthrough to explore features like the Notion sidebar, mobile navigation bar, Corkboard beats, and local Vault storage.
+              </p>
+            </div>
+            {onOpenTour && (
+              <button
+                onClick={onOpenTour}
+                className="px-4 py-2 bg-[#B54B32] hover:bg-[#9E3E27] text-[#FAF6EE] rounded-[6px] text-xs font-semibold flex items-center justify-center gap-1.5 shadow-warm-xs transition-colors cursor-pointer shrink-0 min-h-[38px]"
+              >
+                <Sparkles size={14} /> Start Studio Tour
+              </button>
             )}
           </div>
         </div>

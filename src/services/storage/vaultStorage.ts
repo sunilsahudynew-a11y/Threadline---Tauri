@@ -1,4 +1,4 @@
-import { ProjectBundle, Scene, Chapter } from '../../types';
+import { Project, ProjectBundle, Scene, Chapter } from '../../types';
 import { VaultInfo, VaultSyncResult } from './vaultTypes';
 
 // Detect if running inside Tauri native runtime
@@ -491,13 +491,42 @@ export async function readBundleFromVault(projectId: string): Promise<ProjectBun
       const sep = vaultPath.includes('\\') ? '\\' : '/';
 
       const projectJsonPath = `${vaultPath}${sep}project.json`;
-      if (!(await exists(projectJsonPath))) return null;
+      let project: Project;
 
-      const project = JSON.parse(await readTextFile(projectJsonPath));
+      if (await exists(projectJsonPath).catch(() => false)) {
+        project = JSON.parse(await readTextFile(projectJsonPath));
+      } else {
+        // Fallback: Check if there are markdown files in Manuscript/ or root folder to import
+        const manuscriptDir = `${vaultPath}${sep}Manuscript`;
+        const hasManuscript = await exists(manuscriptDir).catch(() => false);
+        let hasAnyMd = false;
+        if (hasManuscript) {
+          const entries = await readDir(manuscriptDir).catch(() => []);
+          hasAnyMd = entries.some((e) => e.name && e.name.endsWith('.md'));
+        }
+        if (!hasAnyMd) {
+          const rootEntries = await readDir(vaultPath).catch(() => []);
+          hasAnyMd = rootEntries.some((e) => e.name && e.name.endsWith('.md'));
+        }
+
+        if (!hasAnyMd) {
+          // Genuinely empty folder or brand new folder not yet synced
+          return null;
+        }
+
+        const folderName = vaultPath.split(/[/\\]/).filter(Boolean).pop() || 'Imported Vault';
+        project = {
+          id: projectId,
+          title: folderName,
+          type: 'Novel',
+          lastActiveSceneId: 'scene-1',
+          updatedAt: new Date().toISOString()
+        };
+      }
 
       let chapters: Chapter[] = [];
       const chaptersPath = `${vaultPath}${sep}chapters.json`;
-      if (await exists(chaptersPath)) {
+      if (await exists(chaptersPath).catch(() => false)) {
         try {
           chapters = JSON.parse(await readTextFile(chaptersPath));
         } catch {}
@@ -506,8 +535,8 @@ export async function readBundleFromVault(projectId: string): Promise<ProjectBun
       // Read Manuscript/
       const scenes: Scene[] = [];
       const manuscriptDir = `${vaultPath}${sep}Manuscript`;
-      if (await exists(manuscriptDir)) {
-        const entries = await readDir(manuscriptDir);
+      if (await exists(manuscriptDir).catch(() => false)) {
+        const entries = await readDir(manuscriptDir).catch(() => []);
         // Sort entries by filename (01 - Title.md)
         entries.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
@@ -518,6 +547,19 @@ export async function readBundleFromVault(projectId: string): Promise<ProjectBun
             const sc = markdownFileToScene(raw, `scene-${idx + 1}`, idx);
             scenes.push(sc);
           }
+        }
+      }
+
+      // Fallback: If no scenes in Manuscript/, check root folder for .md files
+      if (scenes.length === 0) {
+        const rootEntries = await readDir(vaultPath).catch(() => []);
+        const mdEntries = rootEntries.filter((e) => e.name && e.name.endsWith('.md') && !e.name.startsWith('.'));
+        mdEntries.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        for (let idx = 0; idx < mdEntries.length; idx++) {
+          const entry = mdEntries[idx];
+          const raw = await readTextFile(`${vaultPath}${sep}${entry.name}`);
+          const sc = markdownFileToScene(raw, `scene-${idx + 1}`, idx);
+          scenes.push(sc);
         }
       }
 

@@ -36,23 +36,14 @@
     {
       "identifier": "fs:scope",
       "allow": [
-        { "path": "/**" },
-        { "path": "/**/*" },
-        { "path": "**" },
-        { "path": "**/*" },
         { "path": "$HOME/**" },
-        { "path": "$HOME/**/*" },
         { "path": "$DOCUMENT/**" },
-        { "path": "$DOCUMENT/**/*" },
         { "path": "$DESKTOP/**" },
-        { "path": "$DESKTOP/**/*" },
         { "path": "$DOWNLOAD/**" },
-        { "path": "$DOWNLOAD/**/*" },
         { "path": "$APPDATA/**" },
         { "path": "$APPLOCALDATA/**" },
         { "path": "$TEMP/**" },
-        { "path": "*:**" },
-        { "path": "*:\\**" }
+        { "path": "/**" }
       ]
     }
   ]

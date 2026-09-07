@@ -26,11 +26,11 @@ export function ensureChapters(
     return chapters.map((chap, idx) => {
       // Find scenes that explicitly point to this chapter
       const matchingScenes = scenes.filter(
-        (s) => s.chapterId === chap.id || s.chapterNumber === chap.number
+        (s) => s && (s.chapterId === chap.id || (s.chapterNumber !== undefined && s.chapterNumber === chap.number))
       );
       const sceneIds = matchingScenes.length > 0
         ? matchingScenes.map((s) => s.id)
-        : chap.sceneIds.filter((id) => scenes.some((s) => s.id === id));
+        : (chap.sceneIds || []).filter((id) => scenes.some((s) => s && s.id === id));
 
       return {
         ...chap,
@@ -46,7 +46,9 @@ export function ensureChapters(
   let currentChapterNum = 1;
 
   scenes.forEach((scene, index) => {
+    if (!scene) return;
     const chapKey = scene.chapterId || (scene.chapterNumber ? `chap-${scene.chapterNumber}` : undefined);
+    const sceneTitle = scene.title || `Scene ${index + 1}`;
     
     if (chapKey && chapterMap.has(chapKey)) {
       const existing = chapterMap.get(chapKey)!;
@@ -67,7 +69,7 @@ export function ensureChapters(
       chapterMap.set(fallbackId, {
         id: fallbackId,
         number: index + 1,
-        title: scene.title.replace(/^(\d+\.|\w+\s\w+:)\s*/i, '') || `Chapter ${index + 1}`,
+        title: sceneTitle.replace(/^(\d+\.|\w+\s\w+:)\s*/i, '') || `Chapter ${index + 1}`,
         actOrPhase: scene.actOrPhase || 'Act I',
         sceneIds: [scene.id]
       });
@@ -184,10 +186,11 @@ export function getAllActs(chapters: Chapter[], scenes: Scene[]): string[] {
  * Falls back to checking the parent chapter's act if scene has no explicit act.
  */
 export function getScenesForAct(allScenes: Scene[], actName: string, chapters: Chapter[]): Scene[] {
-  const targetAct = actName.trim().toLowerCase();
+  if (!Array.isArray(allScenes)) return [];
+  const targetAct = (actName || '').trim().toLowerCase();
   const chapterActMap = new Map<string, string>();
-  chapters.forEach((c) => {
-    if (c.actOrPhase) {
+  (chapters || []).forEach((c) => {
+    if (c?.actOrPhase) {
       chapterActMap.set(c.id, c.actOrPhase.trim().toLowerCase());
       chapterActMap.set(String(c.number), c.actOrPhase.trim().toLowerCase());
     }
@@ -195,6 +198,7 @@ export function getScenesForAct(allScenes: Scene[], actName: string, chapters: C
 
   return allScenes
     .filter((s) => {
+      if (!s) return false;
       const sceneAct = s.actOrPhase?.trim().toLowerCase();
       if (sceneAct) {
         return sceneAct === targetAct;
@@ -215,8 +219,9 @@ export function getScenesForAct(allScenes: Scene[], actName: string, chapters: C
  * Returns all chapters categorized under a specific Act.
  */
 export function getChaptersForAct(chapters: Chapter[], actName: string): Chapter[] {
-  const targetAct = actName.trim().toLowerCase();
-  return chapters.filter((c) => (c.actOrPhase?.trim().toLowerCase() || 'act i: setup') === targetAct);
+  if (!Array.isArray(chapters)) return [];
+  const targetAct = (actName || '').trim().toLowerCase();
+  return chapters.filter((c) => (c?.actOrPhase?.trim().toLowerCase() || 'act i: setup') === targetAct);
 }
 
 export interface DramaticBeatDefinition {

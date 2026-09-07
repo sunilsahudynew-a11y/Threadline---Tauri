@@ -34,7 +34,11 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const showToast = useCallback((message: string, type: ToastType = 'success', duration = 3000) => {
     const id = 'toast-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6);
-    setToasts((prev) => [...prev, { id, message, type, duration }]);
+    
+    // Safely defer toast creation to next tick to avoid React set-state-in-render warnings
+    setTimeout(() => {
+      setToasts((prev) => [...prev, { id, message, type, duration }]);
+    }, 0);
 
     if (duration > 0) {
       setTimeout(() => {
@@ -44,7 +48,9 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const removeToast = (id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 0);
   };
 
   return (

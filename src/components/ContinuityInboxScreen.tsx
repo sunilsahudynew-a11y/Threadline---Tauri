@@ -59,9 +59,9 @@ export const ContinuityInboxScreen: React.FC<ContinuityInboxScreenProps> = ({
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+    <div className="w-full max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-8 min-w-0 overflow-x-hidden">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8 w-full min-w-0">
         <div>
           <span className="text-[10px] font-mono font-semibold tracking-[0.14em] text-[#7A705F] uppercase">
             Evidence-Based Analysis
@@ -74,7 +74,7 @@ export const ContinuityInboxScreen: React.FC<ContinuityInboxScreenProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
           {onCreateIssue && (
             <button
               onClick={() => setShowLogModal(true)}
@@ -257,8 +257,8 @@ export const ContinuityInboxScreen: React.FC<ContinuityInboxScreenProps> = ({
       )}
 
       {/* Filter Tabs */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-2 border-b border-[rgba(34,30,24,0.12)]">
-        <div className="flex gap-1 text-xs bg-[#F1EAD9] p-0.5 rounded-[6px] border border-[rgba(34,30,24,0.12)] self-start overflow-x-auto no-scrollbar">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-2 border-b border-[rgba(34,30,24,0.12)] w-full min-w-0">
+        <div className="flex gap-1 text-xs bg-[#F1EAD9] p-0.5 rounded-[6px] border border-[rgba(34,30,24,0.12)] overflow-x-auto no-scrollbar w-full sm:w-auto max-w-full min-w-0">
           <button
             onClick={() => setFilter('open')}
             className={`px-3 py-1.5 rounded-[5px] font-medium transition-colors cursor-pointer min-h-[36px] whitespace-nowrap ${
@@ -363,44 +363,44 @@ export const ContinuityInboxScreen: React.FC<ContinuityInboxScreenProps> = ({
               </div>
 
               {/* Side-by-Side Passages Comparison */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full min-w-0">
                 {/* Passage A */}
-                <div className="bg-[#FAF6EE] rounded-[6px] border border-[rgba(34,30,24,0.12)] p-3.5 flex flex-col justify-between">
+                <div className="bg-[#FAF6EE] rounded-[6px] border border-[rgba(34,30,24,0.12)] p-3.5 flex flex-col justify-between min-w-0">
                   <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-[10px] font-bold uppercase font-mono text-[#7A705F]">
+                    <div className="flex items-center justify-between mb-1.5 gap-2">
+                      <span className="text-[10px] font-bold uppercase font-mono text-[#7A705F] shrink-0">
                         Evidence Passage 1
                       </span>
                       <button
                         onClick={() => onNavigateToScene(issue.passageA.sceneId)}
-                        className="text-[11px] text-[#B54B32] hover:text-[#9E3E27] flex items-center gap-1 font-medium cursor-pointer"
+                        className="text-[11px] text-[#B54B32] hover:text-[#9E3E27] flex items-center gap-1 font-medium cursor-pointer truncate"
                       >
-                        <span>{issue.passageA.sceneTitle}</span>
-                        <ArrowRight size={11} />
+                        <span className="truncate">{issue.passageA.sceneTitle}</span>
+                        <ArrowRight size={11} className="shrink-0" />
                       </button>
                     </div>
-                    <p className="font-mono text-xs text-[#221E18] italic leading-relaxed">
+                    <p className="font-mono text-xs text-[#221E18] italic leading-relaxed break-words">
                       "{issue.passageA.excerpt}"
                     </p>
                   </div>
                 </div>
 
                 {/* Passage B */}
-                <div className="bg-[#FAF6EE] rounded-[6px] border border-[rgba(34,30,24,0.12)] p-3.5 flex flex-col justify-between">
+                <div className="bg-[#FAF6EE] rounded-[6px] border border-[rgba(34,30,24,0.12)] p-3.5 flex flex-col justify-between min-w-0">
                   <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-[10px] font-bold uppercase font-mono text-[#7A705F]">
+                    <div className="flex items-center justify-between mb-1.5 gap-2">
+                      <span className="text-[10px] font-bold uppercase font-mono text-[#7A705F] shrink-0">
                         Evidence Passage 2
                       </span>
                       <button
                         onClick={() => onNavigateToScene(issue.passageB.sceneId)}
-                        className="text-[11px] text-[#B54B32] hover:text-[#9E3E27] flex items-center gap-1 font-medium cursor-pointer"
+                        className="text-[11px] text-[#B54B32] hover:text-[#9E3E27] flex items-center gap-1 font-medium cursor-pointer truncate"
                       >
-                        <span>{issue.passageB.sceneTitle}</span>
-                        <ArrowRight size={11} />
+                        <span className="truncate">{issue.passageB.sceneTitle}</span>
+                        <ArrowRight size={11} className="shrink-0" />
                       </button>
                     </div>
-                    <p className="font-mono text-xs text-[#221E18] italic leading-relaxed">
+                    <p className="font-mono text-xs text-[#221E18] italic leading-relaxed break-words">
                       "{issue.passageB.excerpt}"
                     </p>
                   </div>
@@ -408,8 +408,8 @@ export const ContinuityInboxScreen: React.FC<ContinuityInboxScreenProps> = ({
               </div>
 
               {/* Action Buttons */}
-              <div className="pt-3 border-t border-[rgba(34,30,24,0.12)] flex flex-wrap items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-2 flex-wrap">
+              <div className="pt-3 border-t border-[rgba(34,30,24,0.12)] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs w-full min-w-0">
+                <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                   <button
                     onClick={() => onUpdateIssue({ ...issue, status: 'intentional' })}
                     className="px-3 py-1.5 rounded-[5px] border border-[#35505F]/40 bg-[#35505F]/10 text-[#35505F] hover:bg-[#35505F]/20 font-medium transition-colors cursor-pointer min-h-[36px]"

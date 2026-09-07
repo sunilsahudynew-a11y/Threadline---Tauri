@@ -29,7 +29,27 @@ import {
   INITIAL_PROJECTS,
   SECOND_PROJECT_BUNDLE
 } from './data/initialData';
-import { Navigation, ScreenType } from './components/Navigation';
+import { Navigation, ScreenType, NotionSidebar, NotionTopBar } from './components/Navigation';
+import { AppTourModal } from './components/AppTourModal';
+import { hasCompletedTour } from './utils/cookieUtils';
+import { motion, AnimatePresence } from 'motion/react';
+import { ThemeConfig, ThemeFamily, ThemeMode, AVAILABLE_THEMES, getSavedTheme, applyThemeToDOM } from './services/theme/themeConfig';
+import {
+  FileText,
+  Layers,
+  Compass,
+  Sparkles,
+  MoreHorizontal,
+  FolderKanban,
+  BookOpen,
+  Sliders,
+  Download,
+  Settings,
+  HardDrive,
+  Moon,
+  Sun,
+  X
+} from 'lucide-react';
 import { HomeScreen } from './components/HomeScreen';
 import { EditorScreen } from './components/EditorScreen';
 import { StoryBibleScreen } from './components/StoryBibleScreen';
@@ -149,6 +169,82 @@ function ThreadlineApp() {
     return 'home';
   });
 
+  // Notion-style Sidebar state
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('threadline_sidebar_open');
+      if (saved !== null) {
+        return saved === 'true';
+      }
+      return window.innerWidth >= 1024;
+    }
+    return true;
+  });
+
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [showMobileMoreSheet, setShowMobileMoreSheet] = useState(false);
+  const [isTourOpen, setIsTourOpen] = useState(() => !hasCompletedTour());
+
+  const handleToggleSidebar = () => {
+    setIsSidebarOpen((prev) => {
+      const next = !prev;
+      localStorage.setItem('threadline_sidebar_open', String(next));
+      return next;
+    });
+  };
+
+  // Keyboard shortcut: Cmd+K / Ctrl+K for search, Cmd+\ or Ctrl+\ to toggle Notion sidebar
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        setIsCommandPaletteOpen((prev) => !prev);
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === '\\') {
+        e.preventDefault();
+        handleToggleSidebar();
+        return;
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Full Theme System State (Threadline, Notion, Obsidian, Ubuntu x Light/Dark)
+  const [themeConfig, setThemeConfig] = useState<ThemeConfig>(() => getSavedTheme());
+
+  // Apply theme to DOM on mount and on changes
+  useEffect(() => {
+    applyThemeToDOM(themeConfig);
+  }, [themeConfig]);
+
+  // Derived legacy theme mode for backward compatibility with child components
+  const theme = themeConfig.mode === 'dark' ? 'lamplight' : 'paper';
+
+  const handleToggleTheme = () => {
+    const nextMode: ThemeMode = themeConfig.mode === 'light' ? 'dark' : 'light';
+    const nextConfig: ThemeConfig = { ...themeConfig, mode: nextMode };
+    setThemeConfig(nextConfig);
+    applyThemeToDOM(nextConfig);
+    showToast(nextMode === 'dark' ? 'Switched to Dark Mode' : 'Switched to Light Mode');
+  };
+
+  const handleSelectThemeFamily = (family: ThemeFamily) => {
+    const nextConfig: ThemeConfig = { ...themeConfig, family };
+    setThemeConfig(nextConfig);
+    applyThemeToDOM(nextConfig);
+    const themeName = AVAILABLE_THEMES.find((t) => t.id === family)?.name || family;
+    showToast(`Applied ${themeName} Theme`);
+  };
+
+  const handleSelectThemeMode = (mode: ThemeMode) => {
+    const nextConfig: ThemeConfig = { ...themeConfig, mode };
+    setThemeConfig(nextConfig);
+    applyThemeToDOM(nextConfig);
+    showToast(mode === 'dark' ? 'Switched to Dark Mode' : 'Switched to Light Mode');
+  };
+
   // Synchronize browser history / URL with /landing and reset scroll to top smoothly
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -192,7 +288,7 @@ function ThreadlineApp() {
 
   // Multi-Project Catalog
   const [projects, setProjects] = useState<Project[]>(() => {
-    const saved = localStorage.getItem('threadline_projects_list');
+    const saved = localStorage.getItem('threadline_projects_list_v2');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -204,7 +300,7 @@ function ThreadlineApp() {
     if (legacy) {
       try {
         const parsedLegacy = JSON.parse(legacy);
-        return [parsedLegacy, SECOND_PROJECT_BUNDLE.project];
+        return [parsedLegacy];
       } catch (e) {}
     }
     return INITIAL_PROJECTS;
@@ -310,7 +406,7 @@ function ThreadlineApp() {
 
   // Persist Projects List and Active ID
   useEffect(() => {
-    localStorage.setItem('threadline_projects_list', JSON.stringify(projects));
+    localStorage.setItem('threadline_projects_list_v2', JSON.stringify(projects));
   }, [projects]);
 
   useEffect(() => {
@@ -1149,27 +1245,121 @@ function ThreadlineApp() {
     showToast(`Reloaded manuscript from ${vaultInfo?.folderName || 'folder'}!`);
   };
 
+  const isFullScreenPage = currentScreen === 'new-project' || currentScreen === 'landing';
+
   return (
-    <div className="min-h-screen bg-[#FAF6EE] text-[#221E18] flex flex-col font-sans">
-      {/* Top Navigation Bar (Hidden in new project wizard and on the dedicated landing page) */}
-      {currentScreen !== 'new-project' && currentScreen !== 'landing' && (
-        <Navigation
-          currentScreen={currentScreen}
-          onNavigate={(screen) => setCurrentScreen(screen)}
-          openContinuityCount={openContinuityCount}
-          projectTitle={project.title}
-          allProjects={projects}
-          activeProjectId={activeProjectId}
-          onSelectProject={(id) => handleSwitchProject(id, 'editor')}
-          onStartNewProject={() => setCurrentScreen('new-project')}
-          onOpenSearch={() => setIsCommandPaletteOpen(true)}
-          vaultInfo={vaultInfo}
-          onOpenVaultManager={() => setIsVaultModalOpen(true)}
-        />
+    <div
+      className={`bg-[#FAF6EE] text-[#221E18] font-sans ${
+        isFullScreenPage
+          ? 'min-h-screen flex flex-col'
+          : 'h-screen w-screen flex flex-row overflow-hidden'
+      }`}
+    >
+      {/* 1. NOTION SIDEBAR (Desktop - Collapsible) */}
+      {!isFullScreenPage && isSidebarOpen && (
+        <div className="hidden md:flex h-full shrink-0">
+          <NotionSidebar
+            currentScreen={currentScreen}
+            onNavigate={(screen) => setCurrentScreen(screen)}
+            openContinuityCount={openContinuityCount}
+            projectTitle={project.title}
+            allProjects={projects}
+            activeProjectId={activeProjectId}
+            onSelectProject={(id) => handleSwitchProject(id, 'editor')}
+            onStartNewProject={() => setCurrentScreen('new-project')}
+            onOpenSearch={() => setIsCommandPaletteOpen(true)}
+            vaultInfo={vaultInfo}
+            onOpenVaultManager={() => setIsVaultModalOpen(true)}
+            theme={theme}
+            onToggleTheme={handleToggleTheme}
+            chapters={chapters}
+            scenes={scenes}
+            activeSceneId={activeSceneId}
+            onSelectScene={(sceneId) => {
+              setActiveSceneId(sceneId);
+              setCurrentScreen('editor');
+            }}
+            onAddScene={handleAddScene}
+            onAddChapter={() => handleAddChapter()}
+            isOpen={isSidebarOpen}
+            onClose={handleToggleSidebar}
+            isMobile={false}
+          />
+        </div>
       )}
 
-      {/* Screen Routing */}
-      <main className="flex-1 flex flex-col">
+      {/* 2. NOTION SIDEBAR (Mobile Slide-out Drawer) */}
+      {!isFullScreenPage && isMobileSidebarOpen && (
+        <div className="md:hidden fixed inset-0 z-50 flex">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+            onClick={() => setIsMobileSidebarOpen(false)}
+          />
+          {/* Drawer Panel */}
+          <div className="relative z-10 animate-in slide-in-from-left duration-200 h-full">
+            <NotionSidebar
+              currentScreen={currentScreen}
+              onNavigate={(screen) => setCurrentScreen(screen)}
+              openContinuityCount={openContinuityCount}
+              projectTitle={project.title}
+              allProjects={projects}
+              activeProjectId={activeProjectId}
+              onSelectProject={(id) => handleSwitchProject(id, 'editor')}
+              onStartNewProject={() => setCurrentScreen('new-project')}
+              onOpenSearch={() => setIsCommandPaletteOpen(true)}
+              vaultInfo={vaultInfo}
+              onOpenVaultManager={() => setIsVaultModalOpen(true)}
+              theme={theme}
+              onToggleTheme={handleToggleTheme}
+              chapters={chapters}
+              scenes={scenes}
+              activeSceneId={activeSceneId}
+              onSelectScene={(sceneId) => {
+                setActiveSceneId(sceneId);
+                setCurrentScreen('editor');
+              }}
+              onAddScene={handleAddScene}
+              onAddChapter={() => handleAddChapter()}
+              isOpen={true}
+              onClose={() => setIsMobileSidebarOpen(false)}
+              isMobile={true}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* 3. MAIN WORKSPACE / CONTENT COLUMN */}
+      <div className={`flex-1 flex flex-col min-w-0 h-full overflow-hidden relative ${isFullScreenPage ? 'min-h-screen' : ''}`}>
+        {/* Notion Top Breadcrumb Bar */}
+        {!isFullScreenPage && (
+          <NotionTopBar
+            currentScreen={currentScreen}
+            onNavigate={(screen) => setCurrentScreen(screen)}
+            projectTitle={project.title}
+            activeScene={activeScene}
+            isSidebarOpen={isSidebarOpen}
+            onToggleSidebar={handleToggleSidebar}
+            onOpenMobileDrawer={() => setIsMobileSidebarOpen(true)}
+            onOpenSearch={() => setIsCommandPaletteOpen(true)}
+            vaultInfo={vaultInfo}
+            onOpenVaultManager={() => setIsVaultModalOpen(true)}
+            theme={theme}
+            onToggleTheme={handleToggleTheme}
+          />
+        )}
+
+        {/* Screen Routing */}
+        <main className={`flex-1 min-h-0 w-full max-w-full overflow-x-hidden flex flex-col ${currentScreen === 'editor' ? 'overflow-hidden' : 'overflow-y-auto'} ${!isFullScreenPage ? 'pb-20 md:pb-0' : ''}`}>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentScreen}
+              initial={{ opacity: 0, y: 3 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15, ease: 'easeOut' }}
+              className="flex-1 flex flex-col min-h-0 w-full max-w-full overflow-x-hidden"
+            >
         {currentScreen === 'projects' && (
           <ProjectsRootScreen
             projects={projects}
@@ -1362,6 +1552,9 @@ function ThreadlineApp() {
               setActiveSceneId(sceneId);
               setCurrentScreen('editor');
             }}
+            onUpdateScene={(sceneId, fields) => {
+              handleUpdateActiveScene(fields, sceneId);
+            }}
           />
         )}
 
@@ -1369,6 +1562,7 @@ function ThreadlineApp() {
           <ExportScreen
             project={project}
             scenes={scenes}
+            chapters={chapters}
             entities={entities}
             threads={threads}
           />
@@ -1382,6 +1576,11 @@ function ThreadlineApp() {
             onExportFullArchive={handleExportFullArchive}
             vaultInfo={vaultInfo}
             onOpenVaultManager={() => setIsVaultModalOpen(true)}
+            onOpenTour={() => setIsTourOpen(true)}
+            themeConfig={themeConfig}
+            onSelectThemeFamily={handleSelectThemeFamily}
+            onSelectThemeMode={handleSelectThemeMode}
+            onToggleTheme={handleToggleTheme}
           />
         )}
 
@@ -1442,7 +1641,10 @@ function ThreadlineApp() {
             onOpenSampleProject={(projId) => handleSwitchProject(projId, 'editor')}
           />
         )}
-      </main>
+            </motion.div>
+          </AnimatePresence>
+        </main>
+      </div>
 
       {/* Global Command Palette (⌘K / Ctrl+K) */}
       <CommandPalette
@@ -1457,6 +1659,7 @@ function ThreadlineApp() {
           setCurrentScreen('editor');
         }}
         onAddScene={handleAddScene}
+        onOpenTour={() => setIsTourOpen(true)}
       />
 
       {/* Dedicated Local Project Folder / Vault Manager Modal */}
@@ -1466,6 +1669,205 @@ function ThreadlineApp() {
         currentBundle={currentBundleForVault}
         onReloadBundleFromVault={handleReloadBundleFromVault}
         onVaultStatusChange={(info) => setVaultInfo(info)}
+      />
+
+      {/* 4. MOBILE BOTTOM NAVIGATION BAR (md:hidden) */}
+      {!isFullScreenPage && (
+        <>
+          <nav
+            id="mobile-bottom-navigation-bar"
+            className="md:hidden fixed bottom-3 inset-x-3 z-40 bg-[#FAF6EE]/95 backdrop-blur-md border border-[rgba(34,30,24,0.16)] rounded-[14px] flex items-center justify-around h-14 px-1 select-none shadow-warm-lg"
+          >
+            <button
+              id="mobile-nav-editor"
+              onClick={() => {
+                setShowMobileMoreSheet(false);
+                setCurrentScreen('editor');
+              }}
+              className={`flex flex-col items-center justify-center flex-1 py-1 rounded-[5px] transition-colors cursor-pointer min-h-[44px] ${
+                currentScreen === 'editor' ? 'text-[#B54B32]' : 'text-[#7A705F] hover:text-[#221E18]'
+              }`}
+            >
+              <FileText size={18} />
+              <span className="text-[10px] font-medium mt-0.5">Write</span>
+            </button>
+
+            <button
+              id="mobile-nav-corkboard"
+              onClick={() => {
+                setShowMobileMoreSheet(false);
+                setCurrentScreen('dashboard');
+              }}
+              className={`flex flex-col items-center justify-center flex-1 py-1 rounded-[5px] transition-colors cursor-pointer min-h-[44px] ${
+                currentScreen === 'dashboard' ? 'text-[#B54B32]' : 'text-[#7A705F] hover:text-[#221E18]'
+              }`}
+            >
+              <Layers size={18} />
+              <span className="text-[10px] font-medium mt-0.5">Corkboard</span>
+            </button>
+
+            <button
+              id="mobile-nav-codex"
+              onClick={() => {
+                setShowMobileMoreSheet(false);
+                setCurrentScreen('codex');
+              }}
+              className={`flex flex-col items-center justify-center flex-1 py-1 rounded-[5px] transition-colors cursor-pointer min-h-[44px] ${
+                currentScreen === 'codex' || currentScreen === 'bible' ? 'text-[#B54B32]' : 'text-[#7A705F] hover:text-[#221E18]'
+              }`}
+            >
+              <Compass size={18} />
+              <span className="text-[10px] font-medium mt-0.5">Codex</span>
+            </button>
+
+            <button
+              id="mobile-nav-continuity"
+              onClick={() => {
+                setShowMobileMoreSheet(false);
+                setCurrentScreen('continuity');
+              }}
+              className={`relative flex flex-col items-center justify-center flex-1 py-1 rounded-[5px] transition-colors cursor-pointer min-h-[44px] ${
+                currentScreen === 'continuity' ? 'text-[#B54B32]' : 'text-[#7A705F] hover:text-[#221E18]'
+              }`}
+            >
+              <Sparkles size={18} />
+              <span className="text-[10px] font-medium mt-0.5">Continuity</span>
+              {openContinuityCount > 0 && (
+                <span className="absolute top-1 right-3 px-1.5 py-0.2 rounded-full bg-[#B54B32] text-[#FAF6EE] text-[9px] font-mono font-bold leading-none">
+                  {openContinuityCount}
+                </span>
+              )}
+            </button>
+
+            <button
+              id="mobile-nav-more"
+              onClick={() => setShowMobileMoreSheet((prev) => !prev)}
+              className={`flex flex-col items-center justify-center flex-1 py-1 rounded-[5px] transition-colors cursor-pointer min-h-[44px] ${
+                showMobileMoreSheet ? 'text-[#B54B32]' : 'text-[#7A705F] hover:text-[#221E18]'
+              }`}
+            >
+              <MoreHorizontal size={18} />
+              <span className="text-[10px] font-medium mt-0.5">More</span>
+            </button>
+          </nav>
+
+          {/* Mobile More Sheet */}
+          {showMobileMoreSheet && (
+            <div className="md:hidden fixed inset-0 z-50 flex flex-col justify-end bg-black/40 backdrop-blur-xs animate-fade-in">
+              <div
+                className="fixed inset-0"
+                onClick={() => setShowMobileMoreSheet(false)}
+              />
+              <div className="relative bg-[#FAF6EE] border-t border-[rgba(34,30,24,0.16)] rounded-t-[12px] p-5 pb-8 space-y-4 shadow-warm-modal z-10 animate-in slide-in-from-bottom duration-200">
+                <div className="flex items-center justify-between border-b border-[rgba(34,30,24,0.1)] pb-3">
+                  <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#7A705F]">
+                    Threadline Workspace
+                  </span>
+                  <button
+                    onClick={() => setShowMobileMoreSheet(false)}
+                    className="p-1 text-[#7A705F] hover:text-[#221E18] rounded cursor-pointer"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <button
+                    onClick={() => {
+                      setCurrentScreen('projects');
+                      setShowMobileMoreSheet(false);
+                    }}
+                    className="flex items-center gap-2 p-2.5 rounded-[6px] border border-[rgba(34,30,24,0.12)] bg-[#F1EAD9] hover:bg-[#FAF6EE] text-[#221E18] text-left cursor-pointer"
+                  >
+                    <FolderKanban size={15} className="text-[#B54B32]" />
+                    <span className="font-medium">Manuscripts</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setCurrentScreen('home');
+                      setShowMobileMoreSheet(false);
+                    }}
+                    className="flex items-center gap-2 p-2.5 rounded-[6px] border border-[rgba(34,30,24,0.12)] bg-[#F1EAD9] hover:bg-[#FAF6EE] text-[#221E18] text-left cursor-pointer"
+                  >
+                    <BookOpen size={15} className="text-[#35505F]" />
+                    <span className="font-medium">Overview</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setCurrentScreen('revisions');
+                      setShowMobileMoreSheet(false);
+                    }}
+                    className="flex items-center gap-2 p-2.5 rounded-[6px] border border-[rgba(34,30,24,0.12)] bg-[#F1EAD9] hover:bg-[#FAF6EE] text-[#221E18] text-left cursor-pointer"
+                  >
+                    <Sliders size={15} className="text-[#7A705F]" />
+                    <span className="font-medium">Snapshots</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setCurrentScreen('export');
+                      setShowMobileMoreSheet(false);
+                    }}
+                    className="flex items-center gap-2 p-2.5 rounded-[6px] border border-[rgba(34,30,24,0.12)] bg-[#F1EAD9] hover:bg-[#FAF6EE] text-[#221E18] text-left cursor-pointer"
+                  >
+                    <Download size={15} className="text-[#7A705F]" />
+                    <span className="font-medium">Export</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setCurrentScreen('settings');
+                      setShowMobileMoreSheet(false);
+                    }}
+                    className="flex items-center gap-2 p-2.5 rounded-[6px] border border-[rgba(34,30,24,0.12)] bg-[#F1EAD9] hover:bg-[#FAF6EE] text-[#221E18] text-left cursor-pointer"
+                  >
+                    <Settings size={15} className="text-[#7A705F]" />
+                    <span className="font-medium">Settings</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setIsVaultModalOpen(true);
+                      setShowMobileMoreSheet(false);
+                    }}
+                    className="flex items-center gap-2 p-2.5 rounded-[6px] border border-[rgba(34,30,24,0.12)] bg-[#F1EAD9] hover:bg-[#FAF6EE] text-[#221E18] text-left cursor-pointer"
+                  >
+                    <HardDrive size={15} className="text-[#221E18]" />
+                    <span className="font-medium">Vault Storage</span>
+                  </button>
+                </div>
+
+                <div className="pt-2 border-t border-[rgba(34,30,24,0.1)] flex items-center justify-between">
+                  <button
+                    onClick={() => {
+                      setIsTourOpen(true);
+                      setShowMobileMoreSheet(false);
+                    }}
+                    className="text-xs text-[#B54B32] hover:underline font-medium cursor-pointer"
+                  >
+                    Take Studio Tour
+                  </button>
+                  <button
+                    onClick={handleToggleTheme}
+                    className="flex items-center gap-1.5 px-3 py-1 text-xs rounded-[5px] border border-[rgba(34,30,24,0.12)] text-[#221E18] hover:bg-[#F1EAD9] cursor-pointer"
+                  >
+                    {theme === 'lamplight' ? <Sun size={13} /> : <Moon size={13} />}
+                    <span>{theme === 'lamplight' ? 'Daylight Paper' : 'Lamplight'}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* First-Time User Onboarding Studio Tour Modal */}
+      <AppTourModal
+        isOpen={isTourOpen}
+        onClose={() => setIsTourOpen(false)}
+        onNavigateToScreen={(screen) => setCurrentScreen(screen)}
       />
     </div>
   );

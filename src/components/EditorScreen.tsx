@@ -67,6 +67,25 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
   const [focusMode, setFocusMode] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 1024);
   const [leftNavOpen, setLeftNavOpen] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 1024);
+  const [metadataTab, setMetadataTab] = useState<'facts' | 'history'>('facts');
+
+  const handleToggleFacts = () => {
+    if (sidebarOpen && metadataTab === 'facts') {
+      setSidebarOpen(false);
+    } else {
+      setSidebarOpen(true);
+      setMetadataTab('facts');
+    }
+  };
+
+  const handleToggleHistory = () => {
+    if (sidebarOpen && metadataTab === 'history') {
+      setSidebarOpen(false);
+    } else {
+      setSidebarOpen(true);
+      setMetadataTab('history');
+    }
+  };
 
   // Resize listener for responsive layout adjustments
   useEffect(() => {
@@ -168,8 +187,24 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
   const handleProseChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const nextVal = e.target.value;
     recordTypingChange(nextVal, scene.proseContent);
-    onUpdateScene({ proseContent: nextVal });
+    const words = nextVal.trim() ? nextVal.trim().split(/\s+/).length : 0;
+    onUpdateScene({ proseContent: nextVal, wordCount: words });
   };
+
+  // Safe surface switcher between Live Preview (rich) and Syntax (raw)
+  const handleSwitchEditorSurface = useCallback(
+    (surface: 'rich' | 'raw') => {
+      if (editorSurface === 'rich' && richEditorRef.current?.flush) {
+        const latest = richEditorRef.current.flush();
+        if (latest !== scene.proseContent) {
+          const words = latest.trim() ? latest.trim().split(/\s+/).length : 0;
+          onUpdateScene({ proseContent: latest, wordCount: words });
+        }
+      }
+      setEditorSurface(surface);
+    },
+    [editorSurface, scene.proseContent, onUpdateScene]
+  );
 
   // Global keyboard listener for Undo/Redo across editor
   useEffect(() => {
@@ -252,13 +287,14 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
 
   // Text formatting helpers (applies Markdown syntax into prose with instant snapshot)
   const applyFormat = (prefix: string, suffix: string = prefix) => {
-    // If rich editor is mounted, format directly
-    if (richEditorRef.current) {
+    // If rich editor is mounted and active, format directly
+    if (editorSurface === 'rich' && richEditorRef.current) {
       richEditorRef.current.applyFormat(prefix, suffix);
+      return;
     }
 
     const textarea = textareaRef.current;
-    if (textarea && document.activeElement === textarea) {
+    if (textarea) {
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
       const current = scene.proseContent;
@@ -274,7 +310,8 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
       }
 
       const nextProse = current.slice(0, start) + replacement + current.slice(end);
-      onUpdateScene({ proseContent: nextProse });
+      const words = nextProse.trim() ? nextProse.trim().split(/\s+/).length : 0;
+      onUpdateScene({ proseContent: nextProse, wordCount: words });
 
       setTimeout(() => {
         textarea.focus();
@@ -284,30 +321,38 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
   };
 
   const insertSceneBreak = () => {
-    if (richEditorRef.current) {
+    if (editorSurface === 'rich' && richEditorRef.current) {
       richEditorRef.current.insertSceneBreak();
+      return;
     }
 
     const textarea = textareaRef.current;
-    if (textarea && document.activeElement === textarea) {
+    if (textarea) {
       const current = scene.proseContent;
       const breakString = '\n\n* * *\n\n';
 
       pushSnapshot(current);
       const start = textarea.selectionStart;
       const nextProse = current.slice(0, start) + breakString + current.slice(start);
-      onUpdateScene({ proseContent: nextProse });
+      const words = nextProse.trim() ? nextProse.trim().split(/\s+/).length : 0;
+      onUpdateScene({ proseContent: nextProse, wordCount: words });
+
+      setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(start + breakString.length, start + breakString.length);
+      }, 10);
     }
   };
 
   // Highlight helper (applies ==selection== or custom color ==color:selection==)
   const handleApplyHighlight = (colorKey: string = 'yellow') => {
-    if (richEditorRef.current) {
+    if (editorSurface === 'rich' && richEditorRef.current) {
       richEditorRef.current.applyHighlight(colorKey);
+      return;
     }
 
     const textarea = textareaRef.current;
-    if (textarea && document.activeElement === textarea) {
+    if (textarea) {
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
       const current = scene.proseContent;
@@ -331,7 +376,8 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
       }
 
       const nextProse = current.slice(0, start) + replacement + current.slice(end);
-      onUpdateScene({ proseContent: nextProse });
+      const words = nextProse.trim() ? nextProse.trim().split(/\s+/).length : 0;
+      onUpdateScene({ proseContent: nextProse, wordCount: words });
 
       setTimeout(() => {
         textarea.focus();
@@ -515,8 +561,8 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
 
   return (
     <div
-      className={`flex-1 flex flex-col bg-[#F9F8F6] text-[#3C3933] overflow-hidden ${
-        focusMode ? 'fixed inset-0 z-50 h-screen' : 'h-[calc(100vh-48px-32px)]'
+      className={`flex-1 min-h-0 flex flex-col bg-[#F9F8F6] text-[#3C3933] overflow-hidden ${
+        focusMode ? 'fixed inset-0 z-50 h-screen' : 'h-full max-h-full'
       }`}
     >
       {/* TOPBAR */}
@@ -531,7 +577,9 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
         showSearch={showSearch}
         onToggleFocusMode={() => setFocusMode(!focusMode)}
         onToggleLeftNav={() => setLeftNavOpen(!leftNavOpen)}
-        onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+        onToggleSidebar={handleToggleFacts}
+        onToggleHistory={handleToggleHistory}
+        activeMetadataTab={metadataTab}
         onToggleSearch={() => setShowSearch(!showSearch)}
         onNavigateToScene={handleSafeNavigateToScene}
         onUpdateScene={onUpdateScene}
@@ -544,7 +592,7 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
         viewMode={viewMode}
         onChangeViewMode={setViewMode}
         editorSurface={editorSurface}
-        onChangeEditorSurface={setEditorSurface}
+        onChangeEditorSurface={handleSwitchEditorSurface}
         fontFamily={fontFamily}
         onChangeFontFamily={setFontFamily}
         fontSize={fontSize}
@@ -594,7 +642,7 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
       )}
 
       {/* MAIN CANVAS BODY: 3-PANE MODULAR LAYOUT */}
-      <div className="flex-1 flex overflow-hidden relative">
+      <div className="flex-1 min-h-0 flex overflow-hidden relative">
         {/* LEFT OUTLINE DRAWER (Static column on desktop, slide-over overlay sheet on mobile/tablet) */}
         {isSmallScreen ? (
           leftNavOpen && !focusMode && (
@@ -652,7 +700,7 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
           focusMode={focusMode}
           viewMode={viewMode}
           editorSurface={editorSurface}
-          onChangeEditorSurface={setEditorSurface}
+          onChangeEditorSurface={handleSwitchEditorSurface}
           fontFamily={fontFamily}
           fontSize={fontSize}
           typewriterMode={typewriterMode}
@@ -720,6 +768,8 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
                     chapters={chapters}
                     onUpdateScene={onUpdateScene}
                     onCreateChapter={onAddChapter ? (c) => onAddChapter(c.title, c.actOrPhase) : undefined}
+                    activeTab={metadataTab}
+                    onTabChange={setMetadataTab}
                   />
                 </div>
               </div>
@@ -733,6 +783,8 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
               chapters={chapters}
               onUpdateScene={onUpdateScene}
               onCreateChapter={onAddChapter ? (c) => onAddChapter(c.title, c.actOrPhase) : undefined}
+              activeTab={metadataTab}
+              onTabChange={setMetadataTab}
             />
           )
         )}

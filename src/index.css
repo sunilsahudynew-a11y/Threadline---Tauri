@@ -2,64 +2,315 @@
 
 @layer base {
   :root {
-    /* Threadline Brand Core Palette (Brand v1.0) */
-    --paper-primary: #FAF6EE;       /* Manuscript Paper - primary background */
-    --paper-secondary: #F1EAD9;     /* Aged Paper - cards, panels, drawers */
-    --ink-primary: #221E18;         /* Manuscript Ink - primary text (13.6:1 AAA) */
-    --ink-muted: #7A705F;           /* Ink Muted - secondary text, captions, metadata (4.6:1 AA) */
-    --hairline-border: rgba(34, 30, 24, 0.12); /* 1px muted hairline rule */
-    --hairline-subtle: rgba(34, 30, 24, 0.08); /* Faint divider */
+    /* Base CSS Variables for Threadline Standard (Light) */
+    --canvas-bg: #FAF6EE;
+    --panel-bg: #F1EAD9;
+    --panel-hover: #ECE5D6;
+    --text-main: #221E18;
+    --text-dim: #7A705F;
+    --border-hairline: rgba(34, 30, 24, 0.12);
+    --border-subtle: rgba(34, 30, 24, 0.08);
+    --accent-color: #B54B32;
+    --accent-secondary: #35505F;
 
-    /* Threadline Brand Accents */
-    --accent-wax-seal: #B54B32;     /* Wax Seal - CTAs, active nav, knot mark, "Revised" status */
-    --accent-focus-blue: #35505F;   /* Focus Blue - links, focus rings, "Drafting" status */
-
-    /* Brand Status Color Mapping (Explicit assignment per Brand v1.0) */
-    --status-idea: #7A705F;         /* Idea - Still forming (ink.muted) */
-    --status-drafting: #35505F;     /* Drafting - In motion (accent.focusBlue) */
-    --status-revised: #B54B32;      /* Revised - Refined (accent.waxSeal) */
-    --status-final: #221E18;        /* Final - Complete, permanent (ink.primary) */
-
-    /* Compatibility variables */
+    /* Legacy compatibility variables */
+    --paper-primary: #FAF6EE;
+    --paper-secondary: #F1EAD9;
+    --ink-primary: #221E18;
+    --ink-muted: #7A705F;
+    --hairline-border: rgba(34, 30, 24, 0.12);
+    --hairline-subtle: rgba(34, 30, 24, 0.08);
+    --accent-wax-seal: #B54B32;
+    --accent-focus-blue: #35505F;
+    --status-idea: #7A705F;
+    --status-drafting: #35505F;
+    --status-revised: #B54B32;
+    --status-final: #221E18;
     --bg-paper: #FAF6EE;
     --bg-aged: #F1EAD9;
     --text-ink: #221E18;
     --text-muted: #7A705F;
     --border-paper: rgba(34, 30, 24, 0.12);
-    --border-subtle: rgba(34, 30, 24, 0.08);
     --accent-wax: #B54B32;
     --accent-blue: #35505F;
   }
 
-  /* Lamplight Low-Light Reading & Writing Theme (§7.2 of Revamp Report) */
-  .theme-lamplight,
-  html.theme-lamplight,
-  body.theme-lamplight {
-    --paper-primary: #191714;
-    --paper-secondary: #24201C;
-    --ink-primary: #FAF6EE;
-    --ink-muted: #A39885;
-    --hairline-border: rgba(250, 246, 238, 0.12);
-    --hairline-subtle: rgba(250, 246, 238, 0.08);
-    --accent-wax-seal: #B54B32;
-    --accent-focus-blue: #5B8399;
+  /* 1. THREADLINE STANDARD - DARK (LAMPLIGHT) */
+  html[data-theme="threadline-dark"],
+  body.theme-threadline-dark,
+  .theme-lamplight {
+    --canvas-bg: #151311;
+    --panel-bg: #231F1B;
+    --panel-hover: #2E2924;
+    --text-main: #F7F3E8;
+    --text-dim: #A89E8D;
+    --border-hairline: rgba(247, 243, 232, 0.14);
+    --border-subtle: rgba(247, 243, 232, 0.08);
+    --accent-color: #DE6346;
+    --accent-secondary: #6B96AE;
 
-    --status-idea: #A39885;
-    --status-drafting: #5B8399;
-    --status-revised: #B54B32;
-    --status-final: #FAF6EE;
+    --paper-primary: #151311;
+    --paper-secondary: #231F1B;
+    --ink-primary: #F7F3E8;
+    --ink-muted: #A89E8D;
+    --hairline-border: rgba(247, 243, 232, 0.14);
+    --hairline-subtle: rgba(247, 243, 232, 0.08);
+    --bg-paper: #151311;
+    --bg-aged: #231F1B;
+    --text-ink: #F7F3E8;
+    --text-muted: #A89E8D;
+  }
 
-    --bg-paper: #191714;
-    --bg-aged: #24201C;
-    --text-ink: #FAF6EE;
-    --text-muted: #A39885;
-    --border-paper: rgba(250, 246, 238, 0.12);
-    --border-subtle: rgba(250, 246, 238, 0.08);
-    --accent-wax: #B54B32;
-    --accent-blue: #5B8399;
+  /* 2. NOTION - LIGHT (Modern, crisp white slate) */
+  html[data-theme="notion-light"],
+  body.theme-notion-light {
+    --canvas-bg: #FFFFFF;
+    --panel-bg: #F7F6F3;
+    --panel-hover: #EBEAE5;
+    --text-main: #37352F;
+    --text-dim: #787774;
+    --border-hairline: rgba(55, 53, 47, 0.14);
+    --border-subtle: rgba(55, 53, 47, 0.08);
+    --accent-color: #E03E3E;
+    --accent-secondary: #0B6E99;
 
-    background-color: #191714;
-    color: #FAF6EE;
+    --paper-primary: #FFFFFF;
+    --paper-secondary: #F7F6F3;
+    --ink-primary: #37352F;
+    --ink-muted: #787774;
+    --bg-paper: #FFFFFF;
+    --bg-aged: #F7F6F3;
+    --text-ink: #37352F;
+    --text-muted: #787774;
+  }
+
+  /* 2. NOTION - DARK (Charcoal slate & pure white) */
+  html[data-theme="notion-dark"],
+  body.theme-notion-dark {
+    --canvas-bg: #191919;
+    --panel-bg: #252525;
+    --panel-hover: #2F2F2F;
+    --text-main: #FFFFFF;
+    --text-dim: #9B9B9B;
+    --border-hairline: rgba(255, 255, 255, 0.13);
+    --border-subtle: rgba(255, 255, 255, 0.07);
+    --accent-color: #FF5C5C;
+    --accent-secondary: #2EAADC;
+
+    --paper-primary: #191919;
+    --paper-secondary: #252525;
+    --ink-primary: #FFFFFF;
+    --ink-muted: #9B9B9B;
+    --bg-paper: #191919;
+    --bg-aged: #252525;
+    --text-ink: #FFFFFF;
+    --text-muted: #9B9B9B;
+  }
+
+  /* 3. OBSIDIAN - LIGHT (Zinc vault & Royal Violet) */
+  html[data-theme="obsidian-light"],
+  body.theme-obsidian-light {
+    --canvas-bg: #F8F9FA;
+    --panel-bg: #EDEFF2;
+    --panel-hover: #E1E4E8;
+    --text-main: #181A1F;
+    --text-dim: #62666D;
+    --border-hairline: rgba(24, 26, 31, 0.14);
+    --border-subtle: rgba(24, 26, 31, 0.08);
+    --accent-color: #7C3AED;
+    --accent-secondary: #4F46E5;
+
+    --paper-primary: #F8F9FA;
+    --paper-secondary: #EDEFF2;
+    --ink-primary: #181A1F;
+    --ink-muted: #62666D;
+    --bg-paper: #F8F9FA;
+    --bg-aged: #EDEFF2;
+    --text-ink: #181A1F;
+    --text-muted: #62666D;
+  }
+
+  /* 3. OBSIDIAN - DARK (Deep Space Void & Electric Violet) */
+  html[data-theme="obsidian-dark"],
+  body.theme-obsidian-dark {
+    --canvas-bg: #0F0F14;
+    --panel-bg: #1B1A24;
+    --panel-hover: #272535;
+    --text-main: #F5F5FA;
+    --text-dim: #A0A0B8;
+    --border-hairline: rgba(139, 92, 246, 0.22);
+    --border-subtle: rgba(139, 92, 246, 0.12);
+    --accent-color: #A78BFA;
+    --accent-secondary: #818CF8;
+
+    --paper-primary: #0F0F14;
+    --paper-secondary: #1B1A24;
+    --ink-primary: #F5F5FA;
+    --ink-muted: #A0A0B8;
+    --bg-paper: #0F0F14;
+    --bg-aged: #1B1A24;
+    --text-ink: #F5F5FA;
+    --text-muted: #A0A0B8;
+  }
+
+  /* 4. UBUNTU - LIGHT (Warm terminal canvas & Canonical orange) */
+  html[data-theme="ubuntu-light"],
+  body.theme-ubuntu-light {
+    --canvas-bg: #F7F7F7;
+    --panel-bg: #EDE8E1;
+    --panel-hover: #DDD6CC;
+    --text-main: #2C001E;
+    --text-dim: #736870;
+    --border-hairline: rgba(44, 0, 30, 0.15);
+    --border-subtle: rgba(44, 0, 30, 0.08);
+    --accent-color: #E95420;
+    --accent-secondary: #77216F;
+
+    --paper-primary: #F7F7F7;
+    --paper-secondary: #EDE8E1;
+    --ink-primary: #2C001E;
+    --ink-muted: #736870;
+    --bg-paper: #F7F7F7;
+    --bg-aged: #EDE8E1;
+    --text-ink: #2C001E;
+    --text-muted: #736870;
+  }
+
+  /* 4. UBUNTU - DARK (Iconic Canonical Deep Aubergine & Flaming Orange) */
+  html[data-theme="ubuntu-dark"],
+  body.theme-ubuntu-dark {
+    --canvas-bg: #240018;
+    --panel-bg: #3B052B;
+    --panel-hover: #4D0938;
+    --text-main: #FFFFFF;
+    --text-dim: #DFC8D9;
+    --border-hairline: rgba(233, 84, 32, 0.25);
+    --border-subtle: rgba(233, 84, 32, 0.14);
+    --accent-color: #E95420;
+    --accent-secondary: #A02B8F;
+
+    --paper-primary: #240018;
+    --paper-secondary: #3B052B;
+    --ink-primary: #FFFFFF;
+    --ink-muted: #DFC8D9;
+    --bg-paper: #240018;
+    --bg-aged: #3B052B;
+    --text-ink: #FFFFFF;
+    --text-muted: #DFC8D9;
+  }
+
+  /* General Dark Mode Fallback and Overrides for elements */
+  html.dark,
+  html[data-mode="dark"] {
+    color-scheme: dark;
+  }
+
+  html[data-mode="dark"] body {
+    background-color: var(--canvas-bg);
+    color: var(--text-main);
+  }
+
+  /* Map hardcoded background colors to active theme variables for all non-default themes */
+  html[data-theme="notion-light"] .bg-\[\#FAF6EE\],
+  html[data-theme="notion-light"] .bg-\[\#F9F8F6\],
+  html[data-theme="notion-light"] .bg-\[\#FAF9F5\],
+  html[data-theme="notion-light"] .bg-\[\#F6F2EA\],
+  html[data-theme="obsidian-light"] .bg-\[\#FAF6EE\],
+  html[data-theme="obsidian-light"] .bg-\[\#F9F8F6\],
+  html[data-theme="obsidian-light"] .bg-\[\#FAF9F5\],
+  html[data-theme="obsidian-light"] .bg-\[\#F6F2EA\],
+  html[data-theme="ubuntu-light"] .bg-\[\#FAF6EE\],
+  html[data-theme="ubuntu-light"] .bg-\[\#F9F8F6\],
+  html[data-theme="ubuntu-light"] .bg-\[\#FAF9F5\],
+  html[data-theme="ubuntu-light"] .bg-\[\#F6F2EA\],
+  html[data-mode="dark"] .bg-\[\#FAF6EE\],
+  html[data-mode="dark"] .bg-\[\#F9F8F6\],
+  html[data-mode="dark"] .bg-\[\#FAF9F5\],
+  html[data-mode="dark"] .bg-\[\#F6F2EA\] {
+    background-color: var(--canvas-bg) !important;
+  }
+
+  html[data-theme="notion-light"] .bg-\[\#F1EAD9\],
+  html[data-theme="notion-light"] .bg-\[\#EAE2D1\],
+  html[data-theme="notion-light"] .bg-\[\#ECE5D6\],
+  html[data-theme="obsidian-light"] .bg-\[\#F1EAD9\],
+  html[data-theme="obsidian-light"] .bg-\[\#EAE2D1\],
+  html[data-theme="obsidian-light"] .bg-\[\#ECE5D6\],
+  html[data-theme="ubuntu-light"] .bg-\[\#F1EAD9\],
+  html[data-theme="ubuntu-light"] .bg-\[\#EAE2D1\],
+  html[data-theme="ubuntu-light"] .bg-\[\#ECE5D6\],
+  html[data-mode="dark"] .bg-\[\#F1EAD9\],
+  html[data-mode="dark"] .bg-\[\#EAE2D1\],
+  html[data-mode="dark"] .bg-\[\#ECE5D6\] {
+    background-color: var(--panel-bg) !important;
+  }
+
+  html[data-theme="notion-light"] .hover\:bg-\[\#F1EAD9\]:hover,
+  html[data-theme="obsidian-light"] .hover\:bg-\[\#F1EAD9\]:hover,
+  html[data-theme="ubuntu-light"] .hover\:bg-\[\#F1EAD9\]:hover,
+  html[data-mode="dark"] .hover\:bg-\[\#F1EAD9\]:hover {
+    background-color: var(--panel-hover) !important;
+  }
+
+  html[data-theme="notion-light"] .text-\[\#221E18\],
+  html[data-theme="obsidian-light"] .text-\[\#221E18\],
+  html[data-theme="ubuntu-light"] .text-\[\#221E18\],
+  html[data-mode="dark"] .text-\[\#221E18\],
+  html[data-mode="dark"] .text-\[\#3C3933\],
+  html[data-mode="dark"] .text-\[\#5C5346\],
+  html[data-mode="dark"] .text-\[\#5A5143\] {
+    color: var(--text-main) !important;
+  }
+
+  html[data-theme="notion-light"] .text-\[\#7A705F\],
+  html[data-theme="obsidian-light"] .text-\[\#7A705F\],
+  html[data-theme="ubuntu-light"] .text-\[\#7A705F\],
+  html[data-mode="dark"] .text-\[\#7A705F\],
+  html[data-mode="dark"] .text-\[\#8C887F\] {
+    color: var(--text-dim) !important;
+  }
+
+  html[data-theme="notion-light"] .border-\[rgba\(34\,30\,24\,0\.12\)\],
+  html[data-theme="notion-light"] .border-\[rgba\(34\,30\,24\,0\.1\)\],
+  html[data-theme="notion-light"] .border-\[rgba\(34\,30\,24\,0\.16\)\],
+  html[data-theme="notion-light"] .border-\[rgba\(34\,30\,24\,0\.08\)\],
+  html[data-theme="obsidian-light"] .border-\[rgba\(34\,30\,24\,0\.12\)\],
+  html[data-theme="obsidian-light"] .border-\[rgba\(34\,30\,24\,0\.1\)\],
+  html[data-theme="obsidian-light"] .border-\[rgba\(34\,30\,24\,0\.16\)\],
+  html[data-theme="obsidian-light"] .border-\[rgba\(34\,30\,24\,0\.08\)\],
+  html[data-theme="ubuntu-light"] .border-\[rgba\(34\,30\,24\,0\.12\)\],
+  html[data-theme="ubuntu-light"] .border-\[rgba\(34\,30\,24\,0\.1\)\],
+  html[data-theme="ubuntu-light"] .border-\[rgba\(34\,30\,24\,0\.16\)\],
+  html[data-theme="ubuntu-light"] .border-\[rgba\(34\,30\,24\,0\.08\)\],
+  html[data-mode="dark"] .border-\[rgba\(34\,30\,24\,0\.12\)\],
+  html[data-mode="dark"] .border-\[rgba\(34\,30\,24\,0\.1\)\],
+  html[data-mode="dark"] .border-\[rgba\(34\,30\,24\,0\.16\)\],
+  html[data-mode="dark"] .border-\[rgba\(34\,30\,24\,0\.08\)\],
+  html[data-mode="dark"] .border-\[\#EBE8E2\] {
+    border-color: var(--border-hairline) !important;
+  }
+
+  /* Dynamic accent mapping for all themes except threadline-light */
+  html:not([data-theme="threadline-light"]) .bg-\[\#B54B32\],
+  html:not([data-theme="threadline-light"]) .hover\:bg-\[\#9E3E27\]:hover {
+    background-color: var(--accent-color) !important;
+  }
+
+  html:not([data-theme="threadline-light"]) .text-\[\#B54B32\],
+  html:not([data-theme="threadline-light"]) .hover\:text-\[\#9E3E27\]:hover {
+    color: var(--accent-color) !important;
+  }
+
+  html:not([data-theme="threadline-light"]) .border-\[\#B54B32\] {
+    border-color: var(--accent-color) !important;
+  }
+
+  html[data-mode="dark"] input:not([type="checkbox"]):not([type="radio"]),
+  html[data-mode="dark"] textarea,
+  html[data-mode="dark"] select {
+    background-color: var(--panel-bg);
+    color: var(--text-main);
+    border-color: var(--border-hairline);
   }
 
   body {
@@ -197,6 +448,33 @@
   word-wrap: break-word;
   white-space: pre-wrap;
   color: var(--ink-primary);
+}
+
+/* Highlight badge & mark styles */
+mark {
+  padding: 0.1em 0.25em;
+  border-radius: 3px;
+  color: inherit;
+}
+mark.hl-yellow {
+  background-color: rgba(245, 158, 11, 0.28);
+  border-bottom: 1.5px solid rgba(245, 158, 11, 0.65);
+}
+mark.hl-mint {
+  background-color: rgba(16, 185, 129, 0.25);
+  border-bottom: 1.5px solid rgba(16, 185, 129, 0.65);
+}
+mark.hl-rose {
+  background-color: rgba(244, 63, 94, 0.25);
+  border-bottom: 1.5px solid rgba(244, 63, 94, 0.65);
+}
+mark.hl-blue {
+  background-color: rgba(59, 130, 246, 0.25);
+  border-bottom: 1.5px solid rgba(59, 130, 246, 0.65);
+}
+mark.hl-purple {
+  background-color: rgba(168, 85, 247, 0.25);
+  border-bottom: 1.5px solid rgba(168, 85, 247, 0.65);
 }
 
 .editor-rich-surface:focus {

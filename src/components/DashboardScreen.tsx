@@ -68,7 +68,53 @@ interface DashboardScreenProps {
   onAddNote: () => void;
 }
 
-export const DashboardScreen: React.FC<DashboardScreenProps> = ({
+class DashboardErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: any) {
+    console.error('Corkboard render error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="max-w-6xl mx-auto p-6 sm:p-8 space-y-4 animate-fade-in">
+          <div className="bg-[#FAF6EE] p-6 rounded-[8px] border border-amber-300 shadow-warm-md">
+            <div className="flex items-center gap-3 text-amber-800 mb-2">
+              <AlertCircle size={22} className="text-[#B54B32]" />
+              <h2 className="font-serif font-bold text-lg text-[#221E18]">Corkboard Recovery Mode</h2>
+            </div>
+            <p className="text-xs text-[#7A705F] mb-4 leading-relaxed">
+              Threadline detected an unexpected scene structure while rendering the index cards.
+              Your scenes and manuscript remain completely safe.
+            </p>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => this.setState({ hasError: false, error: null })}
+                className="px-4 py-2 bg-[#221E18] text-[#FAF6EE] text-xs font-semibold rounded-[6px] hover:bg-black cursor-pointer shadow-warm-xs"
+              >
+                Reload Corkboard
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+const DashboardScreenInner: React.FC<DashboardScreenProps> = ({
   project,
   scenes,
   chapters,
@@ -303,7 +349,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   ];
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 pb-24 md:pb-12 text-[#221E18]">
+    <div className="w-full max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-10 pb-24 md:pb-12 text-[#221E18] min-w-0 overflow-x-hidden">
       {/* TOAST NOTIFICATION */}
       {syncToast && (
         <div className="fixed bottom-6 right-6 z-50 bg-[#221E18] text-[#FAF6EE] px-4 py-2.5 rounded-[6px] shadow-warm-lg text-xs font-mono flex items-center gap-2 border border-[rgba(255,255,255,0.1)] animate-fade-in">
@@ -313,7 +359,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
       )}
 
       {/* 1. SCREEN HEADER */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8 w-full min-w-0">
         <div>
           <span className="section-label block mb-1">
             Structure &amp; Arc Index
@@ -326,14 +372,14 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
-          <div className="bg-[#F1EAD9] border border-[rgba(34,30,24,0.12)] px-3 py-1.5 rounded-[6px] text-xs font-mono text-[#7A705F]">
-            {effectiveChapters.length} Ch · {allActs.length} Acts · {completedScenes}/{scenes.length} Scenes Done · {totalWords.toLocaleString()} w
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="bg-[#F1EAD9] border border-[rgba(34,30,24,0.12)] px-2.5 sm:px-3 py-1.5 rounded-[6px] text-[11px] sm:text-xs font-mono text-[#7A705F] max-w-full">
+            {effectiveChapters.length} Ch · {allActs.length} Acts · {completedScenes}/{scenes.length} Scenes · {totalWords.toLocaleString()} w
           </div>
 
           <button
             onClick={() => setIsAddingChapter(true)}
-            className="px-3.5 py-1.5 bg-[#F1EAD9] hover:bg-[#EAE4D6] border border-[rgba(34,30,24,0.12)] text-[#221E18] rounded-[6px] text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer min-h-[36px]"
+            className="px-3 py-1.5 bg-[#F1EAD9] hover:bg-[#EAE4D6] border border-[rgba(34,30,24,0.12)] text-[#221E18] rounded-[6px] text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer min-h-[36px]"
           >
             <Bookmark size={13} className="text-[#35505F]" />
             <span>Add Chapter</span>
@@ -341,7 +387,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
           <button
             onClick={onAddScene}
-            className="px-3.5 py-1.5 bg-[#B54B32] hover:bg-[#9E3E27] text-[#FAF6EE] rounded-[6px] text-xs font-semibold flex items-center gap-1.5 shadow-warm-sm transition-colors cursor-pointer min-h-[36px]"
+            className="px-3 py-1.5 bg-[#B54B32] hover:bg-[#9E3E27] text-[#FAF6EE] rounded-[6px] text-xs font-semibold flex items-center gap-1.5 shadow-warm-sm transition-colors cursor-pointer min-h-[36px]"
           >
             <Plus size={13} />
             <span>Add Scene</span>
@@ -440,12 +486,12 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         <div className="pt-2 border-t border-[rgba(34,30,24,0.08)]">
           <div className="flex items-center justify-between text-[11px] text-[#7A705F] mb-1 font-mono">
             <span>Manuscript Distribution: {totalWords.toLocaleString()} Words</span>
-            <span>Target: {project.targetWordCount.toLocaleString()} Words ({Math.min(100, Math.round((totalWords / (project.targetWordCount || 1)) * 100))}%)</span>
+            <span>Target: {(project.targetWordCount || 50000).toLocaleString()} Words ({Math.min(100, Math.round((totalWords / (project.targetWordCount || 50000)) * 100))}%)</span>
           </div>
           <div className="w-full bg-[#FAF6EE] h-2 rounded-full overflow-hidden border border-[rgba(34,30,24,0.1)]">
             <div
               className="bg-[#B54B32] h-full transition-all duration-300"
-              style={{ width: `${Math.min(100, Math.round((totalWords / (project.targetWordCount || 1)) * 100))}%` }}
+              style={{ width: `${Math.min(100, Math.round((totalWords / (project.targetWordCount || 50000)) * 100))}%` }}
             />
           </div>
         </div>
@@ -620,9 +666,9 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
       )}
 
       {/* 5. CONTROLS: VIEW SWITCHER (4 VIEW MODES) & STATUS FILTERS */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-6 w-full min-w-0">
         {/* 4 View Modes */}
-        <div className="flex items-center bg-[#F1EAD9] p-0.5 rounded-[6px] border border-[rgba(34,30,24,0.12)] overflow-x-auto no-scrollbar">
+        <div className="w-full md:w-auto flex items-center bg-[#F1EAD9] p-0.5 rounded-[6px] border border-[rgba(34,30,24,0.12)] overflow-x-auto no-scrollbar min-w-0 max-w-full">
           <button
             onClick={() => setViewMode('chapters')}
             className={`px-3 py-1.5 rounded-[5px] text-xs font-medium transition-colors duration-150 cursor-pointer flex items-center gap-1.5 min-h-[32px] whitespace-nowrap border ${
@@ -673,7 +719,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         </div>
 
         {/* Status Filter Chips */}
-        <div className="flex items-center gap-1 text-xs bg-[#F1EAD9] p-0.5 rounded-[6px] border border-[rgba(34,30,24,0.12)] overflow-x-auto no-scrollbar">
+        <div className="w-full md:w-auto flex items-center gap-1 text-xs bg-[#F1EAD9] p-0.5 rounded-[6px] border border-[rgba(34,30,24,0.12)] overflow-x-auto no-scrollbar min-w-0 max-w-full">
           {['all', 'draft', 'revised', 'complete'].map((st) => (
             <button
               key={st}
@@ -960,11 +1006,17 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             <div className="grid grid-cols-1 gap-3.5">
               {STANDARD_DRAMATIC_BEATS.map((beat) => {
                 // Find scenes mapped to this beat
-                const mappedScenes = scenes.filter(
-                  (s) => s.narrativeBeat?.toLowerCase().includes(beat.name.toLowerCase().split('.')[1]?.trim() || '---') ||
-                         s.narrativeBeat?.toLowerCase() === beat.name.toLowerCase() ||
-                         s.title.toLowerCase().includes(beat.name.toLowerCase().split('.')[1]?.trim() || '---')
-                );
+                const beatSegment = beat.name.split('.')[1]?.trim().toLowerCase() || beat.name.toLowerCase();
+                const mappedScenes = scenes.filter((s) => {
+                  if (!s) return false;
+                  const nBeat = (s.narrativeBeat || '').toLowerCase();
+                  const sTitle = (s.title || '').toLowerCase();
+                  return (
+                    (beatSegment && nBeat.includes(beatSegment)) ||
+                    nBeat === beat.name.toLowerCase() ||
+                    (beatSegment && sTitle.includes(beatSegment))
+                  );
+                });
 
                 const hasScene = mappedScenes.length > 0;
 
@@ -1296,8 +1348,10 @@ const SceneIndexCard: React.FC<SceneIndexCardProps> = ({
   onOpenMapping,
   getStatusBadge
 }) => {
-  const statusInfo = getStatusBadge(scene.status);
-  const displayAct = scene.actOrPhase || chapter?.actOrPhase || 'Act I: Setup';
+  const statusInfo = getStatusBadge(scene.status || 'draft');
+  const displayAct = String(scene.actOrPhase || chapter?.actOrPhase || 'Act I: Setup');
+  const sceneTitle = scene.title || `Scene #${scene.order || 1}`;
+  const povDisplay = typeof scene.pov === 'string' && scene.pov.trim() ? scene.pov.split(' ')[0] : 'POV';
 
   return (
     <div
@@ -1309,7 +1363,7 @@ const SceneIndexCard: React.FC<SceneIndexCardProps> = ({
         <div className="flex items-center justify-between gap-1.5 mb-2 flex-wrap">
           <div className="flex items-center gap-1.5">
             <span className="text-[10px] font-mono text-[#7A705F]">
-              Scene #{scene.order}
+              Scene #{scene.order || 1}
             </span>
             <span className="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded-[4px] bg-[#221E18] text-[#FAF6EE]">
               {displayAct.split(':')[0] || 'Act'}
@@ -1350,7 +1404,7 @@ const SceneIndexCard: React.FC<SceneIndexCardProps> = ({
 
         {/* Scene Title & Premise */}
         <h4 className="font-serif font-semibold text-sm text-[#221E18] line-clamp-1 group-hover:text-[#B54B32] transition-colors">
-          {scene.title}
+          {sceneTitle}
         </h4>
         <p className="text-xs text-[#7A705F] line-clamp-2 mt-1 leading-relaxed">
           {scene.premise || (scene.proseContent ? scene.proseContent.slice(0, 100) : 'No premise drafted yet.')}
@@ -1363,10 +1417,18 @@ const SceneIndexCard: React.FC<SceneIndexCardProps> = ({
           {chapter ? `Ch. ${chapter.number}` : 'Loose Draft'}
         </span>
         <div className="flex items-center gap-2 shrink-0">
-          <span>{scene.pov ? scene.pov.split(' ')[0] : 'POV'}</span>
+          <span>{povDisplay}</span>
           <span className="font-mono font-medium">{scene.wordCount || 0} w</span>
         </div>
       </div>
     </div>
+  );
+};
+
+export const DashboardScreen: React.FC<DashboardScreenProps> = (props) => {
+  return (
+    <DashboardErrorBoundary>
+      <DashboardScreenInner {...props} />
+    </DashboardErrorBoundary>
   );
 };

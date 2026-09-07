@@ -109,8 +109,8 @@ export const EditorFormatBar: React.FC<EditorFormatBarProps> = ({
 
   return (
     <div
-      className={`border-b border-[#E5DEC9] bg-[#FAF6EE]/95 backdrop-blur-xs px-2.5 sm:px-4 md:px-8 py-1 flex items-center justify-between gap-2 text-xs select-none transition-all z-20 overflow-x-auto no-scrollbar scroll-smooth whitespace-nowrap ${
-        focusMode ? 'opacity-0 hover:opacity-100 duration-200 fixed top-0 left-0 right-0 shadow-warm-modal' : ''
+      className={`border-b border-[#E5DEC9] bg-[#FAF6EE] px-2.5 sm:px-4 md:px-8 py-1 flex items-center justify-between gap-2 text-xs select-none transition-all relative z-20 overflow-x-auto md:overflow-visible no-scrollbar scroll-smooth whitespace-nowrap ${
+        focusMode ? 'opacity-0 hover:opacity-100 duration-200 fixed top-0 left-0 right-0 shadow-warm-modal z-50' : ''
       }`}
     >
       {/* LEFT: Core Formatting Controls */}
@@ -119,6 +119,7 @@ export const EditorFormatBar: React.FC<EditorFormatBarProps> = ({
         <div className="flex items-center gap-0.5 pr-1 border-r border-[#E5DEC9]">
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             disabled={!canUndo}
             onClick={onUndo}
             className="p-1.5 text-[#7A705F] hover:text-[#221E18] hover:bg-[#F1EAD9] rounded transition-colors disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-[#7A705F] cursor-pointer disabled:cursor-not-allowed min-h-[32px] min-w-[30px] flex items-center justify-center relative group"
@@ -128,6 +129,7 @@ export const EditorFormatBar: React.FC<EditorFormatBarProps> = ({
           </button>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             disabled={!canRedo}
             onClick={onRedo}
             className="p-1.5 text-[#7A705F] hover:text-[#221E18] hover:bg-[#F1EAD9] rounded transition-colors disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-[#7A705F] cursor-pointer disabled:cursor-not-allowed min-h-[32px] min-w-[30px] flex items-center justify-center relative group"
@@ -141,6 +143,7 @@ export const EditorFormatBar: React.FC<EditorFormatBarProps> = ({
         <div className="relative" ref={headingRef}>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => setShowHeadingMenu(!showHeadingMenu)}
             className="p-1.5 text-[#7A705F] hover:text-[#221E18] hover:bg-[#F1EAD9] rounded transition-colors flex items-center gap-1 cursor-pointer"
             title="Headings & Scene structure"
@@ -153,6 +156,7 @@ export const EditorFormatBar: React.FC<EditorFormatBarProps> = ({
             <div className="absolute top-full left-0 mt-1.5 w-48 bg-[#FAF6EE] rounded-lg border border-[#E5DEC9] shadow-warm-modal p-1 z-50 animate-in fade-in zoom-in-95 duration-100">
               <button
                 type="button"
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   onApplyFormat('# ', '');
                   setShowHeadingMenu(false);
@@ -167,6 +171,7 @@ export const EditorFormatBar: React.FC<EditorFormatBarProps> = ({
               </button>
               <button
                 type="button"
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   onApplyFormat('## ', '');
                   setShowHeadingMenu(false);
@@ -181,6 +186,7 @@ export const EditorFormatBar: React.FC<EditorFormatBarProps> = ({
               </button>
               <button
                 type="button"
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   onApplyFormat('### ', '');
                   setShowHeadingMenu(false);
@@ -201,6 +207,7 @@ export const EditorFormatBar: React.FC<EditorFormatBarProps> = ({
         <div className="flex items-center gap-0.5 px-1 border-r border-[#E5DEC9]">
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => onApplyFormat('**', '**')}
             className="p-1.5 text-[#7A705F] hover:text-[#221E18] hover:bg-[#F1EAD9] rounded transition-colors cursor-pointer font-bold"
             title="Bold (**text**) - Ctrl+B"
@@ -209,6 +216,7 @@ export const EditorFormatBar: React.FC<EditorFormatBarProps> = ({
           </button>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => onApplyFormat('*', '*')}
             className="p-1.5 text-[#7A705F] hover:text-[#221E18] hover:bg-[#F1EAD9] rounded transition-colors cursor-pointer italic"
             title="Italic (*text*) - Ctrl+I"
@@ -217,6 +225,7 @@ export const EditorFormatBar: React.FC<EditorFormatBarProps> = ({
           </button>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => onApplyFormat('~~', '~~')}
             className="p-1.5 text-[#7A705F] hover:text-[#221E18] hover:bg-[#F1EAD9] rounded transition-colors cursor-pointer"
             title="Strikethrough (~~text~~)"
@@ -230,6 +239,7 @@ export const EditorFormatBar: React.FC<EditorFormatBarProps> = ({
           <div className="flex items-center">
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => onApplyHighlight('yellow')}
               className="p-1.5 text-[#7A705F] hover:text-[#221E18] hover:bg-[#F1EAD9] rounded-l transition-colors cursor-pointer"
               title="Highlight selection (Ctrl+H)"
@@ -256,6 +266,7 @@ export const EditorFormatBar: React.FC<EditorFormatBarProps> = ({
                   <button
                     key={color.key}
                     type="button"
+                    onMouseDown={(e) => e.preventDefault()}
                     onClick={() => {
                       onApplyHighlight(color.key);
                       setShowHighlightMenu(false);
@@ -275,6 +286,7 @@ export const EditorFormatBar: React.FC<EditorFormatBarProps> = ({
         <div className="flex items-center gap-0.5 px-1 border-r border-[#E5DEC9]">
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => onApplyFormat('> ', '')}
             className="p-1.5 text-[#7A705F] hover:text-[#221E18] hover:bg-[#F1EAD9] rounded transition-colors cursor-pointer"
             title="Blockquote (> quote)"
@@ -283,6 +295,7 @@ export const EditorFormatBar: React.FC<EditorFormatBarProps> = ({
           </button>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => onApplyFormat('- ', '')}
             className="p-1.5 text-[#7A705F] hover:text-[#221E18] hover:bg-[#F1EAD9] rounded transition-colors cursor-pointer"
             title="Bullet List (- item)"
@@ -291,6 +304,7 @@ export const EditorFormatBar: React.FC<EditorFormatBarProps> = ({
           </button>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => onApplyFormat('1. ', '')}
             className="p-1.5 text-[#7A705F] hover:text-[#221E18] hover:bg-[#F1EAD9] rounded transition-colors cursor-pointer"
             title="Numbered List (1. item)"
@@ -299,6 +313,7 @@ export const EditorFormatBar: React.FC<EditorFormatBarProps> = ({
           </button>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={onInsertSceneBreak}
             className="px-2 py-1 text-[11px] font-serif text-[#7A705F] hover:text-[#221E18] hover:bg-[#F1EAD9] rounded tracking-widest cursor-pointer"
             title="Insert Scene Break (* * *)"

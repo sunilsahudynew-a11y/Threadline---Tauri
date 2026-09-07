@@ -12,7 +12,8 @@ import {
   Sliders,
   X,
   FolderKanban,
-  Check
+  Check,
+  History
 } from 'lucide-react';
 import { Scene, Entity, Thread } from '../types';
 import { ScreenType } from './Navigation';
@@ -28,6 +29,7 @@ interface CommandPaletteProps {
   onAddScene: () => void;
   onToggleFocusMode?: () => void;
   onToggleTypewriter?: () => void;
+  onOpenTour?: () => void;
 }
 
 interface PaletteItem {
@@ -49,7 +51,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   onNavigateToScene,
   onAddScene,
   onToggleFocusMode,
-  onToggleTypewriter
+  onToggleTypewriter,
+  onOpenTour
 }) => {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -102,6 +105,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   // Actions
   const actionsList: PaletteItem[] = [
     { id: 'act-add-scene', title: 'Create New Chapter Beat', category: 'Actions', icon: Plus, action: onAddScene },
+    ...(onOpenTour ? [{ id: 'act-tour', title: 'Take Studio Orientation Tour', category: 'Actions', icon: Sparkles, action: onOpenTour }] : []),
     ...(onToggleFocusMode ? [{ id: 'act-focus', title: 'Toggle Focus Mode', category: 'Actions', icon: Eye, action: onToggleFocusMode }] : []),
     ...(onToggleTypewriter ? [{ id: 'act-typewriter', title: 'Toggle Typewriter Scroll Mode', category: 'Actions', icon: Sliders, action: onToggleTypewriter }] : [])
   ];
@@ -168,7 +172,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/40 backdrop-blur-xs animate-fade-in">
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/40 backdrop-blur-xs animate-fade-in"
+      onClick={onClose}
+    >
       <div
         className="bg-[#FAF6EE] w-full max-w-xl rounded-[6px] shadow-warm-modal border border-[rgba(34,30,24,0.16)] overflow-hidden flex flex-col max-h-[75vh]"
         onClick={(e) => e.stopPropagation()}

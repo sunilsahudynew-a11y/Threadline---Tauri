@@ -61,20 +61,21 @@ export const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({
 
   return (
     <div
-      className={`h-full overflow-y-auto no-scrollbar selection:bg-[#EAE4D6] px-6 md:px-12 py-8 ${
-        isFullPreview ? 'max-w-2xl mx-auto' : 'w-full'
+      className={`h-full min-h-0 overflow-y-auto overscroll-contain scrollbar-subtle selection:bg-[#EAE4D6] px-6 md:px-12 py-8 ${
+        isFullPreview ? 'max-w-2xl mx-auto w-full' : 'w-full'
       }`}
     >
       {/* Header Info */}
-      <div className="mb-8 pb-4 border-b border-[#EBE8E2]/80">
-        <div className="flex items-center justify-between text-[11px] font-mono text-[#8C887F] uppercase tracking-wider mb-2 select-none">
+      <div className="pt-8 sm:pt-12 mb-8 pb-6 border-b border-[#EBE8E2]/80 text-center">
+        <div className="flex items-center justify-center gap-3 text-[11px] font-mono text-[#8C887F] uppercase tracking-wider mb-3 select-none">
           <span>{sceneOrder ? `Scene ${sceneOrder}` : 'Draft'}</span>
+          <span className="opacity-30">·</span>
           <span className="flex items-center gap-1.5">
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
             Live Preview {wordCount !== undefined ? `· ${wordCount} words` : ''}
           </span>
         </div>
-        <h1 className="text-3xl md:text-4xl font-serif font-semibold text-[#1A1814] tracking-tight">
+        <h1 className="text-3xl md:text-4xl font-serif font-semibold text-[#1A1814] tracking-tight text-center">
           {title || 'Untitled Scene'}
         </h1>
       </div>

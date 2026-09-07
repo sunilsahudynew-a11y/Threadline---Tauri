@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Project, Scene, Entity, Thread, Chapter } from '../types';
-import { Download, Printer, FileText, Code, Check, Eye, BookOpen } from 'lucide-react';
+import { Download, Printer, FileText, Code, Check, Eye, BookOpen, Sparkles, BookCheck, Loader2 } from 'lucide-react';
 import { ensureChapters, getScenesForChapter } from '../utils/chapterUtils';
+import { generateBookPdf, BookPdfOptions, DEFAULT_BOOK_PDF_OPTIONS } from '../services/pdf/bookPdfGenerator';
+import { useToast } from './Toast';
 
 interface ExportScreenProps {
   project: Project;
@@ -18,11 +20,38 @@ export const ExportScreen: React.FC<ExportScreenProps> = ({
   entities,
   threads
 }) => {
-  const [format, setFormat] = useState<'markdown' | 'text' | 'json' | 'print'>('markdown');
+  const { showToast } = useToast();
+  const [format, setFormat] = useState<'book-pdf' | 'markdown' | 'text' | 'json' | 'print'>('book-pdf');
   const [includeMetadata, setIncludeMetadata] = useState(true);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+
+  // PDF Book Customization Options
+  const [pdfOptions, setPdfOptions] = useState<BookPdfOptions>({
+    ...DEFAULT_BOOK_PDF_OPTIONS,
+    authorName: project.protagonist ? `Author of ${project.title}` : ''
+  });
 
   const effectiveChapters = ensureChapters(scenes, chapters);
+
+  // Handle PDF Generation
+  const handleDownloadBookPdf = async () => {
+    try {
+      setIsGeneratingPdf(true);
+      showToast('Compiling manuscript chapters into print PDF...');
+      const doc = await generateBookPdf(project, scenes, chapters, pdfOptions);
+      const safeFilename = `${project.title.toLowerCase().replace(/[^a-z0-9]/g, '_')}_book.pdf`;
+      doc.save(safeFilename);
+      setDownloadSuccess(true);
+      setTimeout(() => setDownloadSuccess(false), 2500);
+      showToast('Book PDF generated and downloaded successfully!');
+    } catch (err) {
+      console.error('Failed to generate Book PDF:', err);
+      showToast('Failed to compile Book PDF', 'error');
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
 
   // Generate Markdown
   const generateMarkdown = () => {
@@ -151,7 +180,25 @@ export const ExportScreen: React.FC<ExportScreenProps> = ({
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-6 sm:mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 mb-6 sm:mb-8">
+        <button
+          type="button"
+          onClick={() => setFormat('book-pdf')}
+          className={`p-4 rounded-[6px] border text-left transition-all cursor-pointer min-h-[44px] ${
+            format === 'book-pdf'
+              ? 'border-[#B54B32] bg-[#FAF6EE] shadow-warm-sm ring-1 ring-[#B54B32]/20'
+              : 'border-[rgba(34,30,24,0.12)] bg-[#F1EAD9]/40 hover:bg-[#F1EAD9]'
+          }`}
+        >
+          <div className="flex items-center gap-2 mb-1.5">
+            <BookCheck size={16} className={format === 'book-pdf' ? 'text-[#B54B32]' : 'text-[#7A705F]'} />
+            <span className="font-semibold text-xs text-[#221E18]">Book PDF (.pdf)</span>
+          </div>
+          <p className="text-[11px] text-[#7A705F] leading-snug">
+            Real typeset book layout with chapter pages, running headers, and table of contents.
+          </p>
+        </button>
+
         <button
           type="button"
           onClick={() => setFormat('markdown')}
@@ -217,55 +264,179 @@ export const ExportScreen: React.FC<ExportScreenProps> = ({
         >
           <div className="flex items-center gap-2 mb-1.5">
             <Printer size={16} className={format === 'print' ? 'text-[#B54B32]' : 'text-[#7A705F]'} />
-            <span className="font-semibold text-xs text-[#221E18]">Print / PDF Proof</span>
+            <span className="font-semibold text-xs text-[#221E18]">Browser Print</span>
           </div>
           <p className="text-[11px] text-[#7A705F] leading-snug">
-            Formatted book proof view ready for paper or saving to PDF.
+            Print proof view ready for physical printer or browser save dialog.
           </p>
         </button>
       </div>
 
-      {/* Export Options & Actions */}
-      <div className="bg-[#FAF6EE] p-5 sm:p-6 rounded-[6px] border border-[rgba(34,30,24,0.12)] shadow-warm-sm mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <label className="flex items-center gap-2.5 text-xs text-[#221E18] cursor-pointer select-none">
-          <input
-            type="checkbox"
-            checked={includeMetadata}
-            onChange={(e) => setIncludeMetadata(e.target.checked)}
-            className="rounded border-[rgba(34,30,24,0.2)] text-[#B54B32] focus:ring-0 accent-[#B54B32]"
-          />
-          <span className="font-medium">Include scene metadata (premise, POV, time) as editorial headers</span>
-        </label>
+      {/* Book PDF Configuration Box */}
+      {format === 'book-pdf' && (
+        <div className="bg-[#FAF6EE] p-5 sm:p-6 rounded-[6px] border border-[#B54B32]/30 shadow-warm-sm mb-6 sm:mb-8 space-y-4">
+          <div className="flex items-center justify-between border-b border-[rgba(34,30,24,0.1)] pb-3">
+            <div className="flex items-center gap-2">
+              <Sparkles size={16} className="text-[#B54B32]" />
+              <h3 className="font-serif font-bold text-sm text-[#221E18]">
+                Typeset Book PDF Formatting
+              </h3>
+            </div>
+            <span className="text-[10px] font-mono uppercase bg-[#F1EAD9] text-[#7A705F] px-2 py-0.5 rounded">
+              Print-Ready Book Engine
+            </span>
+          </div>
 
-        <div className="flex items-center gap-3">
-          {format === 'print' ? (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+            <div>
+              <label className="block text-[#7A705F] text-[11px] font-medium mb-1">
+                Trim Size
+              </label>
+              <select
+                value={pdfOptions.pageSize}
+                onChange={(e) => setPdfOptions({ ...pdfOptions, pageSize: e.target.value as BookPdfOptions['pageSize'] })}
+                className="w-full p-2 bg-[#F1EAD9] border border-[rgba(34,30,24,0.14)] rounded-[4px] text-[#221E18] text-xs focus:outline-none"
+              >
+                <option value="trade">US Trade (6&quot; × 9&quot; standard novel)</option>
+                <option value="a5">A5 International (148 × 210 mm)</option>
+                <option value="letter">US Letter (8.5&quot; × 11&quot; manuscript)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-[#7A705F] text-[11px] font-medium mb-1">
+                Book Font Style
+              </label>
+              <select
+                value={pdfOptions.fontStyle}
+                onChange={(e) => setPdfOptions({ ...pdfOptions, fontStyle: e.target.value as BookPdfOptions['fontStyle'] })}
+                className="w-full p-2 bg-[#F1EAD9] border border-[rgba(34,30,24,0.14)] rounded-[4px] text-[#221E18] text-xs focus:outline-none"
+              >
+                <option value="times">Literary Serif (Times New Roman style)</option>
+                <option value="helvetica">Modern Clean (Helvetica style)</option>
+                <option value="courier">Classic Typewriter (Courier style)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-[#7A705F] text-[11px] font-medium mb-1">
+                Author Byline
+              </label>
+              <input
+                type="text"
+                placeholder="Author Name"
+                value={pdfOptions.authorName || ''}
+                onChange={(e) => setPdfOptions({ ...pdfOptions, authorName: e.target.value })}
+                className="w-full p-2 bg-[#F1EAD9] border border-[rgba(34,30,24,0.14)] rounded-[4px] text-[#221E18] text-xs focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-4 pt-1 text-xs text-[#221E18]">
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={pdfOptions.includeCoverPage}
+                onChange={(e) => setPdfOptions({ ...pdfOptions, includeCoverPage: e.target.checked })}
+                className="rounded text-[#B54B32] accent-[#B54B32]"
+              />
+              <span>Include Half-Title &amp; Cover Page</span>
+            </label>
+
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={pdfOptions.includeTableOfContents}
+                onChange={(e) => setPdfOptions({ ...pdfOptions, includeTableOfContents: e.target.checked })}
+                className="rounded text-[#B54B32] accent-[#B54B32]"
+              />
+              <span>Include Table of Contents</span>
+            </label>
+
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={pdfOptions.includeSceneTitles}
+                onChange={(e) => setPdfOptions({ ...pdfOptions, includeSceneTitles: e.target.checked })}
+                className="rounded text-[#B54B32] accent-[#B54B32]"
+              />
+              <span>Include Scene Headings (uncheck for traditional novel flow)</span>
+            </label>
+          </div>
+
+          <div className="pt-2 border-t border-[rgba(34,30,24,0.1)] flex items-center justify-between">
+            <span className="text-[11px] text-[#7A705F]">
+              Each chapter opens on a new page with running headers, ornament glyphs, and authentic page numbers.
+            </span>
             <button
-              onClick={handlePrint}
-              className="px-4 py-2 bg-[#221E18] hover:bg-black text-[#FAF6EE] rounded-[6px] text-xs font-semibold flex items-center gap-2 shadow-warm-sm transition-colors cursor-pointer min-h-[40px]"
+              onClick={handleDownloadBookPdf}
+              disabled={isGeneratingPdf}
+              className="px-5 py-2.5 bg-[#B54B32] hover:bg-[#9E3E27] text-[#FAF6EE] rounded-[6px] text-xs font-semibold flex items-center gap-2 shadow-warm-sm transition-colors cursor-pointer min-h-[40px] disabled:opacity-50"
             >
-              <Printer size={14} />
-              <span>Print / Save PDF</span>
-            </button>
-          ) : (
-            <button
-              onClick={handleDownload}
-              className="px-4 py-2 bg-[#B54B32] hover:bg-[#9E3E27] text-[#FAF6EE] rounded-[6px] text-xs font-semibold flex items-center gap-2 shadow-warm-sm transition-colors cursor-pointer min-h-[40px]"
-            >
-              {downloadSuccess ? (
+              {isGeneratingPdf ? (
                 <>
-                  <Check size={14} className="text-[#FAF6EE]" />
-                  <span>File Downloaded</span>
+                  <Loader2 size={15} className="animate-spin" />
+                  <span>Compiling Book PDF...</span>
+                </>
+              ) : downloadSuccess ? (
+                <>
+                  <Check size={15} className="text-[#FAF6EE]" />
+                  <span>PDF Downloaded!</span>
                 </>
               ) : (
                 <>
-                  <Download size={14} />
-                  <span>Download {format.toUpperCase()}</span>
+                  <Download size={15} />
+                  <span>Download Book PDF</span>
                 </>
               )}
             </button>
-          )}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Export Options & Actions for Other Formats */}
+      {format !== 'book-pdf' && (
+        <div className="bg-[#FAF6EE] p-5 sm:p-6 rounded-[6px] border border-[rgba(34,30,24,0.12)] shadow-warm-sm mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <label className="flex items-center gap-2.5 text-xs text-[#221E18] cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={includeMetadata}
+              onChange={(e) => setIncludeMetadata(e.target.checked)}
+              className="rounded border-[rgba(34,30,24,0.2)] text-[#B54B32] focus:ring-0 accent-[#B54B32]"
+            />
+            <span className="font-medium">Include scene metadata (premise, POV, time) as editorial headers</span>
+          </label>
+
+          <div className="flex items-center gap-3">
+            {format === 'print' ? (
+              <button
+                onClick={handlePrint}
+                className="px-4 py-2 bg-[#221E18] hover:bg-black text-[#FAF6EE] rounded-[6px] text-xs font-semibold flex items-center gap-2 shadow-warm-sm transition-colors cursor-pointer min-h-[40px]"
+              >
+                <Printer size={14} />
+                <span>Print / Save PDF</span>
+              </button>
+            ) : (
+              <button
+                onClick={handleDownload}
+                className="px-4 py-2 bg-[#B54B32] hover:bg-[#9E3E27] text-[#FAF6EE] rounded-[6px] text-xs font-semibold flex items-center gap-2 shadow-warm-sm transition-colors cursor-pointer min-h-[40px]"
+              >
+                {downloadSuccess ? (
+                  <>
+                    <Check size={14} className="text-[#FAF6EE]" />
+                    <span>File Downloaded</span>
+                  </>
+                ) : (
+                  <>
+                    <Download size={14} />
+                    <span>Download {format.toUpperCase()}</span>
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Live Manuscript Preview */}
       <div className="bg-[#FAF6EE] rounded-[6px] border border-[rgba(34,30,24,0.12)] p-6 sm:p-8 shadow-warm-sm">
@@ -279,7 +450,57 @@ export const ExportScreen: React.FC<ExportScreenProps> = ({
         </div>
 
         <div className="max-h-[500px] overflow-y-auto p-4 bg-[#F1EAD9]/50 rounded-[5px] border border-[rgba(34,30,24,0.08)]">
-          {format === 'json' ? (
+          {format === 'book-pdf' ? (
+            <div className="space-y-6 max-w-lg mx-auto py-4">
+              {/* Simulated Book Page */}
+              <div className="bg-[#FAF6EE] p-8 rounded border border-[rgba(34,30,24,0.15)] shadow-warm-sm text-center font-serif">
+                <div className="text-[10px] uppercase font-mono tracking-widest text-[#7A705F] mb-6">
+                  [ Book Title Page Preview ]
+                </div>
+                <h1 className="text-xl font-bold uppercase tracking-wider text-[#221E18] mb-2">
+                  {project.title}
+                </h1>
+                <div className="w-12 h-0.5 bg-[#B54B32] mx-auto mb-3" />
+                <p className="text-xs italic text-[#7A705F] mb-4">
+                  {project.type ? `A ${project.type}` : 'A Novel Manuscript'}
+                </p>
+                {pdfOptions.authorName && (
+                  <p className="text-xs uppercase tracking-widest text-[#221E18] mt-6">
+                    BY {pdfOptions.authorName}
+                  </p>
+                )}
+              </div>
+
+              {/* Simulated Chapter Page */}
+              <div className="bg-[#FAF6EE] p-8 rounded border border-[rgba(34,30,24,0.15)] shadow-warm-sm font-serif">
+                <div className="text-center mb-6">
+                  <div className="text-[10px] font-mono uppercase tracking-widest text-[#B54B32] mb-1">
+                    C H A P T E R &nbsp; 1
+                  </div>
+                  <h2 className="text-base font-bold text-[#221E18]">
+                    {effectiveChapters[0]?.title || 'Opening'}
+                  </h2>
+                  <div className="text-[#B54B32] text-xs mt-2">• &nbsp; ✦ &nbsp; •</div>
+                </div>
+
+                <div className="text-xs text-[#221E18] leading-relaxed text-justify space-y-3">
+                  {getScenesForChapter(scenes, effectiveChapters[0])[0]?.proseContent ? (
+                    <p className="indent-6">
+                      {getScenesForChapter(scenes, effectiveChapters[0])[0].proseContent.slice(0, 450)}...
+                    </p>
+                  ) : (
+                    <p className="text-[#7A705F] italic text-center">
+                      (Prose content will flow seamlessly across pages with running headers and authentic page numbering)
+                    </p>
+                  )}
+                </div>
+
+                <div className="text-center text-[10px] font-mono text-[#7A705F] mt-8 pt-4 border-t border-[rgba(34,30,24,0.06)]">
+                  — 1 —
+                </div>
+              </div>
+            </div>
+          ) : format === 'json' ? (
             <pre className="text-[11px] font-mono text-[#221E18] whitespace-pre-wrap">
               {generateJSON()}
             </pre>

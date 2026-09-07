@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Scene, Entity, Chapter } from '../../types';
-import { Sliders, BookOpen, Layers, Plus, Check, Compass, Scissors } from 'lucide-react';
+import { Sliders, BookOpen, Layers, Plus, Check, Compass, Scissors, History } from 'lucide-react';
+import { SceneVersionHistoryTab } from './SceneVersionHistoryTab';
 
 interface SceneMetadataPanelProps {
   scene: Scene;
@@ -8,6 +9,8 @@ interface SceneMetadataPanelProps {
   chapters?: Chapter[];
   onUpdateScene: (updatedFields: Partial<Scene>) => void;
   onCreateChapter?: (chapter: Chapter) => void;
+  activeTab?: 'facts' | 'history';
+  onTabChange?: (tab: 'facts' | 'history') => void;
 }
 
 export const SceneMetadataPanel: React.FC<SceneMetadataPanelProps> = ({
@@ -15,11 +18,24 @@ export const SceneMetadataPanel: React.FC<SceneMetadataPanelProps> = ({
   sceneEntities,
   chapters = [],
   onUpdateScene,
-  onCreateChapter
+  onCreateChapter,
+  activeTab: controlledTab,
+  onTabChange
 }) => {
+  const [internalTab, setInternalTab] = useState<'facts' | 'history'>('facts');
+  const activeTab = controlledTab !== undefined ? controlledTab : internalTab;
+
+  const handleTabClick = (tab: 'facts' | 'history') => {
+    setInternalTab(tab);
+    if (onTabChange) {
+      onTabChange(tab);
+    }
+  };
   const [isCreatingChapter, setIsCreatingChapter] = useState(false);
   const [newChapTitle, setNewChapTitle] = useState('');
   const [newChapPhase, setNewChapPhase] = useState('');
+
+  const versionCount = (scene.versions || []).length;
 
   const handleSelectChapter = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
@@ -68,9 +84,48 @@ export const SceneMetadataPanel: React.FC<SceneMetadataPanelProps> = ({
   };
 
   return (
-    <aside className="w-72 border-l border-[rgba(34,30,24,0.12)] bg-[#FAF6EE] overflow-y-auto scrollbar-subtle flex flex-col shrink-0 select-none text-xs">
-      {/* Chapter & Act Architecture Section */}
-      <div className="p-4 border-b border-[rgba(34,30,24,0.12)] bg-[#F1EAD9]">
+    <aside className="w-72 h-full max-h-full min-h-0 border-l border-[rgba(34,30,24,0.12)] bg-[#FAF6EE] flex flex-col shrink-0 select-none text-xs">
+      {/* Tab Switcher */}
+      <div className="flex items-center border-b border-[rgba(34,30,24,0.12)] bg-[#F1EAD9] p-1 gap-1 shrink-0">
+        <button
+          onClick={() => handleTabClick('facts')}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-[5px] text-xs font-medium transition-colors cursor-pointer ${
+            activeTab === 'facts'
+              ? 'bg-[#FAF6EE] text-[#221E18] shadow-xs'
+              : 'text-[#7A705F] hover:text-[#221E18] hover:bg-[#FAF6EE]/50'
+          }`}
+        >
+          <BookOpen size={12} className={activeTab === 'facts' ? 'text-[#35505F]' : ''} />
+          <span>Facts &amp; Structure</span>
+        </button>
+
+        <button
+          onClick={() => handleTabClick('history')}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-[5px] text-xs font-medium transition-colors cursor-pointer ${
+            activeTab === 'history'
+              ? 'bg-[#FAF6EE] text-[#221E18] shadow-xs'
+              : 'text-[#7A705F] hover:text-[#221E18] hover:bg-[#FAF6EE]/50'
+          }`}
+        >
+          <History size={12} className={activeTab === 'history' ? 'text-[#B54B32]' : ''} />
+          <span>History</span>
+          {versionCount > 0 && (
+            <span className="px-1.5 py-0.2 rounded-full bg-[#B54B32] text-[#FAF6EE] text-[9px] font-mono font-bold leading-none">
+              {versionCount}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* Tab Content Area */}
+      {activeTab === 'history' ? (
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          <SceneVersionHistoryTab scene={scene} onUpdateScene={onUpdateScene} />
+        </div>
+      ) : (
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-subtle flex flex-col">
+          {/* Chapter & Act Architecture Section */}
+          <div className="p-4 border-b border-[rgba(34,30,24,0.12)] bg-[#F1EAD9]">
         <div className="flex items-center justify-between mb-2.5">
           <div className="flex items-center gap-1.5">
             <BookOpen size={12} className="text-[#35505F]" />
@@ -291,6 +346,8 @@ export const SceneMetadataPanel: React.FC<SceneMetadataPanelProps> = ({
           Select prose and click "Cutting Room" to safely stash trims.
         </div>
       </div>
+        </div>
+      )}
     </aside>
   );
 };

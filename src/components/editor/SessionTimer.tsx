@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Timer,
   Play,
@@ -9,8 +10,8 @@ import {
   X,
   Volume2,
   VolumeX,
-  Flame,
-  Award
+  Award,
+  Flame
 } from 'lucide-react';
 
 interface SessionTimerProps {
@@ -29,26 +30,24 @@ export const SessionTimer: React.FC<SessionTimerProps> = ({ currentWordCount }) 
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [showCelebration, setShowCelebration] = useState(false);
 
-  // Baseline word count when session started
+  // Word count tracked for this session
   const [startingWordCount, setStartingWordCount] = useState(currentWordCount);
+  const [popoverCoords, setPopoverCoords] = useState<{ top: number; right: number } | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown on outside click
+  // Update startingWordCount when idle if it hasn't started yet
   useEffect(() => {
-    const handleOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleOutside);
-    return () => document.removeEventListener('mousedown', handleOutside);
-  }, []);
+    if (!isRunning && secondsElapsed === 0 && secondsRemaining === targetMinutes * 60) {
+      setStartingWordCount(currentWordCount);
+    }
+  }, [currentWordCount, isRunning, secondsElapsed, secondsRemaining, targetMinutes]);
 
   // Words added in current session
   const sessionWords = Math.max(0, currentWordCount - startingWordCount);
 
-  // Calculate WPM
+  // Calculate Words Per Minute (WPM)
   const wordsPerMinute = useMemo(() => {
     const activeTimeInMinutes =
       mode === 'countdown'
@@ -58,7 +57,7 @@ export const SessionTimer: React.FC<SessionTimerProps> = ({ currentWordCount }) 
     return Math.round(sessionWords / activeTimeInMinutes);
   }, [mode, targetMinutes, secondsRemaining, secondsElapsed, sessionWords]);
 
-  // Gentle audio chime using Web Audio API (no external asset required)
+  // Audio chime using Web Audio API on completion
   const playChime = () => {
     if (!soundEnabled || typeof window === 'undefined') return;
     try {
@@ -80,36 +79,86 @@ export const SessionTimer: React.FC<SessionTimerProps> = ({ currentWordCount }) 
       osc.start();
       osc.stop(ctx.currentTime + 1.3);
     } catch {
-      // AudioContext unavailable or blocked by browser
+      // AudioContext unavailable or blocked by browser policy
     }
   };
 
-  // Timer interval effect
+  // Robust timer interval runner
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
+    if (!isRunning) return;
 
-    if (isRunning) {
-      interval = setInterval(() => {
-        if (mode === 'countdown') {
-          setSecondsRemaining((prev) => {
-            if (prev <= 1) {
-              setIsRunning(false);
-              setShowCelebration(true);
-              playChime();
-              return 0;
-            }
-            return prev - 1;
-          });
-        } else {
-          setSecondsElapsed((prev) => prev + 1);
-        }
-      }, 1000);
-    }
+    const intervalId = window.setInterval(() => {
+      if (mode === 'countdown') {
+        setSecondsRemaining((prev) => {
+          if (prev <= 1) {
+            return 0;
+          }
+          return prev - 1;
+        });
+      } else {
+        setSecondsElapsed((prev) => prev + 1);
+      }
+    }, 1000);
 
     return () => {
-      if (interval) clearInterval(interval);
+      window.clearInterval(intervalId);
     };
-  }, [isRunning, mode, soundEnabled]);
+  }, [isRunning, mode]);
+
+  // Handle countdown sprint completion
+  useEffect(() => {
+    if (mode === 'countdown' && isRunning && secondsRemaining === 0) {
+      setIsRunning(false);
+      setShowCelebration(true);
+      playChime();
+    }
+  }, [mode, isRunning, secondsRemaining]);
+
+  // Calculate popover coordinates when opening
+  const updatePosition = () => {
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const rightMargin = Math.max(16, window.innerWidth - rect.right);
+      setPopoverCoords({
+        top: rect.bottom + 6,
+        right: rightMargin
+      });
+    }
+  };
+
+  const handleToggleOpen = () => {
+    if (!isOpen) {
+      updatePosition();
+      setIsOpen(true);
+    } else {
+      setIsOpen(false);
+    }
+  };
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(target) &&
+        popoverRef.current &&
+        !popoverRef.current.contains(target)
+      ) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener('mousedown', handleOutside);
+      window.addEventListener('resize', updatePosition);
+      window.addEventListener('scroll', updatePosition, true);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleOutside);
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [isOpen]);
 
   const handleStart = () => {
     if (!isRunning && (secondsElapsed === 0 || secondsRemaining === targetMinutes * 60)) {
@@ -121,6 +170,15 @@ export const SessionTimer: React.FC<SessionTimerProps> = ({ currentWordCount }) 
 
   const handlePause = () => {
     setIsRunning(false);
+  };
+
+  const handleTogglePlayPause = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isRunning) {
+      handlePause();
+    } else {
+      handleStart();
+    }
   };
 
   const handleReset = () => {
@@ -159,152 +217,191 @@ export const SessionTimer: React.FC<SessionTimerProps> = ({ currentWordCount }) 
     mode === 'countdown' ? formatTime(secondsRemaining) : formatTime(secondsElapsed);
 
   return (
-    <div className="relative inline-block" ref={containerRef}>
-      {/* TRIGGER BADGE */}
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-mono transition-all cursor-pointer border ${
+    <div className="relative inline-flex items-center" ref={containerRef}>
+      {/* TRIGGER BADGE WITH QUICK PLAY/PAUSE */}
+      <div
+        className={`inline-flex items-center rounded-md border text-xs font-mono transition-all select-none ${
           isRunning
-            ? 'bg-amber-50 text-amber-900 border-amber-300 shadow-2xs'
-            : 'bg-[#F9F8F6] text-[#736F66] border-[#EBE8E2] hover:text-[#1A1814] hover:bg-[#F2EFE9]'
+            ? 'bg-amber-50 text-amber-900 border-amber-300 shadow-xs'
+            : 'bg-[#F1EAD9] text-[#7A705F] border-[#E5DEC9] hover:text-[#221E18] hover:bg-[#EAE4D6]'
         }`}
-        title="Session Writing Timer & Sprint"
       >
-        <Timer size={13} className={isRunning ? 'text-amber-600 animate-pulse' : 'text-[#8C887F]'} />
-        <span className="font-semibold tabular-nums">{displayTime}</span>
-        {sessionWords > 0 && (
-          <span className="text-[10px] text-emerald-700 font-semibold hidden sm:inline">
-            +{sessionWords}w
-          </span>
-        )}
-        <ChevronDown size={10} className="text-[#8C887F]" />
-      </button>
+        {/* Quick Play/Pause Action Icon */}
+        <button
+          type="button"
+          onClick={handleTogglePlayPause}
+          className={`p-1.5 rounded-l-md cursor-pointer transition-colors flex items-center justify-center ${
+            isRunning
+              ? 'text-amber-700 hover:bg-amber-100'
+              : 'text-[#7A705F] hover:text-[#221E18] hover:bg-[#E2DAC3]'
+          }`}
+          title={isRunning ? 'Pause session timer (click to pause)' : 'Start session timer (click to start)'}
+        >
+          {isRunning ? (
+            <Pause size={12} className="fill-current text-amber-700" />
+          ) : (
+            <Play size={12} className="fill-current text-[#7A705F]" />
+          )}
+        </button>
 
-      {/* POPOVER CARD */}
-      {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-white/98 backdrop-blur-md rounded-xl border border-[#E5E1D8] shadow-2xl p-4 z-50 animate-in fade-in zoom-in-95 duration-150">
-          <div className="flex items-center justify-between pb-2 mb-3 border-b border-[#F0ECE1]">
-            <div className="flex items-center gap-1.5">
-              <Timer size={15} className="text-amber-700" />
-              <span className="text-xs font-serif font-semibold text-[#1A1814]">
-                Writing Session Sprint
-              </span>
-            </div>
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => setSoundEnabled(!soundEnabled)}
-                className="p-1 text-[#8C887F] hover:text-[#1A1814] rounded cursor-pointer"
-                title={soundEnabled ? 'Chime on sprint finish (Enabled)' : 'Chime (Muted)'}
-              >
-                {soundEnabled ? <Volume2 size={13} /> : <VolumeX size={13} />}
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                className="p-1 text-[#8C887F] hover:text-[#1A1814] rounded cursor-pointer"
-              >
-                <X size={13} />
-              </button>
-            </div>
-          </div>
+        {/* Time Display and Popover Opener */}
+        <button
+          type="button"
+          onClick={handleToggleOpen}
+          className="flex items-center gap-1.5 py-1 pr-2 pl-0.5 cursor-pointer rounded-r-md"
+          title="Session Writing Timer & Sprint Settings"
+        >
+          <span className="font-semibold tabular-nums text-xs">{displayTime}</span>
+          {sessionWords > 0 && (
+            <span className="text-[10px] text-emerald-700 font-semibold hidden sm:inline">
+              +{sessionWords}w
+            </span>
+          )}
+          <ChevronDown size={11} className={isRunning ? 'text-amber-700' : 'text-[#7A705F]'} />
+        </button>
+      </div>
 
-          {/* CELEBRATION BANNER */}
-          {showCelebration && (
-            <div className="mb-3 p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-900 flex items-center gap-2 animate-in zoom-in-95">
-              <Award size={18} className="text-amber-600 shrink-0" />
-              <div>
-                <div className="font-semibold">Sprint Finished!</div>
-                <div className="text-[11px] text-amber-800">
-                  You drafted {sessionWords} words in this session. Take a gentle breath.
-                </div>
+      {/* POPOVER CARD VIA PORTAL (GUARANTEED NEVER CLIPPED BY ANY PARENT OVERFLOW OR Z-INDEX) */}
+      {isOpen &&
+        popoverCoords &&
+        createPortal(
+          <div
+            ref={popoverRef}
+            style={{
+              position: 'fixed',
+              top: `${popoverCoords.top}px`,
+              right: `${popoverCoords.right}px`,
+              zIndex: 9999
+            }}
+            className="w-80 bg-[#FAF6EE] rounded-xl border border-[rgba(34,30,24,0.15)] shadow-2xl p-4 animate-in fade-in zoom-in-95 duration-150 text-[#221E18] select-none"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between pb-2 mb-3 border-b border-[rgba(34,30,24,0.1)]">
+              <div className="flex items-center gap-1.5">
+                <Timer size={15} className="text-[#B54B32]" />
+                <span className="text-xs font-serif font-semibold text-[#221E18]">
+                  Writing Session Sprint
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setSoundEnabled(!soundEnabled)}
+                  className="p-1 text-[#7A705F] hover:text-[#221E18] rounded cursor-pointer transition-colors"
+                  title={soundEnabled ? 'Completion chime enabled (click to mute)' : 'Completion chime muted (click to unmute)'}
+                >
+                  {soundEnabled ? <Volume2 size={13} /> : <VolumeX size={13} />}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsOpen(false)}
+                  className="p-1 text-[#7A705F] hover:text-[#221E18] rounded cursor-pointer transition-colors"
+                  title="Close timer panel"
+                >
+                  <X size={13} />
+                </button>
               </div>
             </div>
-          )}
 
-          {/* BIG DISPLAY TIME */}
-          <div className="text-center my-3">
-            <div className="text-4xl font-mono font-bold tracking-tight text-[#1A1814] tabular-nums">
-              {displayTime}
-            </div>
-            <div className="text-[11px] font-mono text-[#8C887F] mt-1 flex items-center justify-center gap-2">
-              <span className="capitalize">{mode} Mode</span>
-              <span>·</span>
-              <span className="text-emerald-700 font-semibold">+{sessionWords} words</span>
-              {wordsPerMinute > 0 && (
-                <>
-                  <span>·</span>
-                  <span>{wordsPerMinute} wpm</span>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* CONTROLS */}
-          <div className="flex items-center justify-center gap-2 my-3">
-            {isRunning ? (
-              <button
-                type="button"
-                onClick={handlePause}
-                className="flex items-center gap-1.5 px-4 py-2 bg-amber-600 text-white rounded-lg text-xs font-semibold hover:bg-amber-700 transition-colors shadow-xs cursor-pointer"
-              >
-                <Pause size={14} /> Pause
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleStart}
-                className="flex items-center gap-1.5 px-4 py-2 bg-[#2D2A26] text-white rounded-lg text-xs font-semibold hover:bg-[#1A1814] transition-colors shadow-xs cursor-pointer"
-              >
-                <Play size={14} /> {secondsElapsed > 0 || secondsRemaining < targetMinutes * 60 ? 'Resume' : 'Start'}
-              </button>
+            {/* CELEBRATION BANNER */}
+            {showCelebration && (
+              <div className="mb-3 p-2.5 bg-amber-100 border border-amber-300 rounded-lg text-xs text-amber-950 flex items-center gap-2 animate-in zoom-in-95">
+                <Award size={18} className="text-[#B54B32] shrink-0" />
+                <div>
+                  <div className="font-semibold text-[#221E18]">Sprint Finished!</div>
+                  <div className="text-[11px] text-[#7A705F]">
+                    You drafted {sessionWords} words in this session. Well done!
+                  </div>
+                </div>
+              </div>
             )}
-            <button
-              type="button"
-              onClick={handleReset}
-              className="p-2 border border-[#E5E1D8] text-[#736F66] hover:text-[#1A1814] hover:bg-[#F2EFE9] rounded-lg text-xs transition-colors cursor-pointer"
-              title="Reset session timer"
-            >
-              <RotateCcw size={14} />
-            </button>
-          </div>
 
-          {/* PRESETS */}
-          <div className="pt-2 border-t border-[#F0ECE1]">
-            <span className="text-[10px] font-mono text-[#AAA69F] uppercase tracking-wider block mb-1.5">
-              Sprint Presets
-            </span>
-            <div className="grid grid-cols-4 gap-1 text-[11px] font-mono">
-              {[15, 25, 45].map((m) => (
+            {/* BIG DISPLAY TIME */}
+            <div className="text-center my-3 py-1 bg-[#F1EAD9]/60 rounded-lg border border-[#E5DEC9]">
+              <div className="text-4xl font-mono font-bold tracking-tight text-[#221E18] tabular-nums">
+                {displayTime}
+              </div>
+              <div className="text-[11px] font-mono text-[#7A705F] mt-1 flex items-center justify-center gap-2">
+                <span className="capitalize font-semibold">{mode}</span>
+                <span>·</span>
+                <span className="text-emerald-800 font-semibold">+{sessionWords} words</span>
+                {wordsPerMinute > 0 && (
+                  <>
+                    <span>·</span>
+                    <span className="font-mono">{wordsPerMinute} wpm</span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* CONTROLS */}
+            <div className="flex items-center justify-center gap-2 my-3">
+              {isRunning ? (
                 <button
-                  key={m}
                   type="button"
-                  onClick={() => handleSelectPreset(m)}
-                  className={`py-1 rounded text-center transition-colors cursor-pointer ${
-                    mode === 'countdown' && targetMinutes === m
-                      ? 'bg-[#2D2A26] text-white font-semibold'
-                      : 'bg-[#F9F8F6] text-[#3C3933] hover:bg-[#EBE8E2]'
+                  onClick={handlePause}
+                  className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 bg-[#B54B32] text-[#FAF6EE] rounded-lg text-xs font-semibold hover:bg-[#9E3E27] transition-colors shadow-xs cursor-pointer"
+                >
+                  <Pause size={14} /> Pause Sprint
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleStart}
+                  className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 bg-[#221E18] text-[#FAF6EE] rounded-lg text-xs font-semibold hover:bg-[#35505F] transition-colors shadow-xs cursor-pointer"
+                >
+                  <Play size={14} />
+                  {secondsElapsed > 0 || (mode === 'countdown' && secondsRemaining < targetMinutes * 60)
+                    ? 'Resume Sprint'
+                    : 'Start Sprint'}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleReset}
+                className="p-2 border border-[#E5DEC9] bg-[#FAF6EE] text-[#7A705F] hover:text-[#221E18] hover:bg-[#F1EAD9] rounded-lg text-xs transition-colors cursor-pointer"
+                title="Reset session timer and words"
+              >
+                <RotateCcw size={14} />
+              </button>
+            </div>
+
+            {/* SPRINT PRESETS */}
+            <div className="pt-2.5 border-t border-[rgba(34,30,24,0.1)]">
+              <span className="text-[10px] font-mono text-[#7A705F] uppercase tracking-wider block mb-1.5 font-medium">
+                Sprint Presets
+              </span>
+              <div className="grid grid-cols-4 gap-1.5 text-[11px] font-mono">
+                {[15, 25, 45].map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => handleSelectPreset(m)}
+                    className={`py-1.5 rounded-md text-center transition-colors cursor-pointer ${
+                      mode === 'countdown' && targetMinutes === m
+                        ? 'bg-[#221E18] text-[#FAF6EE] font-semibold'
+                        : 'bg-[#F1EAD9] text-[#221E18] hover:bg-[#E5DEC9]'
+                    }`}
+                  >
+                    {m}m
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={handleSelectStopwatch}
+                  className={`py-1.5 rounded-md text-center transition-colors cursor-pointer ${
+                    mode === 'stopwatch'
+                      ? 'bg-[#221E18] text-[#FAF6EE] font-semibold'
+                      : 'bg-[#F1EAD9] text-[#221E18] hover:bg-[#E5DEC9]'
                   }`}
                 >
-                  {m}m
+                  Count Up
                 </button>
-              ))}
-              <button
-                type="button"
-                onClick={handleSelectStopwatch}
-                className={`py-1 rounded text-center transition-colors cursor-pointer ${
-                  mode === 'stopwatch'
-                    ? 'bg-[#2D2A26] text-white font-semibold'
-                    : 'bg-[#F9F8F6] text-[#3C3933] hover:bg-[#EBE8E2]'
-                }`}
-              >
-                Stopwatch
-              </button>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 };

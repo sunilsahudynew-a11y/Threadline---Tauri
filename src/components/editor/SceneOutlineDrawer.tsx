@@ -35,9 +35,9 @@ export const SceneOutlineDrawer: React.FC<SceneOutlineDrawerProps> = ({
   const totalManuscriptWords = allScenes.reduce((acc, s) => acc + (s.wordCount || 0), 0);
 
   return (
-    <aside className="w-72 border-r border-[rgba(34,30,24,0.12)] bg-[#FAF6EE] flex flex-col shrink-0 select-none overflow-hidden text-xs">
+    <aside className="w-72 h-full max-h-full min-h-0 border-r border-[rgba(34,30,24,0.12)] bg-[#FAF6EE] flex flex-col shrink-0 select-none overflow-hidden text-xs">
       {/* Drawer Header & Mode Switcher */}
-      <div className="p-3 border-b border-[rgba(34,30,24,0.12)] bg-[#F1EAD9] flex items-center justify-between">
+      <div className="p-3 border-b border-[rgba(34,30,24,0.12)] bg-[#F1EAD9] flex items-center justify-between shrink-0">
         <div className="flex items-center gap-1.5">
           <BookOpen size={13} className="text-[#B54B32]" />
           <span className="text-[10px] font-mono font-semibold uppercase tracking-[0.14em] text-[#7A705F]">
@@ -73,7 +73,7 @@ export const SceneOutlineDrawer: React.FC<SceneOutlineDrawerProps> = ({
       </div>
 
       {/* Main Scenes / Chapters List */}
-      <div className="flex-1 overflow-y-auto scrollbar-subtle p-3 space-y-2.5">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-subtle p-3 space-y-2.5">
         {viewMode === 'chapters' ? (
           <div className="space-y-2.5">
             {effectiveChapters.map((chap) => {
@@ -245,7 +245,7 @@ export const SceneOutlineDrawer: React.FC<SceneOutlineDrawerProps> = ({
       </div>
 
       {/* Footer / Word Count Progress */}
-      <div className="p-3 bg-[#FAF6EE] border-t border-[rgba(34,30,24,0.12)]">
+      <div className="p-3 bg-[#FAF6EE] border-t border-[rgba(34,30,24,0.12)] shrink-0">
         <div className="flex items-center justify-between text-[10px] mb-1.5">
           <span className="text-[#7A705F]">Manuscript Progress</span>
           <span className="font-bold text-[#221E18] font-mono">

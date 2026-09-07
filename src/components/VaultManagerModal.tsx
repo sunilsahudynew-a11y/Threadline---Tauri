@@ -115,7 +115,7 @@ export const VaultManagerModal: React.FC<VaultManagerModalProps> = ({
         onReloadBundleFromVault(loaded);
         setStatusMessage('Project successfully reloaded from folder!');
       } else {
-        setStatusMessage('Could not find project.json in this folder.');
+        setStatusMessage('No project.json or markdown files found in this folder yet. Click "Sync to Folder Now" to save your manuscript files here first.');
       }
     } catch (err) {
       setStatusMessage('Error reading files from folder');
