@@ -13,6 +13,51 @@ export interface Chapter {
 export type EntityType = 'character' | 'place' | 'object' | 'organization' | 'concept';
 export type EntityStatus = 'confirmed' | 'tentative' | 'contradicted' | 'retired';
 
+export interface VisualDetails {
+  imageUrl?: string;
+  appearance?: string; // Physical traits, distinctive marks, silhouette, posture
+  appearanceNotes?: string;
+  sensoryAtmosphere?: string;
+  colorPalette?: string[]; // Signature colors (hex codes or names)
+  attireOrArchitecture?: string; // Clothing, costume, materials, architectural style
+  moodKeywords?: string[]; // Aesthetic tags, e.g., "steampunk", "gothic", "neon"
+  galleryUrls?: string[]; // Extra visual reference links or base64 images
+  bannerUrl?: string; // Header or landscape art
+}
+
+export type CharacterRole = 'protagonist' | 'antagonist' | 'deuteragonist' | 'mentor' | 'ally' | 'rival' | 'foil' | 'supporting';
+
+export interface CharacterPlanning {
+  role?: CharacterRole;
+  want?: string; // External goal
+  need?: string; // Internal/spiritual need
+  wound?: string; // Backstory trauma or ghost
+  ghostOrWound?: string;
+  flaw?: string; // Fatal character flaw
+  fatalFlaw?: string;
+  secret?: string;
+  secrets?: string; // Hidden truths
+  voiceNotes?: string; // Speech cadence, favorite phrases, dialect
+}
+
+export interface WorldPlanning {
+  category?: string; // Geography, Magic/Tech, Government, Cultural, Relic
+  sensoryAtmosphere?: string; // Smells, ambient sounds, temperature, light
+  culturalRules?: string | string[]; // Taboos, traditions, laws
+  dangerLevel?: string;
+  influenceOrDangerLevel?: string; // Low, Moderate, Treacherous
+}
+
+export interface ResearchEntry {
+  id: string;
+  topic: string;
+  notes?: string;
+  sourceUrl?: string;
+  sources?: string[];
+  status?: 'inquiry' | 'in-progress' | 'verified' | 'canon' | 'debunked';
+  verified?: boolean;
+}
+
 export interface Entity {
   id: string;
   name: string;
@@ -21,6 +66,11 @@ export interface Entity {
   description: string;
   canonicalFacts: string[];
   linkedSceneIds: string[];
+  imageUrl?: string;
+  visualDetails?: VisualDetails;
+  characterPlanning?: CharacterPlanning;
+  worldPlanning?: WorldPlanning;
+  researchEntries?: ResearchEntry[];
 }
 
 export interface StoryEvent {
@@ -78,6 +128,45 @@ export interface Scene {
   notes: string;
   comments: SceneComment[];
   versions?: SceneVersion[];
+  editorialProseContent?: string;
+  editorialBaseline?: string;
+  editorialQueries?: EditorialQuery[];
+  editorialStatus?: 'unedited' | 'in-review' | 'line-edited' | 'copyedited' | 'clean-approved';
+}
+
+export type EditorialCategory = 'developmental' | 'line-edit' | 'continuity' | 'pacing' | 'author-query' | 'grammar';
+
+export interface EditorialQuery {
+  id: string;
+  sceneId: string;
+  selectionExcerpt: string;
+  comment: string;
+  category: EditorialCategory;
+  severity: 'note' | 'suggestion' | 'critical';
+  resolved: boolean;
+  author: string;
+  createdAt: string;
+  authorReply?: string;
+}
+
+export interface EditorialPassDef {
+  id: string;
+  name: string;
+  stage: 'developmental' | 'line' | 'copy' | 'proof';
+  description: string;
+  focus: string;
+  completed: boolean;
+  totalChecks: number;
+  completedChecks: number;
+}
+
+export interface ManuscriptStyleSheet {
+  oxfordComma: boolean;
+  dialogueQuoteStyle: 'double' | 'single';
+  emDashSpacing: 'closed' | 'spaced';
+  numbersSpelledUnder: number;
+  customTerms: { term: string; note: string }[];
+  flaggedEchoes: string[];
 }
 
 export interface ContinuityIssue {
@@ -144,10 +233,42 @@ export interface AIAuditLog {
   status: 'accepted' | 'discarded' | 'pending';
 }
 
+export type IdeaStatus = 'spark' | 'in-progress' | 'fleshed-out' | 'incorporated';
+export type IdeaCategory = 'plot' | 'character' | 'world' | 'dialogue' | 'theme' | 'twist' | 'research';
+export type IdeaPriority = 'high' | 'medium' | 'low';
+
+export interface RoughIdea {
+  id: string;
+  title: string;
+  description: string;
+  category: IdeaCategory;
+  status: IdeaStatus;
+  priority: IdeaPriority;
+  tags: string[];
+  linkedBeatKey?: string;
+  linkedEntityIds?: string[];
+  linkedSceneId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FrameworkPointer {
+  id: string;
+  framework: WritingFramework | 'three-act' | 'heros-journey' | 'story-circle' | 'save-the-cat';
+  beatKey: string;
+  title: string;
+  notes?: string;
+  color?: string;
+  linkedSceneId?: string;
+  order?: number;
+  createdAt: string;
+}
+
 export interface Project {
   id: string;
   title: string;
   type: ProjectType;
+  author?: string;
   protagonist?: string;
   situation?: string;
   desiredSessionGoal?: string;
@@ -174,4 +295,8 @@ export interface ProjectBundle {
   notes: NoteItem[];
   snapshots: Snapshot[];
   aiAuditLogs: AIAuditLog[];
+  roughIdeas?: RoughIdea[];
+  frameworkPointers?: FrameworkPointer[];
+  editorialStyleSheet?: ManuscriptStyleSheet;
+  editorialPasses?: EditorialPassDef[];
 }

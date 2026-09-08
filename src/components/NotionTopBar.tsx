@@ -7,11 +7,14 @@ import {
   Sun,
   Folder,
   ChevronRight,
-  Menu
+  Menu,
+  PenTool,
+  Edit3
 } from 'lucide-react';
 import { ScreenType } from './Navigation';
 import { Scene } from '../types';
 import { VaultInfo } from '../services/storage/vaultTypes';
+import { AutosaveIndicator } from './common/AutosaveIndicator';
 
 export interface NotionTopBarProps {
   currentScreen: ScreenType;
@@ -26,6 +29,7 @@ export interface NotionTopBarProps {
   onOpenVaultManager?: () => void;
   theme?: 'paper' | 'lamplight';
   onToggleTheme?: () => void;
+  lastSavedText?: string;
 }
 
 export const NotionTopBar: React.FC<NotionTopBarProps> = ({
@@ -40,15 +44,18 @@ export const NotionTopBar: React.FC<NotionTopBarProps> = ({
   vaultInfo,
   onOpenVaultManager,
   theme = 'paper',
-  onToggleTheme
+  onToggleTheme,
+  lastSavedText
 }) => {
   // Screen display labels
   const screenLabels: Record<ScreenType, string> = {
     home: 'Overview',
-    editor: 'Manuscript',
+    editor: 'Manuscript Draft',
+    editorial: 'Editor Mode',
     dashboard: 'Corkboard',
     codex: 'Codex & Lore',
     bible: 'Codex & Lore',
+    ideation: 'Ideation & Frameworks',
     continuity: 'Continuity Inbox',
     revisions: 'Snapshots & History',
     projects: 'All Manuscripts',
@@ -126,6 +133,41 @@ export const NotionTopBar: React.FC<NotionTopBarProps> = ({
 
       {/* RIGHT: Quick Search, Vault Status, Export, Theme Toggle */}
       <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+        {/* Workspace Switcher Pill */}
+        <div className="hidden sm:flex items-center bg-[#F1EAD9] rounded-[6px] border border-[rgba(34,30,24,0.12)] p-0.5 text-xs font-medium mr-1">
+          <button
+            onClick={() => onNavigate('editor')}
+            className={`px-2 py-0.5 rounded-[4px] transition-colors cursor-pointer flex items-center gap-1 ${
+              currentScreen !== 'editorial'
+                ? 'bg-[#221E18] text-[#FAF6EE] font-semibold shadow-2xs'
+                : 'text-[#7A705F] hover:text-[#221E18]'
+            }`}
+            title="Switch to Author Drafting Workspace"
+          >
+            <PenTool size={11} />
+            <span>Author</span>
+          </button>
+          <button
+            onClick={() => onNavigate('editorial')}
+            className={`px-2 py-0.5 rounded-[4px] transition-colors cursor-pointer flex items-center gap-1 ${
+              currentScreen === 'editorial'
+                ? 'bg-[#221E18] text-[#FAF6EE] font-semibold shadow-2xs'
+                : 'text-[#7A705F] hover:text-[#221E18]'
+            }`}
+            title="Switch to Editor Desk Workspace (Working Copy)"
+          >
+            <Edit3 size={11} className={currentScreen === 'editorial' ? 'text-[#DE6346]' : ''} />
+            <span>Editor</span>
+          </button>
+        </div>
+
+        {/* Animated Autosave Indicator */}
+        {lastSavedText && (
+          <div className="hidden sm:flex items-center px-2 py-0.5 rounded-[4px] bg-[#F1EAD9]/60 border border-[rgba(34,30,24,0.06)] mr-1">
+            <AutosaveIndicator lastSavedText={lastSavedText} compact={false} />
+          </div>
+        )}
+
         {/* Search Trigger */}
         {onOpenSearch && (
           <button

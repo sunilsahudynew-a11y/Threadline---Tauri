@@ -20,7 +20,8 @@ import {
   X,
   Smartphone,
   CheckCircle2,
-  HardDrive
+  HardDrive,
+  Lightbulb
 } from 'lucide-react';
 import { Project } from '../types';
 import { VaultInfo } from '../services/storage/vaultTypes';
@@ -35,6 +36,8 @@ export type ScreenType =
   | 'projects'
   | 'home'
   | 'editor'
+  | 'editorial'
+  | 'ideation'
   | 'bible'
   | 'codex'
   | 'dashboard'
@@ -101,6 +104,7 @@ export const Navigation: React.FC<NavigationProps> = ({
     { screen: 'projects', label: 'Manuscripts', icon: FolderKanban },
     { screen: 'home', label: 'Overview', icon: BookOpen },
     { screen: 'editor', label: 'Manuscript', icon: FileText },
+    { screen: 'ideation', label: 'Ideation', icon: Lightbulb },
     { screen: 'dashboard', label: 'Corkboard', icon: Layers },
     { screen: 'codex', label: 'Codex & Lore', icon: Compass },
     { screen: 'continuity', label: 'Continuity', icon: Sparkles, count: openContinuityCount },
@@ -442,6 +446,17 @@ export const Navigation: React.FC<NavigationProps> = ({
               >
                 <BookOpen size={16} className="text-[#35505F]" />
                 <span>Overview</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  onNavigate('ideation');
+                  setShowMobileMoreSheet(false);
+                }}
+                className="flex items-center gap-3 p-3 bg-[#F1EAD9] rounded-[6px] text-left text-xs font-medium text-[#221E18] min-h-[44px]"
+              >
+                <Lightbulb size={16} className="text-[#B54B32]" />
+                <span>Ideation</span>
               </button>
 
               <button

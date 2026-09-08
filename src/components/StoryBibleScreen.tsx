@@ -7,6 +7,10 @@ import {
   EntityType,
   EntityStatus
 } from '../types';
+import { VisualDetailsEditor } from './codex/VisualDetailsEditor';
+import { CharacterPlanningDossier } from './codex/CharacterPlanningDossier';
+import { WorldPlanningDossier } from './codex/WorldPlanningDossier';
+import { ResearchTracker } from './codex/ResearchTracker';
 import {
   Search,
   Plus,
@@ -23,7 +27,12 @@ import {
   AlertTriangle,
   ArrowLeft,
   BookOpen,
-  Tag
+  Tag,
+  User,
+  Globe,
+  FileText,
+  Sparkles,
+  Palette
 } from 'lucide-react';
 
 interface StoryBibleScreenProps {
@@ -43,6 +52,8 @@ interface StoryBibleScreenProps {
   onNavigateToScene: (sceneId: string) => void;
 }
 
+export type CodexTab = 'characters' | 'world' | 'research' | 'threads' | 'events';
+
 export const StoryBibleScreen: React.FC<StoryBibleScreenProps> = ({
   entities = [],
   threads = [],
@@ -59,7 +70,7 @@ export const StoryBibleScreen: React.FC<StoryBibleScreenProps> = ({
   onDeleteEvent,
   onNavigateToScene
 }) => {
-  const [activeTab, setActiveTab] = useState<'entities' | 'threads' | 'events'>('entities');
+  const [activeTab, setActiveTab] = useState<CodexTab>('characters');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -69,16 +80,28 @@ export const StoryBibleScreen: React.FC<StoryBibleScreenProps> = ({
   const safeEvents = Array.isArray(events) ? events : [];
   const safeScenes = Array.isArray(scenes) ? scenes : [];
 
-  const [selectedEntityId, setSelectedEntityId] = useState<string>(() => safeEntities[0]?.id || '');
-  
-  // Mobile / Tablet push-view state (Revamp Report §5.4)
+  // Split entities into Characters vs World elements
+  const characterEntities = safeEntities.filter((e) => e.type === 'character');
+  const worldEntities = safeEntities.filter((e) => e.type !== 'character');
+
+  // Active selection
+  const [selectedEntityId, setSelectedEntityId] = useState<string>(() => {
+    return safeEntities[0]?.id || '';
+  });
+
+  // Mobile / Tablet push-view state
   const [showMobileProfile, setShowMobileProfile] = useState<boolean>(false);
+
+  // Track failed avatar image URLs so they gracefully fallback to initials
+  const [failedAvatars, setFailedAvatars] = useState<Record<string, boolean>>({});
 
   // New fact input state
   const [newFactText, setNewFactText] = useState('');
 
-  // Filtered Entities
-  const filteredEntities = safeEntities.filter((ent) => {
+  // Determine current active list based on active tab
+  const currentList = activeTab === 'characters' ? characterEntities : worldEntities;
+
+  const filteredEntities = currentList.filter((ent) => {
     const matchesSearch =
       ent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (ent.description && ent.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
@@ -88,7 +111,10 @@ export const StoryBibleScreen: React.FC<StoryBibleScreenProps> = ({
     return matchesSearch && matchesType && matchesStatus;
   });
 
-  const selectedEntity = safeEntities.find((e) => e.id === selectedEntityId) || safeEntities[0];
+  const selectedEntity =
+    safeEntities.find((e) => e.id === selectedEntityId) ||
+    filteredEntities[0] ||
+    safeEntities[0];
 
   const handleCreateDefaultEntity = (type: EntityType = 'character') => {
     const labels: Record<EntityType, string> = {
@@ -105,7 +131,13 @@ export const StoryBibleScreen: React.FC<StoryBibleScreenProps> = ({
       status: 'tentative',
       description: 'Canonical notes, history, or appearance...',
       canonicalFacts: ['Initial established fact'],
-      linkedSceneIds: []
+      linkedSceneIds: [],
+      visualDetails: {
+        colorPalette: ['#3A3026', '#B54B32'],
+        moodKeywords: []
+      },
+      characterPlanning: type === 'character' ? { role: 'protagonist' } : undefined,
+      worldPlanning: type !== 'character' ? { category: 'geography' } : undefined
     };
     onCreateEntity(newEnt);
     setSelectedEntityId(newEnt.id);
@@ -133,7 +165,9 @@ export const StoryBibleScreen: React.FC<StoryBibleScreenProps> = ({
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 pb-24 md:pb-12 text-[#221E18]">
-      {/* HEADER: Brand Lexicon "Codex & Lore Vault" */}
+      {/* ========================================================================= */}
+      {/* HEADER: Codex & Lore Vault with Dedicated Tabs                            */}
+      {/* ========================================================================= */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
         <div>
           <span className="section-label block mb-1">
@@ -143,70 +177,100 @@ export const StoryBibleScreen: React.FC<StoryBibleScreenProps> = ({
             Codex &amp; Lore Vault
           </h1>
           <p className="text-[#7A705F] text-xs sm:text-sm mt-1">
-            Canonical characters, locations, narrative threads, and world history tracked across your manuscript.
+            Organized character planning, world building, research inquiries, narrative threads, and timeline chronology.
           </p>
         </div>
 
         <div className="flex items-center gap-2.5">
-          {/* Tab Switcher */}
-          <div className="bg-[#F1EAD9] border border-[rgba(34,30,24,0.12)] p-0.5 rounded-[6px] flex text-xs font-medium">
+          {/* Primary Dedicated Tab Switcher */}
+          <div className="bg-[#F1EAD9] border border-[rgba(34,30,24,0.12)] p-0.5 rounded-[6px] flex flex-wrap text-xs font-medium">
             <button
               onClick={() => {
-                setActiveTab('entities');
+                setActiveTab('characters');
                 setShowMobileProfile(false);
+                const firstChar = characterEntities[0];
+                if (firstChar) setSelectedEntityId(firstChar.id);
               }}
-              className={`px-3 py-1.5 rounded-[5px] text-xs font-medium transition-colors duration-150 cursor-pointer min-h-[36px] border ${
-                activeTab === 'entities'
-                  ? 'bg-[#FAF6EE] text-[#221E18] shadow-warm-sm border-[rgba(34,30,24,0.12)]'
+              className={`px-3 py-1.5 rounded-[5px] text-xs font-medium transition-colors duration-150 cursor-pointer min-h-[36px] flex items-center gap-1.5 border ${
+                activeTab === 'characters'
+                  ? 'bg-[#FAF6EE] text-[#221E18] shadow-warm-sm border-[rgba(34,30,24,0.12)] font-semibold'
                   : 'text-[#7A705F] hover:text-[#221E18] border-transparent'
               }`}
             >
-              Entities ({safeEntities.length})
+              <User size={13} className="text-[#B54B32]" />
+              <span>Characters ({characterEntities.length})</span>
             </button>
+
+            <button
+              onClick={() => {
+                setActiveTab('world');
+                setShowMobileProfile(false);
+                const firstWorld = worldEntities[0];
+                if (firstWorld) setSelectedEntityId(firstWorld.id);
+              }}
+              className={`px-3 py-1.5 rounded-[5px] text-xs font-medium transition-colors duration-150 cursor-pointer min-h-[36px] flex items-center gap-1.5 border ${
+                activeTab === 'world'
+                  ? 'bg-[#FAF6EE] text-[#221E18] shadow-warm-sm border-[rgba(34,30,24,0.12)] font-semibold'
+                  : 'text-[#7A705F] hover:text-[#221E18] border-transparent'
+              }`}
+            >
+              <Globe size={13} className="text-[#3A7D6E]" />
+              <span>World Building ({worldEntities.length})</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveTab('research');
+                setShowMobileProfile(false);
+              }}
+              className={`px-3 py-1.5 rounded-[5px] text-xs font-medium transition-colors duration-150 cursor-pointer min-h-[36px] flex items-center gap-1.5 border ${
+                activeTab === 'research'
+                  ? 'bg-[#FAF6EE] text-[#221E18] shadow-warm-sm border-[rgba(34,30,24,0.12)] font-semibold'
+                  : 'text-[#7A705F] hover:text-[#221E18] border-transparent'
+              }`}
+            >
+              <BookOpen size={13} className="text-[#C44900]" />
+              <span>Research</span>
+            </button>
+
             <button
               onClick={() => {
                 setActiveTab('threads');
                 setShowMobileProfile(false);
               }}
-              className={`px-3 py-1.5 rounded-[5px] text-xs font-medium transition-colors duration-150 cursor-pointer min-h-[36px] border ${
+              className={`px-3 py-1.5 rounded-[5px] text-xs font-medium transition-colors duration-150 cursor-pointer min-h-[36px] flex items-center gap-1.5 border ${
                 activeTab === 'threads'
-                  ? 'bg-[#FAF6EE] text-[#221E18] shadow-warm-sm border-[rgba(34,30,24,0.12)]'
+                  ? 'bg-[#FAF6EE] text-[#221E18] shadow-warm-sm border-[rgba(34,30,24,0.12)] font-semibold'
                   : 'text-[#7A705F] hover:text-[#221E18] border-transparent'
               }`}
             >
-              Threads ({safeThreads.length})
+              <GitBranch size={13} className="text-[#4B6B94]" />
+              <span>Threads ({safeThreads.length})</span>
             </button>
+
             <button
               onClick={() => {
                 setActiveTab('events');
                 setShowMobileProfile(false);
               }}
-              className={`px-3 py-1.5 rounded-[5px] text-xs font-medium transition-colors duration-150 cursor-pointer min-h-[36px] border ${
+              className={`px-3 py-1.5 rounded-[5px] text-xs font-medium transition-colors duration-150 cursor-pointer min-h-[36px] flex items-center gap-1.5 border ${
                 activeTab === 'events'
-                  ? 'bg-[#FAF6EE] text-[#221E18] shadow-warm-sm border-[rgba(34,30,24,0.12)]'
+                  ? 'bg-[#FAF6EE] text-[#221E18] shadow-warm-sm border-[rgba(34,30,24,0.12)] font-semibold'
                   : 'text-[#7A705F] hover:text-[#221E18] border-transparent'
               }`}
             >
-              Timeline ({safeEvents.length})
+              <Calendar size={13} className="text-[#7A705F]" />
+              <span>Timeline ({safeEvents.length})</span>
             </button>
           </div>
 
-          {/* Add Item Button */}
+          {/* Quick Add Button */}
           <button
             onClick={() => {
-              if (activeTab === 'entities') {
-                const newEnt: Entity = {
-                  id: 'ent-' + Date.now(),
-                  name: 'New Entity',
-                  type: 'character',
-                  status: 'tentative',
-                  description: 'Description of character or lore item...',
-                  canonicalFacts: ['Initial confirmed fact'],
-                  linkedSceneIds: []
-                };
-                onCreateEntity(newEnt);
-                setSelectedEntityId(newEnt.id);
-                setShowMobileProfile(true);
+              if (activeTab === 'characters') {
+                handleCreateDefaultEntity('character');
+              } else if (activeTab === 'world') {
+                handleCreateDefaultEntity('place');
               } else if (activeTab === 'threads') {
                 const newTh: Thread = {
                   id: 'th-' + Date.now(),
@@ -228,118 +292,169 @@ export const StoryBibleScreen: React.FC<StoryBibleScreenProps> = ({
                 onCreateEvent(newEv);
               }
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] bg-[#B54B32] text-[#FAF6EE] text-xs font-semibold hover:bg-[#9E3E27] shadow-warm-sm transition-colors cursor-pointer min-h-[36px]"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] bg-[#B54B32] text-[#FAF6EE] text-xs font-semibold hover:bg-[#9E3E27] shadow-warm-sm transition-colors cursor-pointer min-h-[36px] shrink-0"
           >
             <Plus size={14} />
-            <span className="hidden sm:inline">Add Entry</span>
+            <span className="hidden sm:inline">
+              {activeTab === 'characters'
+                ? 'Add Character'
+                : activeTab === 'world'
+                ? 'Add World Element'
+                : 'Add Entry'}
+            </span>
           </button>
         </div>
       </div>
 
       {/* ========================================================================= */}
-      {/* 1. ENTITIES VIEW (CHARACTERS, PLACES, LORE, OBJECTS)                      */}
+      {/* 1. CHARACTER PLANNING TAB & 2. WORLD BUILDING TAB                         */}
       {/* ========================================================================= */}
-      {activeTab === 'entities' && (
+      {(activeTab === 'characters' || activeTab === 'world') && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* LEFT LIST COLUMN (Filterable, scrollable) */}
-          <div className={`lg:col-span-5 space-y-4 ${showMobileProfile ? 'hidden lg:block' : 'block'}`}>
+          <div className={`lg:col-span-4 space-y-4 ${showMobileProfile ? 'hidden lg:block' : 'block'}`}>
             {/* Search and Filters */}
             <div className="space-y-2.5 bg-[#F1EAD9] p-3 rounded-[6px] border border-[rgba(34,30,24,0.12)]">
               <div className="relative">
                 <Search size={14} className="absolute left-3 top-2.5 text-[#7A705F]" />
                 <input
                   type="text"
+                  placeholder={
+                    activeTab === 'characters'
+                      ? 'Search characters, traits, facts...'
+                      : 'Search locations, relics, factions...'
+                  }
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search characters, places, facts..."
-                  className="w-full bg-[#FAF6EE] border border-[rgba(34,30,24,0.12)] rounded-[6px] pl-8 pr-3 py-1.5 text-xs text-[#221E18] focus:outline-none focus:border-[#35505F]"
+                  className="w-full bg-[#FAF6EE] border border-[rgba(34,30,24,0.12)] rounded-[6px] pl-9 pr-3 py-1.5 text-xs text-[#221E18] focus:outline-none focus:border-[#B54B32]"
                 />
               </div>
 
-              {/* Category Filter Chips */}
-              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-                {[
-                  { id: 'all', label: 'All' },
-                  { id: 'character', label: 'Characters' },
-                  { id: 'place', label: 'Places' },
-                  { id: 'object', label: 'Objects' },
-                  { id: 'organization', label: 'Factions' },
-                  { id: 'concept', label: 'Lore & Magic' }
-                ].map((cat) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => setFilterType(cat.id)}
-                    className={`px-2.5 py-1 rounded-full text-[11px] font-medium whitespace-nowrap transition-colors cursor-pointer min-h-[28px] ${
-                      filterType === cat.id
-                        ? 'bg-[#B54B32] text-[#FAF6EE]'
-                        : 'bg-[#FAF6EE] text-[#7A705F] hover:text-[#221E18] border border-[rgba(34,30,24,0.12)]'
-                    }`}
-                  >
-                    {cat.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Entities List */}
-            <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
-              {filteredEntities.length === 0 ? (
-                <div className="p-6 text-center bg-[#F1EAD9]/60 rounded-[6px] border border-[rgba(34,30,24,0.12)] text-xs text-[#7A705F] space-y-3">
-                  <div>
-                    <p className="font-serif italic text-sm text-[#221E18] mb-1">Your Codex is ready for entries.</p>
-                    <p>Pin characters, locations, factions, and world facts to anchor your canon.</p>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5 justify-center pt-1">
+              {/* World specific domain sub-filter */}
+              {activeTab === 'world' && (
+                <div className="flex flex-wrap gap-1 pt-1">
+                  {[
+                    { id: 'all', label: 'All' },
+                    { id: 'place', label: 'Locations' },
+                    { id: 'organization', label: 'Factions' },
+                    { id: 'object', label: 'Relics' },
+                    { id: 'concept', label: 'Arcana' }
+                  ].map((btn) => (
                     <button
-                      onClick={() => handleCreateDefaultEntity('character')}
-                      className="px-2.5 py-1 bg-[#FAF6EE] hover:bg-[#FAF6EE]/80 border border-[rgba(34,30,24,0.15)] rounded-[4px] text-[11px] font-medium text-[#221E18] cursor-pointer"
-                    >
-                      + Character
-                    </button>
-                    <button
-                      onClick={() => handleCreateDefaultEntity('place')}
-                      className="px-2.5 py-1 bg-[#FAF6EE] hover:bg-[#FAF6EE]/80 border border-[rgba(34,30,24,0.15)] rounded-[4px] text-[11px] font-medium text-[#221E18] cursor-pointer"
-                    >
-                      + Location
-                    </button>
-                    <button
-                      onClick={() => handleCreateDefaultEntity('concept')}
-                      className="px-2.5 py-1 bg-[#FAF6EE] hover:bg-[#FAF6EE]/80 border border-[rgba(34,30,24,0.15)] rounded-[4px] text-[11px] font-medium text-[#221E18] cursor-pointer"
-                    >
-                      + Lore / Magic
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                filteredEntities.map((entity) => {
-                  const isSelected = entity.id === selectedEntity?.id;
-                  return (
-                    <div
-                      key={entity.id}
-                      onClick={() => {
-                        setSelectedEntityId(entity.id);
-                        setShowMobileProfile(true);
-                      }}
-                      className={`p-3.5 rounded-[6px] border transition-all cursor-pointer min-h-[44px] ${
-                        isSelected
-                          ? 'bg-[#F1EAD9] border-[#B54B32] shadow-warm-sm'
-                          : 'bg-[#FAF6EE] border-[rgba(34,30,24,0.12)] hover:border-[rgba(34,30,24,0.25)]'
+                      key={btn.id}
+                      onClick={() => setFilterType(btn.id)}
+                      className={`px-2 py-1 rounded-[4px] text-[10px] font-mono transition-colors cursor-pointer border ${
+                        filterType === btn.id
+                          ? 'bg-[#3A7D6E] text-[#FAF6EE] border-[#3A7D6E] font-semibold'
+                          : 'bg-[#FAF6EE] text-[#554D40] hover:text-[#221E18] border-[rgba(34,30,24,0.08)]'
                       }`}
                     >
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="font-serif font-semibold text-sm text-[#221E18] truncate">
-                          {entity.name}
-                        </div>
-                        <span className="text-[10px] font-mono uppercase tracking-wider text-[#7A705F] px-1.5 py-0.5 rounded-[4px] bg-[#FAF6EE] border border-[rgba(34,30,24,0.12)] shrink-0">
-                          {entity.type}
-                        </span>
+                      {btn.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Entity Cards List */}
+            <div className="space-y-2 max-h-[640px] overflow-y-auto pr-1">
+              {filteredEntities.length === 0 ? (
+                <div className="p-8 text-center bg-[#F1EAD9]/50 rounded-[6px] border border-dashed border-[rgba(34,30,24,0.12)] text-xs text-[#7A705F] space-y-2">
+                  <p>No entries found matching criteria.</p>
+                  <button
+                    onClick={() => handleCreateDefaultEntity(activeTab === 'characters' ? 'character' : 'place')}
+                    className="text-[#B54B32] font-semibold hover:underline"
+                  >
+                    + Create new {activeTab === 'characters' ? 'Character' : 'World Element'}
+                  </button>
+                </div>
+              ) : (
+                filteredEntities.map((ent) => {
+                  const isSelected = selectedEntity?.id === ent.id;
+                  const charRole = ent.characterPlanning?.role;
+                  const avatarUrl = ent.visualDetails?.imageUrl;
+                  const palette = ent.visualDetails?.colorPalette || [];
+
+                  return (
+                    <div
+                      key={ent.id}
+                      onClick={() => {
+                        setSelectedEntityId(ent.id);
+                        setShowMobileProfile(true);
+                      }}
+                      className={`p-3 rounded-[6px] border transition-all cursor-pointer flex items-center gap-3 ${
+                        isSelected
+                          ? 'bg-[#FAF6EE] border-[#B54B32] shadow-warm-sm'
+                          : 'bg-[#F1EAD9] border-[rgba(34,30,24,0.08)] hover:border-[rgba(34,30,24,0.18)]'
+                      }`}
+                    >
+                      {/* Avatar Image or Initial Box */}
+                      <div className="w-11 h-11 rounded-[6px] overflow-hidden bg-white border border-[rgba(34,30,24,0.12)] shrink-0 flex items-center justify-center relative">
+                        {avatarUrl && !failedAvatars[ent.id] ? (
+                          <img
+                            src={avatarUrl}
+                            alt={ent.name || 'Entity'}
+                            className="w-full h-full object-cover"
+                            referrerPolicy="no-referrer"
+                            onError={() => setFailedAvatars((prev) => ({ ...prev, [ent.id]: true }))}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center bg-[#FAF6EE] text-[#B54B32] font-serif font-bold text-xs select-none">
+                            {((ent.name || 'EN').trim().slice(0, 2) || 'EN').toUpperCase()}
+                          </div>
+                        )}
+
+                        {/* Status dot in corner */}
+                        <span
+                          className={`absolute bottom-0.5 right-0.5 w-2 h-2 rounded-full border border-white ${
+                            ent.status === 'confirmed'
+                              ? 'bg-emerald-600'
+                              : ent.status === 'tentative'
+                              ? 'bg-amber-500'
+                              : 'bg-red-500'
+                          }`}
+                        />
                       </div>
-                      <p className="text-xs text-[#7A705F] line-clamp-2 mt-1">
-                        {entity.description || 'No description provided.'}
-                      </p>
-                      <div className="flex items-center justify-between text-[10px] font-mono text-[#7A705F] mt-2 pt-2 border-t border-[rgba(34,30,24,0.08)]">
-                        <span>{entity.canonicalFacts?.length || 0} confirmed facts</span>
-                        <span>{entity.linkedSceneIds?.length || 0} scenes</span>
+
+                      {/* Info & Badges */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-1">
+                          <h4 className="font-serif font-semibold text-xs sm:text-sm text-[#221E18] truncate">
+                            {ent.name}
+                          </h4>
+                          {charRole && (
+                            <span className="text-[9px] font-mono uppercase px-1.5 py-0.2 rounded bg-[#FAF6EE] border border-[rgba(34,30,24,0.1)] text-[#B54B32] font-bold shrink-0">
+                              {charRole}
+                            </span>
+                          )}
+                          {!charRole && (
+                            <span className="text-[9px] font-mono uppercase px-1.5 py-0.2 rounded bg-[#FAF6EE] text-[#7A705F] shrink-0">
+                              {ent.type}
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="text-[11px] text-[#7A705F] truncate mt-0.5">
+                          {ent.characterPlanning?.want
+                            ? `Want: ${ent.characterPlanning.want}`
+                            : ent.description || 'No description yet.'}
+                        </p>
+
+                        {/* Color palette preview dots */}
+                        {palette.length > 0 && (
+                          <div className="flex items-center gap-1 mt-1">
+                            {palette.slice(0, 4).map((c, i) => (
+                              <span
+                                key={i}
+                                className="w-1.5 h-1.5 rounded-full"
+                                style={{ backgroundColor: c }}
+                              />
+                            ))}
+                            <span className="text-[9px] font-mono text-[#7A705F] ml-1">
+                              {ent.canonicalFacts?.length || 0} facts
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
@@ -348,120 +463,178 @@ export const StoryBibleScreen: React.FC<StoryBibleScreenProps> = ({
             </div>
           </div>
 
-          {/* RIGHT PROFILE COLUMN (Deep dossier view) */}
-          <div className={`lg:col-span-7 ${!showMobileProfile ? 'hidden lg:block' : 'block'}`}>
+          {/* RIGHT DOSSIER / PROFILE COLUMN */}
+          <div
+            className={`lg:col-span-8 bg-[#FAF6EE] rounded-[8px] border border-[rgba(34,30,24,0.12)] p-4 sm:p-6 shadow-warm-md space-y-6 ${
+              showMobileProfile ? 'block' : 'hidden lg:block'
+            }`}
+          >
             {selectedEntity ? (
-              <div className="bg-[#F1EAD9] rounded-[6px] border border-[rgba(34,30,24,0.12)] p-5 sm:p-6 space-y-6 shadow-warm-sm">
-                {/* Back button on mobile to return to entity list */}
-                <div className="lg:hidden pb-3 border-b border-[rgba(34,30,24,0.12)]">
+              <div className="space-y-6">
+                {/* Mobile Back Button */}
+                <div className="lg:hidden flex items-center justify-between pb-2 border-b border-[rgba(34,30,24,0.08)]">
                   <button
                     onClick={() => setShowMobileProfile(false)}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#B54B32] cursor-pointer min-h-[44px]"
+                    className="flex items-center gap-1.5 text-xs text-[#B54B32] font-semibold cursor-pointer"
                   >
-                    <ArrowLeft size={15} />
-                    <span>Back to Entities List</span>
+                    <ArrowLeft size={14} />
+                    <span>Back to {activeTab === 'characters' ? 'Characters' : 'World'}</span>
                   </button>
+                  <span className="text-[10px] font-mono text-[#7A705F] uppercase">
+                    Editing: {selectedEntity.name}
+                  </span>
                 </div>
 
-                {/* Profile Title & Meta Fields */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[rgba(34,30,24,0.12)]">
-                  <div className="space-y-1 flex-1">
+                {/* Profile Header: Name, Status & Delete */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[rgba(34,30,24,0.08)] pb-4">
+                  <div className="flex-1 min-w-0 flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-[6px] overflow-hidden bg-white border border-[rgba(34,30,24,0.12)] shrink-0 flex items-center justify-center">
+                      {selectedEntity.visualDetails?.imageUrl && !failedAvatars[selectedEntity.id] ? (
+                        <img
+                          src={selectedEntity.visualDetails.imageUrl}
+                          alt={selectedEntity.name || 'Entity'}
+                          className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                          onError={() => setFailedAvatars((prev) => ({ ...prev, [selectedEntity.id]: true }))}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-[#FAF6EE] text-[#B54B32] font-serif font-bold text-xs select-none">
+                          {((selectedEntity.name || 'EN').trim().slice(0, 2) || 'EN').toUpperCase()}
+                        </div>
+                      )}
+                    </div>
                     <input
                       type="text"
                       value={selectedEntity.name}
-                      onChange={(e) => onUpdateEntity({ ...selectedEntity, name: e.target.value })}
-                      className="font-serif font-semibold text-xl sm:text-2xl text-[#221E18] bg-transparent border-b border-transparent hover:border-[rgba(34,30,24,0.2)] focus:border-[#B54B32] focus:outline-none w-full"
+                      onChange={(e) =>
+                        onUpdateEntity({ ...selectedEntity, name: e.target.value })
+                      }
+                      className="font-serif font-bold text-xl sm:text-2xl text-[#221E18] bg-transparent border-b border-transparent hover:border-[rgba(34,30,24,0.2)] focus:border-[#B54B32] focus:outline-none w-full"
+                      placeholder="Entity Name..."
                     />
-                    <div className="flex items-center gap-2 text-xs">
-                      <select
-                        value={selectedEntity.type}
-                        onChange={(e) => onUpdateEntity({ ...selectedEntity, type: e.target.value as EntityType })}
-                        className="bg-[#FAF6EE] border border-[rgba(34,30,24,0.12)] rounded px-2 py-1 text-xs text-[#221E18] focus:outline-none"
-                      >
-                        <option value="character">Character</option>
-                        <option value="place">Place / Location</option>
-                        <option value="object">Object / Item</option>
-                        <option value="organization">Faction / Group</option>
-                        <option value="concept">Lore / Magic / Tech</option>
-                      </select>
-
-                      <select
-                        value={selectedEntity.status}
-                        onChange={(e) => onUpdateEntity({ ...selectedEntity, status: e.target.value as EntityStatus })}
-                        className="bg-[#FAF6EE] border border-[rgba(34,30,24,0.12)] rounded px-2 py-1 text-xs text-[#221E18] focus:outline-none"
-                      >
-                        <option value="confirmed">Confirmed Canon</option>
-                        <option value="tentative">Tentative / WIP</option>
-                        <option value="contradicted">Contradicted</option>
-                        <option value="retired">Retired</option>
-                      </select>
-                    </div>
                   </div>
 
-                  <button
-                    onClick={() => {
-                      if (confirm(`Remove "${selectedEntity.name}" from the Codex?`)) {
-                        onDeleteEntity(selectedEntity.id);
-                        setShowMobileProfile(false);
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={selectedEntity.status}
+                      onChange={(e) =>
+                        onUpdateEntity({
+                          ...selectedEntity,
+                          status: e.target.value as EntityStatus
+                        })
                       }
-                    }}
-                    className="p-2 text-[#7A705F] hover:text-[#B54B32] transition-colors cursor-pointer self-start sm:self-center"
-                    title="Delete entity"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                      className="text-xs px-2.5 py-1.5 rounded-[5px] border border-[rgba(34,30,24,0.12)] bg-[#F1EAD9] text-[#221E18] font-mono"
+                    >
+                      <option value="confirmed">Confirmed Canon</option>
+                      <option value="tentative">Tentative / WIP</option>
+                      <option value="contradicted">Contradicted</option>
+                    </select>
+
+                    <button
+                      onClick={() => onDeleteEntity(selectedEntity.id)}
+                      className="p-1.5 text-[#7A705F] hover:text-red-700 hover:bg-[#F1EAD9] rounded-[5px] transition-colors cursor-pointer"
+                      title="Delete Entry"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
                 </div>
 
-                {/* Description */}
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-mono uppercase tracking-wider text-[#7A705F] font-semibold block">
-                    Narrative Summary &amp; Traits
+                {/* General Summary / Notes */}
+                <div>
+                  <label className="text-[11px] font-mono text-[#7A705F] uppercase font-semibold block mb-1">
+                    Canonical Overview &amp; Lore Summary
                   </label>
                   <textarea
-                    value={selectedEntity.description}
-                    onChange={(e) => onUpdateEntity({ ...selectedEntity, description: e.target.value })}
-                    rows={3}
-                    placeholder="Physical appearance, voice, motivations, or world significance..."
-                    className="w-full bg-[#FAF6EE] border border-[rgba(34,30,24,0.12)] rounded-[6px] p-3 text-xs text-[#221E18] leading-relaxed focus:outline-none focus:border-[#35505F]"
+                    value={selectedEntity.description || ''}
+                    onChange={(e) =>
+                      onUpdateEntity({ ...selectedEntity, description: e.target.value })
+                    }
+                    rows={2}
+                    className="w-full text-xs p-2.5 rounded-[6px] border border-[rgba(34,30,24,0.12)] bg-[#FAF6EE] focus:outline-none focus:border-[#B54B32] text-[#221E18] leading-relaxed resize-none"
+                    placeholder="Brief background, canonical origins, or significance..."
                   />
                 </div>
 
-                {/* Canonical Facts */}
-                <div className="space-y-2.5">
+                {/* ========================================================================= */}
+                {/* 3. VISUAL DETAILS SECTION (Feature 3)                                    */}
+                {/* ========================================================================= */}
+                <VisualDetailsEditor
+                  entityType={activeTab === 'characters' ? 'character' : 'world'}
+                  visualDetails={selectedEntity.visualDetails}
+                  onChange={(updated) =>
+                    onUpdateEntity({
+                      ...selectedEntity,
+                      visualDetails: updated
+                    })
+                  }
+                />
+
+                {/* ========================================================================= */}
+                {/* 2. DEDICATED PLANNING SECTION (Character Planning / World Systems)       */}
+                {/* ========================================================================= */}
+                {activeTab === 'characters' ? (
+                  <CharacterPlanningDossier
+                    planning={selectedEntity.characterPlanning}
+                    onChange={(updated) =>
+                      onUpdateEntity({
+                        ...selectedEntity,
+                        characterPlanning: updated
+                      })
+                    }
+                  />
+                ) : (
+                  <WorldPlanningDossier
+                    planning={selectedEntity.worldPlanning}
+                    onChange={(updated) =>
+                      onUpdateEntity({
+                        ...selectedEntity,
+                        worldPlanning: updated
+                      })
+                    }
+                  />
+                )}
+
+                {/* Canonical Facts List */}
+                <div className="space-y-3 pt-2 border-t border-[rgba(34,30,24,0.08)]">
                   <div className="flex items-center justify-between">
-                    <label className="text-[11px] font-mono uppercase tracking-wider text-[#7A705F] font-semibold">
-                      Confirmed Canonical Facts ({selectedEntity.canonicalFacts?.length || 0})
-                    </label>
+                    <h4 className="text-xs font-mono uppercase tracking-wider text-[#7A705F] font-semibold flex items-center gap-1.5">
+                      <Shield size={13} className="text-[#3A7D6E]" />
+                      <span>Established Canonical Facts ({selectedEntity.canonicalFacts?.length || 0})</span>
+                    </h4>
                   </div>
 
-                  <div className="space-y-1.5">
-                    {selectedEntity.canonicalFacts?.map((fact, idx) => (
+                  <div className="space-y-2">
+                    {(selectedEntity.canonicalFacts || []).map((fact, idx) => (
                       <div
                         key={idx}
-                        className="flex items-center justify-between gap-2 p-2 bg-[#FAF6EE] rounded-[6px] border border-[rgba(34,30,24,0.12)] text-xs text-[#221E18]"
+                        className="flex items-start justify-between gap-2 p-2.5 rounded-[5px] bg-[#F1EAD9] border border-[rgba(34,30,24,0.08)] text-xs text-[#221E18] group"
                       >
-                        <span className="flex-1">• {fact}</span>
+                        <span className="leading-relaxed">{fact}</span>
                         <button
                           onClick={() => handleRemoveFact(idx)}
-                          className="text-[#7A705F] hover:text-[#B54B32] cursor-pointer p-1"
+                          className="text-[#7A705F] hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 cursor-pointer shrink-0"
+                          title="Remove fact"
                         >
-                          <X size={13} />
+                          <Trash2 size={12} />
                         </button>
                       </div>
                     ))}
 
-                    <div className="flex items-center gap-2 pt-1">
+                    {/* Add Fact Input */}
+                    <div className="flex gap-2 pt-1">
                       <input
                         type="text"
+                        placeholder="Add new confirmed canonical fact..."
                         value={newFactText}
                         onChange={(e) => setNewFactText(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleAddFact()}
-                        placeholder="Add a new immutable canon fact..."
-                        className="flex-1 bg-[#FAF6EE] border border-[rgba(34,30,24,0.12)] rounded-[6px] px-3 py-1.5 text-xs text-[#221E18] focus:outline-none focus:border-[#35505F]"
+                        className="flex-1 text-xs px-2.5 py-1.5 rounded-[5px] border border-[rgba(34,30,24,0.12)] bg-[#FAF6EE] focus:outline-none focus:border-[#B54B32]"
                       />
                       <button
                         onClick={handleAddFact}
-                        className="px-3 py-1.5 bg-[#35505F] text-[#FAF6EE] text-xs font-semibold rounded-[6px] hover:bg-[#2A404D] transition-colors cursor-pointer min-h-[36px]"
+                        disabled={!newFactText.trim()}
+                        className="px-3 py-1.5 bg-[#FAF6EE] border border-[rgba(34,30,24,0.15)] text-[#221E18] text-xs font-semibold rounded-[5px] hover:bg-white disabled:opacity-50 cursor-pointer"
                       >
                         Add Fact
                       </button>
@@ -469,53 +642,34 @@ export const StoryBibleScreen: React.FC<StoryBibleScreenProps> = ({
                   </div>
                 </div>
 
-                {/* Bidirectional Scene Appearances */}
-                <div className="space-y-2.5 pt-2 border-t border-[rgba(34,30,24,0.12)]">
-                  <label className="text-[11px] font-mono uppercase tracking-wider text-[#7A705F] font-semibold block">
-                    Manuscript Appearances ({selectedEntity.linkedSceneIds?.length || 0})
-                  </label>
+                {/* Linked Manuscript Scenes */}
+                <div className="space-y-2 pt-2 border-t border-[rgba(34,30,24,0.08)]">
+                  <h4 className="text-xs font-mono uppercase tracking-wider text-[#7A705F] font-semibold flex items-center gap-1.5">
+                    <FileText size={13} className="text-[#B54B32]" />
+                    <span>Appears in Manuscript Scenes ({selectedEntity.linkedSceneIds?.length || 0})</span>
+                  </h4>
 
-                  {selectedEntity.linkedSceneIds?.length === 0 ? (
-                    <p className="text-xs text-[#7A705F] italic">
-                      This entity hasn't been mentioned in any scenes yet. Use @{selectedEntity.name} in the Editor to link it.
-                    </p>
-                  ) : (
-                    <div className="space-y-1.5">
-                      {selectedEntity.linkedSceneIds.map((sceneId) => {
-                        const sc = scenes.find((s) => s.id === sceneId);
-                        if (!sc) return null;
-                        return (
-                          <button
-                            key={sceneId}
-                            onClick={() => onNavigateToScene(sceneId)}
-                            className="w-full flex items-center justify-between p-2.5 bg-[#FAF6EE] hover:bg-[#EAE4D6] rounded-[6px] border border-[rgba(34,30,24,0.12)] text-left text-xs transition-colors cursor-pointer min-h-[44px]"
-                          >
-                            <div className="flex items-center gap-2">
-                              <BookOpen size={13} className="text-[#B54B32]" />
-                              <span className="font-serif font-medium text-[#221E18]">{sc.title}</span>
-                              {sc.pov && (
-                                <span className="text-[10px] text-[#7A705F]">· POV: {sc.pov}</span>
-                              )}
-                            </div>
-                            <ArrowRight size={13} className="text-[#7A705F]" />
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
+                  <div className="flex flex-wrap gap-2">
+                    {(selectedEntity.linkedSceneIds || []).map((sceneId) => {
+                      const scene = safeScenes.find((s) => s.id === sceneId);
+                      return (
+                        <button
+                          key={sceneId}
+                          onClick={() => onNavigateToScene(sceneId)}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[5px] bg-[#F1EAD9] border border-[rgba(34,30,24,0.1)] text-xs text-[#221E18] hover:border-[#B54B32] transition-colors cursor-pointer group"
+                        >
+                          <FileText size={11} className="text-[#B54B32]" />
+                          <span>{scene ? scene.title : `Scene: ${sceneId}`}</span>
+                          <ArrowRight size={10} className="text-[#7A705F] group-hover:text-[#B54B32]" />
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             ) : (
-              <div className="p-12 text-center bg-[#F1EAD9]/50 rounded-[6px] border border-[rgba(34,30,24,0.12)] text-xs text-[#7A705F] space-y-3">
-                <p className="font-serif italic text-base text-[#221E18]">Select an entity or create a new entry.</p>
-                <p>Track canon, traits, confirmed facts, and bidirectional scene appearances in this dossier.</p>
-                <button
-                  onClick={() => handleCreateDefaultEntity('character')}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] bg-[#B54B32] text-[#FAF6EE] text-xs font-semibold hover:bg-[#9E3E27] cursor-pointer"
-                >
-                  <Plus size={14} />
-                  <span>Create First Entry</span>
-                </button>
+              <div className="p-12 text-center text-[#7A705F] space-y-2">
+                <p>Select an entry to inspect and edit its dossier.</p>
               </div>
             )}
           </div>
@@ -523,7 +677,19 @@ export const StoryBibleScreen: React.FC<StoryBibleScreenProps> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* 2. NARRATIVE THREADS & ARCS VIEW                                          */}
+      {/* 3. RESEARCH & FIELD INQUIRIES TAB (Feature 2)                             */}
+      {/* ========================================================================= */}
+      {activeTab === 'research' && (
+        <ResearchTracker
+          entities={safeEntities}
+          scenes={safeScenes}
+          onUpdateEntity={onUpdateEntity}
+          onNavigateToScene={onNavigateToScene}
+        />
+      )}
+
+      {/* ========================================================================= */}
+      {/* 4. NARRATIVE THREADS & SUBPLOTS TAB                                       */}
       {/* ========================================================================= */}
       {activeTab === 'threads' && (
         <div className="space-y-4">
@@ -582,7 +748,7 @@ export const StoryBibleScreen: React.FC<StoryBibleScreenProps> = ({
                     value={thread.description}
                     onChange={(e) => onUpdateThread({ ...thread, description: e.target.value })}
                     rows={2}
-                    className="w-full bg-[#FAF6EE] border border-[rgba(34,30,24,0.12)] rounded-[6px] p-2 text-xs text-[#221E18] focus:outline-none"
+                    className="w-full bg-[#FAF6EE] border border-[rgba(34,30,24,0.12)] rounded-[6px] p-2 text-xs text-[#221E18] focus:outline-none resize-none"
                     placeholder="Thematic core or conflict trajectory..."
                   />
 
@@ -606,7 +772,7 @@ export const StoryBibleScreen: React.FC<StoryBibleScreenProps> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* 3. STORY TIMELINE & CHRONOLOGY VIEW                                       */}
+      {/* 5. STORY TIMELINE & CHRONOLOGY TAB                                        */}
       {/* ========================================================================= */}
       {activeTab === 'events' && (
         <div className="space-y-4">

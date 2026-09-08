@@ -1,7 +1,18 @@
 import React, { useState } from 'react';
 import { AIAuditLog } from '../types';
 import { VaultInfo } from '../services/storage/vaultTypes';
-import { ThemeConfig, ThemeFamily, ThemeMode, AVAILABLE_THEMES, getSavedTheme, applyThemeToDOM } from '../services/theme/themeConfig';
+import {
+  ThemeConfig,
+  ThemeFamily,
+  ThemeMode,
+  AVAILABLE_THEMES,
+  getSavedTheme,
+  applyThemeToDOM,
+  AppFontSize,
+  AVAILABLE_FONT_SIZES,
+  getSavedFontSize,
+  applyFontSizeToDOM
+} from '../services/theme/themeConfig';
 import {
   ShieldCheck,
   Lock,
@@ -20,7 +31,8 @@ import {
   CheckCircle2,
   Palette,
   Sun,
-  Moon
+  Moon,
+  Type
 } from 'lucide-react';
 
 interface SettingsScreenProps {
@@ -35,6 +47,8 @@ interface SettingsScreenProps {
   onSelectThemeFamily?: (family: ThemeFamily) => void;
   onSelectThemeMode?: (mode: ThemeMode) => void;
   onToggleTheme?: () => void;
+  fontSize?: AppFontSize;
+  onSelectFontSize?: (size: AppFontSize) => void;
 }
 
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({
@@ -48,13 +62,19 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   themeConfig: propThemeConfig,
   onSelectThemeFamily,
   onSelectThemeMode,
-  onToggleTheme
+  onToggleTheme,
+  fontSize: propFontSize,
+  onSelectFontSize
 }) => {
   const [resetConfirm, setResetConfirm] = useState(false);
   
   // Local fallback if not provided via props
   const [localThemeConfig, setLocalThemeConfig] = useState<ThemeConfig>(() => getSavedTheme());
   const activeConfig = propThemeConfig || localThemeConfig;
+
+  // Local font size fallback
+  const [localFontSize, setLocalFontSize] = useState<AppFontSize>(() => getSavedFontSize());
+  const activeFontSize = propFontSize || localFontSize;
 
   const handleChooseFamily = (family: ThemeFamily) => {
     if (onSelectThemeFamily) {
@@ -73,6 +93,14 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
       const next = { ...localThemeConfig, mode };
       setLocalThemeConfig(next);
       applyThemeToDOM(next);
+    }
+  };
+
+  const handleChooseFontSize = (size: AppFontSize) => {
+    setLocalFontSize(size);
+    applyFontSizeToDOM(size);
+    if (onSelectFontSize) {
+      onSelectFontSize(size);
     }
   };
 
@@ -189,6 +217,75 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                         title="Accent color"
                       />
                     </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Global App Typography & Font Size Section */}
+        <div className="bg-[#FAF6EE] rounded-[6px] border border-[rgba(34,30,24,0.12)] p-5 sm:p-6 shadow-warm-sm space-y-5">
+          <div className="flex items-center justify-between border-b border-[rgba(34,30,24,0.1)] pb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-[5px] bg-[#F1EAD9] text-[#B54B32] border border-[rgba(34,30,24,0.1)]">
+                <Type size={18} />
+              </div>
+              <div>
+                <h3 className="font-serif font-bold text-[#221E18] text-base">
+                  Global Workspace Typography &amp; Scale
+                </h3>
+                <p className="text-xs text-[#7A705F] mt-0.5">
+                  Adjust the root type scale across all editor workspaces, story bibles, and sidebars.
+                </p>
+              </div>
+            </div>
+
+            <span className="text-xs font-mono font-bold text-[#B54B32] bg-[#B54B32]/10 px-2.5 py-1 rounded-[4px]">
+              {AVAILABLE_FONT_SIZES.find((s) => s.id === activeFontSize)?.label || 'Default'}
+            </span>
+          </div>
+
+          {/* Font Size Option Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {AVAILABLE_FONT_SIZES.map((sizeOption) => {
+              const isSelected = activeFontSize === sizeOption.id;
+
+              return (
+                <button
+                  key={sizeOption.id}
+                  type="button"
+                  onClick={() => handleChooseFontSize(sizeOption.id)}
+                  className={`p-3.5 rounded-[6px] border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                    isSelected
+                      ? 'border-[#B54B32] bg-[#F1EAD9]/80 shadow-warm-sm ring-2 ring-[#B54B32]/30'
+                      : 'border-[rgba(34,30,24,0.12)] bg-[#FAF6EE] hover:bg-[#F1EAD9]/40'
+                  }`}
+                >
+                  <div className="mb-2">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-serif font-bold text-sm text-[#221E18]">
+                        {sizeOption.label}
+                      </span>
+                      {isSelected && (
+                        <Check size={13} className="text-[#B54B32]" />
+                      )}
+                    </div>
+                    <p className="text-[11px] text-[#7A705F] leading-tight">
+                      {sizeOption.sublabel}
+                    </p>
+                  </div>
+
+                  <div className="pt-2 border-t border-[rgba(34,30,24,0.08)] flex items-center justify-between">
+                    <span className="text-[10px] font-mono font-semibold text-[#7A705F]">
+                      Scale: {sizeOption.pxValue}
+                    </span>
+                    <span
+                      className="font-serif text-[#221E18] font-medium"
+                      style={{ fontSize: sizeOption.pxValue }}
+                    >
+                      Aa
+                    </span>
                   </div>
                 </button>
               );

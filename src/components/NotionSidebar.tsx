@@ -21,7 +21,9 @@ import {
   X,
   Bookmark,
   FilePlus,
-  FolderPlus
+  FolderPlus,
+  Lightbulb,
+  Edit3
 } from 'lucide-react';
 import { ScreenType } from './Navigation';
 import { Project, Chapter, Scene } from '../types';
@@ -146,7 +148,9 @@ export const NotionSidebar: React.FC<NotionSidebarProps> = ({
     count?: number;
   }[] = [
     { screen: 'home', label: 'Overview', icon: BookOpen },
-    { screen: 'editor', label: 'Manuscript', icon: FileText },
+    { screen: 'editor', label: 'Manuscript Draft', icon: FileText },
+    { screen: 'editorial', label: 'Editor Workspace', icon: Edit3 },
+    { screen: 'ideation', label: 'Ideation', icon: Lightbulb },
     { screen: 'dashboard', label: 'Corkboard', icon: Layers },
     { screen: 'codex', label: 'Codex & Lore', icon: Compass },
     { screen: 'continuity', label: 'Continuity Inbox', icon: Sparkles, count: openContinuityCount },

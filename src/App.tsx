@@ -12,7 +12,9 @@ import {
   CuttingRoomItem,
   NoteItem,
   AIAuditLog,
-  Chapter
+  Chapter,
+  RoughIdea,
+  FrameworkPointer
 } from './types';
 import {
   INITIAL_PROJECT,
@@ -27,8 +29,13 @@ import {
   INITIAL_NOTES,
   INITIAL_SNAPSHOTS,
   INITIAL_PROJECTS,
-  SECOND_PROJECT_BUNDLE
+  SECOND_PROJECT_BUNDLE,
+  NOVELLA_PROJECT_BUNDLE
 } from './data/initialData';
+import {
+  INITIAL_ROUGH_IDEAS,
+  INITIAL_FRAMEWORK_POINTERS
+} from './data/ideationFrameworks';
 import { Navigation, ScreenType, NotionSidebar, NotionTopBar } from './components/Navigation';
 import { AppTourModal } from './components/AppTourModal';
 import { hasCompletedTour } from './utils/cookieUtils';
@@ -48,11 +55,15 @@ import {
   HardDrive,
   Moon,
   Sun,
-  X
+  X,
+  Lightbulb
 } from 'lucide-react';
 import { HomeScreen } from './components/HomeScreen';
 import { EditorScreen } from './components/EditorScreen';
+import { EditorialDeskScreen } from './components/editorial/EditorialDeskScreen';
 import { StoryBibleScreen } from './components/StoryBibleScreen';
+import { IdeationScreen } from './components/ideation/IdeationScreen';
+import { QuickIdeationModal } from './components/ideation/QuickIdeationModal';
 import { DashboardScreen } from './components/DashboardScreen';
 import { ContinuityInboxScreen } from './components/ContinuityInboxScreen';
 import { RevisionsScreen } from './components/RevisionsScreen';
@@ -67,10 +78,11 @@ import { VaultManagerModal } from './components/VaultManagerModal';
 import { VaultInfo } from './services/storage/vaultTypes';
 import { getVaultInfo, writeBundleToVault } from './services/storage/vaultStorage';
 import { ensureChapters } from './utils/chapterUtils';
+import { safeSetItem, safeGetItem, safeJsonParse } from './utils/storageUtils';
 
 // Helper to retrieve a project bundle from local storage or defaults
 function loadProjectBundle(projId: string): ProjectBundle {
-  const saved = localStorage.getItem(`threadline_project_data_${projId}`);
+  const saved = safeGetItem(`threadline_project_data_${projId}`);
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
@@ -80,7 +92,9 @@ function loadProjectBundle(projId: string): ProjectBundle {
           entities: Array.isArray(parsed.entities) && parsed.entities.length > 0 ? parsed.entities : INITIAL_ENTITIES,
           threads: Array.isArray(parsed.threads) && parsed.threads.length > 0 ? parsed.threads : INITIAL_THREADS,
           events: Array.isArray(parsed.events) ? parsed.events : INITIAL_EVENTS,
-          chapters: ensureChapters(parsed.scenes || [], parsed.chapters)
+          chapters: ensureChapters(parsed.scenes || [], parsed.chapters),
+          roughIdeas: Array.isArray(parsed.roughIdeas) ? parsed.roughIdeas : INITIAL_ROUGH_IDEAS,
+          frameworkPointers: Array.isArray(parsed.frameworkPointers) ? parsed.frameworkPointers : INITIAL_FRAMEWORK_POINTERS
         };
       }
     } catch (e) {
@@ -88,55 +102,72 @@ function loadProjectBundle(projId: string): ProjectBundle {
     }
   }
 
+  // Check if it's the novella sample project
+  if (projId === NOVELLA_PROJECT_BUNDLE.project.id) {
+    return {
+      ...NOVELLA_PROJECT_BUNDLE,
+      chapters: ensureChapters(NOVELLA_PROJECT_BUNDLE.scenes, NOVELLA_PROJECT_BUNDLE.chapters),
+      roughIdeas: NOVELLA_PROJECT_BUNDLE.roughIdeas || INITIAL_ROUGH_IDEAS,
+      frameworkPointers: NOVELLA_PROJECT_BUNDLE.frameworkPointers || INITIAL_FRAMEWORK_POINTERS
+    };
+  }
+
   // Check if it's the second sample project
   if (projId === SECOND_PROJECT_BUNDLE.project.id) {
     return {
       ...SECOND_PROJECT_BUNDLE,
-      chapters: ensureChapters(SECOND_PROJECT_BUNDLE.scenes, SECOND_PROJECT_BUNDLE.chapters)
+      chapters: ensureChapters(SECOND_PROJECT_BUNDLE.scenes, SECOND_PROJECT_BUNDLE.chapters),
+      roughIdeas: SECOND_PROJECT_BUNDLE.roughIdeas || INITIAL_ROUGH_IDEAS,
+      frameworkPointers: SECOND_PROJECT_BUNDLE.frameworkPointers || INITIAL_FRAMEWORK_POINTERS
     };
   }
 
-  // Default to Initial Project bundle with legacy fallback
-  const legacyProj = localStorage.getItem('threadline_project');
-  const legacyScenes = localStorage.getItem('threadline_scenes');
-  const legacyChapters = localStorage.getItem('threadline_chapters');
+  // Default to Initial Project bundle with legacy fallback wrapped safely
+  try {
+    const legacyProj = safeGetItem('threadline_project');
+    const legacyScenes = safeGetItem('threadline_scenes');
+    const legacyChapters = safeGetItem('threadline_chapters');
 
-  const resolvedScenes: Scene[] = legacyScenes ? JSON.parse(legacyScenes) : INITIAL_SCENES;
-  const resolvedChapters: Chapter[] = legacyChapters ? JSON.parse(legacyChapters) : INITIAL_CHAPTERS;
+    const resolvedScenes: Scene[] = safeJsonParse(legacyScenes, INITIAL_SCENES);
+    const resolvedChapters: Chapter[] = safeJsonParse(legacyChapters, INITIAL_CHAPTERS);
 
-  return {
-    project: legacyProj ? JSON.parse(legacyProj) : INITIAL_PROJECT,
-    chapters: ensureChapters(resolvedScenes, resolvedChapters),
-    scenes: resolvedScenes,
-    entities: localStorage.getItem('threadline_entities')
-      ? JSON.parse(localStorage.getItem('threadline_entities')!)
-      : INITIAL_ENTITIES,
-    threads: localStorage.getItem('threadline_threads')
-      ? JSON.parse(localStorage.getItem('threadline_threads')!)
-      : INITIAL_THREADS,
-    events: localStorage.getItem('threadline_events')
-      ? JSON.parse(localStorage.getItem('threadline_events')!)
-      : INITIAL_EVENTS,
-    continuityIssues: localStorage.getItem('threadline_continuity')
-      ? JSON.parse(localStorage.getItem('threadline_continuity')!)
-      : INITIAL_CONTINUITY_ISSUES,
-    revisionPasses: localStorage.getItem('threadline_revision_passes')
-      ? JSON.parse(localStorage.getItem('threadline_revision_passes')!)
-      : INITIAL_REVISION_PASSES,
-    cuttingRoom: localStorage.getItem('threadline_cutting_room')
-      ? JSON.parse(localStorage.getItem('threadline_cutting_room')!)
-      : INITIAL_CUTTING_ROOM,
-    notes: localStorage.getItem('threadline_notes')
-      ? JSON.parse(localStorage.getItem('threadline_notes')!)
-      : INITIAL_NOTES,
-    snapshots: localStorage.getItem('threadline_snapshots')
-      ? JSON.parse(localStorage.getItem('threadline_snapshots')!)
-      : INITIAL_SNAPSHOTS,
-    aiAuditLogs: localStorage.getItem('threadline_ai_logs')
-      ? JSON.parse(localStorage.getItem('threadline_ai_logs')!)
-      : [],
-    activeSceneId: localStorage.getItem('threadline_active_scene_id') || 'scene-3'
-  };
+    return {
+      project: safeJsonParse(legacyProj, INITIAL_PROJECT),
+      chapters: ensureChapters(resolvedScenes, resolvedChapters),
+      scenes: resolvedScenes,
+      entities: safeJsonParse(safeGetItem('threadline_entities'), INITIAL_ENTITIES),
+      threads: safeJsonParse(safeGetItem('threadline_threads'), INITIAL_THREADS),
+      events: safeJsonParse(safeGetItem('threadline_events'), INITIAL_EVENTS),
+      continuityIssues: safeJsonParse(safeGetItem('threadline_continuity'), INITIAL_CONTINUITY_ISSUES),
+      revisionPasses: safeJsonParse(safeGetItem('threadline_revision_passes'), INITIAL_REVISION_PASSES),
+      cuttingRoom: safeJsonParse(safeGetItem('threadline_cutting_room'), INITIAL_CUTTING_ROOM),
+      notes: safeJsonParse(safeGetItem('threadline_notes'), INITIAL_NOTES),
+      snapshots: safeJsonParse(safeGetItem('threadline_snapshots'), INITIAL_SNAPSHOTS),
+      aiAuditLogs: safeJsonParse(safeGetItem('threadline_ai_logs'), []),
+      roughIdeas: safeJsonParse(safeGetItem('threadline_rough_ideas'), INITIAL_ROUGH_IDEAS),
+      frameworkPointers: safeJsonParse(safeGetItem('threadline_framework_pointers'), INITIAL_FRAMEWORK_POINTERS),
+      activeSceneId: safeGetItem('threadline_active_scene_id') || 'scene-3'
+    };
+  } catch (err) {
+    console.error('Failed to load legacy project bundle, using defaults:', err);
+    return {
+      project: INITIAL_PROJECT,
+      chapters: INITIAL_CHAPTERS,
+      scenes: INITIAL_SCENES,
+      entities: INITIAL_ENTITIES,
+      threads: INITIAL_THREADS,
+      events: INITIAL_EVENTS,
+      continuityIssues: INITIAL_CONTINUITY_ISSUES,
+      revisionPasses: INITIAL_REVISION_PASSES,
+      cuttingRoom: INITIAL_CUTTING_ROOM,
+      notes: INITIAL_NOTES,
+      snapshots: INITIAL_SNAPSHOTS,
+      aiAuditLogs: [],
+      roughIdeas: INITIAL_ROUGH_IDEAS,
+      frameworkPointers: INITIAL_FRAMEWORK_POINTERS,
+      activeSceneId: INITIAL_SCENES[0]?.id || 'scene-1'
+    };
+  }
 }
 
 export default function App() {
@@ -150,6 +181,7 @@ export default function App() {
 function ThreadlineApp() {
   const { showToast } = useToast();
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isQuickIdeationOpen, setIsQuickIdeationOpen] = useState(false);
 
   // Navigation State (supports /landing URL route or in-app navigation)
   const [currentScreen, setCurrentScreen] = useState<ScreenType>(() => {
@@ -188,17 +220,22 @@ function ThreadlineApp() {
   const handleToggleSidebar = () => {
     setIsSidebarOpen((prev) => {
       const next = !prev;
-      localStorage.setItem('threadline_sidebar_open', String(next));
+      safeSetItem('threadline_sidebar_open', String(next));
       return next;
     });
   };
 
-  // Keyboard shortcut: Cmd+K / Ctrl+K for search, Cmd+\ or Ctrl+\ to toggle Notion sidebar
+  // Keyboard shortcut: Cmd+K / Ctrl+K for search, Cmd+\ or Ctrl+\ to toggle Notion sidebar, Cmd+I / Ctrl+I for quick ideation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
         e.preventDefault();
         setIsCommandPaletteOpen((prev) => !prev);
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'i' || e.key === 'I')) {
+        e.preventDefault();
+        setIsQuickIdeationOpen((prev) => !prev);
         return;
       }
       if ((e.metaKey || e.ctrlKey) && e.key === '\\') {
@@ -336,6 +373,16 @@ function ThreadlineApp() {
   const [notes, setNotes] = useState<NoteItem[]>(initialBundle.notes);
   const [snapshots, setSnapshots] = useState<Snapshot[]>(initialBundle.snapshots);
   const [aiAuditLogs, setAiAuditLogs] = useState<AIAuditLog[]>(initialBundle.aiAuditLogs);
+  const [roughIdeas, setRoughIdeas] = useState<RoughIdea[]>(() => {
+    return Array.isArray(initialBundle.roughIdeas) && initialBundle.roughIdeas.length > 0
+      ? initialBundle.roughIdeas
+      : INITIAL_ROUGH_IDEAS;
+  });
+  const [frameworkPointers, setFrameworkPointers] = useState<FrameworkPointer[]>(() => {
+    return Array.isArray(initialBundle.frameworkPointers) && initialBundle.frameworkPointers.length > 0
+      ? initialBundle.frameworkPointers
+      : INITIAL_FRAMEWORK_POINTERS;
+  });
 
   const [lastSavedText, setLastSavedText] = useState('Saved locally');
   const saveTimerRef = useRef<any>(null);
@@ -374,6 +421,8 @@ function ThreadlineApp() {
           notes,
           snapshots,
           aiAuditLogs,
+          roughIdeas,
+          frameworkPointers,
           activeSceneId
         };
         const res = await writeBundleToVault(currentActiveBundle);
@@ -401,16 +450,18 @@ function ThreadlineApp() {
     cuttingRoom,
     notes,
     snapshots,
-    aiAuditLogs
+    aiAuditLogs,
+    roughIdeas,
+    frameworkPointers
   ]);
 
   // Persist Projects List and Active ID
   useEffect(() => {
-    localStorage.setItem('threadline_projects_list_v2', JSON.stringify(projects));
+    safeSetItem('threadline_projects_list_v2', JSON.stringify(projects));
   }, [projects]);
 
   useEffect(() => {
-    localStorage.setItem('threadline_active_project_id', activeProjectId);
+    safeSetItem('threadline_active_project_id', activeProjectId);
   }, [activeProjectId]);
 
   // Persist active project bundle
@@ -429,24 +480,28 @@ function ThreadlineApp() {
       notes,
       snapshots,
       aiAuditLogs,
+      roughIdeas,
+      frameworkPointers,
       activeSceneId
     };
-    localStorage.setItem(`threadline_project_data_${activeProjectId}`, JSON.stringify(bundle));
+    safeSetItem(`threadline_project_data_${activeProjectId}`, JSON.stringify(bundle));
 
-    // Also sync legacy keys for backwards compatibility
-    localStorage.setItem('threadline_project', JSON.stringify(project));
-    localStorage.setItem('threadline_chapters', JSON.stringify(chapters));
-    localStorage.setItem('threadline_scenes', JSON.stringify(scenes));
-    localStorage.setItem('threadline_active_scene_id', activeSceneId);
-    localStorage.setItem('threadline_entities', JSON.stringify(entities));
-    localStorage.setItem('threadline_threads', JSON.stringify(threads));
-    localStorage.setItem('threadline_events', JSON.stringify(events));
-    localStorage.setItem('threadline_continuity', JSON.stringify(continuityIssues));
-    localStorage.setItem('threadline_revision_passes', JSON.stringify(revisionPasses));
-    localStorage.setItem('threadline_cutting_room', JSON.stringify(cuttingRoom));
-    localStorage.setItem('threadline_notes', JSON.stringify(notes));
-    localStorage.setItem('threadline_snapshots', JSON.stringify(snapshots));
-    localStorage.setItem('threadline_ai_logs', JSON.stringify(aiAuditLogs));
+    // Also sync legacy keys safely
+    safeSetItem('threadline_project', JSON.stringify(project));
+    safeSetItem('threadline_chapters', JSON.stringify(chapters));
+    safeSetItem('threadline_scenes', JSON.stringify(scenes));
+    safeSetItem('threadline_active_scene_id', activeSceneId);
+    safeSetItem('threadline_entities', JSON.stringify(entities));
+    safeSetItem('threadline_threads', JSON.stringify(threads));
+    safeSetItem('threadline_events', JSON.stringify(events));
+    safeSetItem('threadline_continuity', JSON.stringify(continuityIssues));
+    safeSetItem('threadline_revision_passes', JSON.stringify(revisionPasses));
+    safeSetItem('threadline_cutting_room', JSON.stringify(cuttingRoom));
+    safeSetItem('threadline_notes', JSON.stringify(notes));
+    safeSetItem('threadline_snapshots', JSON.stringify(snapshots));
+    safeSetItem('threadline_ai_logs', JSON.stringify(aiAuditLogs));
+    safeSetItem('threadline_rough_ideas', JSON.stringify(roughIdeas));
+    safeSetItem('threadline_framework_pointers', JSON.stringify(frameworkPointers));
 
     // Keep metadata in projects list synced
     setProjects((prev) =>
@@ -481,7 +536,9 @@ function ThreadlineApp() {
     cuttingRoom,
     notes,
     snapshots,
-    aiAuditLogs
+    aiAuditLogs,
+    roughIdeas,
+    frameworkPointers
   ]);
 
   // Compute Word & Scene counts for all projects
@@ -535,9 +592,11 @@ function ThreadlineApp() {
       notes,
       snapshots,
       aiAuditLogs,
+      roughIdeas,
+      frameworkPointers,
       activeSceneId
     };
-    localStorage.setItem(`threadline_project_data_${activeProjectId}`, JSON.stringify(currentBundle));
+    safeSetItem(`threadline_project_data_${activeProjectId}`, JSON.stringify(currentBundle));
 
     // Load bundle for new project
     const newBundle = loadProjectBundle(targetProjectId);
@@ -578,6 +637,8 @@ function ThreadlineApp() {
     setNotes(newBundle.notes || []);
     setSnapshots(newBundle.snapshots || []);
     setAiAuditLogs(newBundle.aiAuditLogs || []);
+    setRoughIdeas(newBundle.roughIdeas || INITIAL_ROUGH_IDEAS);
+    setFrameworkPointers(newBundle.frameworkPointers || INITIAL_FRAMEWORK_POINTERS);
 
     setCurrentScreen(targetScreen);
   };
@@ -598,7 +659,7 @@ function ThreadlineApp() {
     } else {
       const bundle = loadProjectBundle(updated.id);
       bundle.project = updated;
-      localStorage.setItem(`threadline_project_data_${updated.id}`, JSON.stringify(bundle));
+      safeSetItem(`threadline_project_data_${updated.id}`, JSON.stringify(bundle));
     }
   };
 
@@ -619,6 +680,8 @@ function ThreadlineApp() {
             notes,
             snapshots,
             aiAuditLogs,
+            roughIdeas,
+            frameworkPointers,
             activeSceneId
           }
         : loadProjectBundle(projId);
@@ -639,7 +702,7 @@ function ThreadlineApp() {
       project: clonedProject
     };
 
-    localStorage.setItem(`threadline_project_data_${newId}`, JSON.stringify(clonedBundle));
+    safeSetItem(`threadline_project_data_${newId}`, JSON.stringify(clonedBundle));
     setProjects((prev) => [...prev, clonedProject]);
   };
 
@@ -650,7 +713,11 @@ function ThreadlineApp() {
       return;
     }
 
-    localStorage.removeItem(`threadline_project_data_${projId}`);
+    try {
+      localStorage.removeItem(`threadline_project_data_${projId}`);
+    } catch (e) {
+      console.warn('Failed to remove project data:', e);
+    }
     const remaining = projects.filter((p) => p.id !== projId);
     setProjects(remaining);
     showToast('Project deleted');
@@ -711,10 +778,12 @@ function ThreadlineApp() {
       notes: Array.isArray(importedData.notes) ? importedData.notes : [],
       snapshots: Array.isArray(importedData.snapshots) ? importedData.snapshots : [],
       aiAuditLogs: Array.isArray(importedData.aiAuditLogs) ? importedData.aiAuditLogs : [],
+      roughIdeas: Array.isArray(importedData.roughIdeas) ? importedData.roughIdeas : INITIAL_ROUGH_IDEAS,
+      frameworkPointers: Array.isArray(importedData.frameworkPointers) ? importedData.frameworkPointers : INITIAL_FRAMEWORK_POINTERS,
       activeSceneId: importedData.scenes?.[0]?.id || 'scene-1'
     };
 
-    localStorage.setItem(`threadline_project_data_${newId}`, JSON.stringify(newBundle));
+    safeSetItem(`threadline_project_data_${newId}`, JSON.stringify(newBundle));
     setProjects((prev) => [...prev, finalProject]);
     handleSwitchProject(newId, 'editor');
   };
@@ -736,6 +805,8 @@ function ThreadlineApp() {
             notes,
             snapshots,
             aiAuditLogs,
+            roughIdeas,
+            frameworkPointers,
             activeSceneId
           }
         : loadProjectBundle(projId);
@@ -753,50 +824,6 @@ function ThreadlineApp() {
     downloadAnchor.click();
     downloadAnchor.remove();
   };
-
-  useEffect(() => {
-    localStorage.setItem('threadline_scenes', JSON.stringify(scenes));
-  }, [scenes]);
-
-  useEffect(() => {
-    localStorage.setItem('threadline_active_scene_id', activeSceneId);
-  }, [activeSceneId]);
-
-  useEffect(() => {
-    localStorage.setItem('threadline_entities', JSON.stringify(entities));
-  }, [entities]);
-
-  useEffect(() => {
-    localStorage.setItem('threadline_threads', JSON.stringify(threads));
-  }, [threads]);
-
-  useEffect(() => {
-    localStorage.setItem('threadline_events', JSON.stringify(events));
-  }, [events]);
-
-  useEffect(() => {
-    localStorage.setItem('threadline_continuity', JSON.stringify(continuityIssues));
-  }, [continuityIssues]);
-
-  useEffect(() => {
-    localStorage.setItem('threadline_revision_passes', JSON.stringify(revisionPasses));
-  }, [revisionPasses]);
-
-  useEffect(() => {
-    localStorage.setItem('threadline_cutting_room', JSON.stringify(cuttingRoom));
-  }, [cuttingRoom]);
-
-  useEffect(() => {
-    localStorage.setItem('threadline_notes', JSON.stringify(notes));
-  }, [notes]);
-
-  useEffect(() => {
-    localStorage.setItem('threadline_snapshots', JSON.stringify(snapshots));
-  }, [snapshots]);
-
-  useEffect(() => {
-    localStorage.setItem('threadline_ai_logs', JSON.stringify(aiAuditLogs));
-  }, [aiAuditLogs]);
 
   // Find active scene object
   const activeScene = scenes.find((s) => s.id === activeSceneId) || scenes[0] || {
@@ -847,6 +874,53 @@ function ThreadlineApp() {
     saveTimerRef.current = setTimeout(() => {
       setLastSavedText('Saved locally');
     }, 400);
+  };
+
+  // Merge Editorial Working Copy into Manuscript Draft with Automatic Pre-Merge Snapshot
+  const handleMergeSceneToManuscript = (sceneId: string, finalProse: string) => {
+    setLastSavedText('Saving merge...');
+    setScenes((prev) =>
+      prev.map((s) => {
+        if (s.id !== sceneId) return s;
+        // Create backup revision snapshot of author's original draft
+        const snapshot = {
+          id: 'ver-premerge-' + Date.now(),
+          timestamp: new Date().toISOString(),
+          title: s.title,
+          proseContent: s.proseContent,
+          wordCount: s.wordCount,
+          label: 'Pre-Editorial Merge Snapshot (Original Manuscript)'
+        };
+        const words = finalProse.trim()
+          ? finalProse.trim().split(/\s+/).filter(Boolean).length
+          : 0;
+
+        return {
+          ...s,
+          proseContent: finalProse,
+          editorialBaseline: finalProse,
+          editorialProseContent: finalProse,
+          wordCount: words,
+          editorialStatus: 'clean-approved',
+          versions: [snapshot, ...(s.versions || [])]
+        };
+      })
+    );
+    showToast('Merged editorial copy into manuscript draft (backup snapshot preserved)');
+    setLastSavedText('Saved locally');
+  };
+
+  // Quick Ideation Handler
+  const handleSaveQuickIdea = (ideaData: Omit<RoughIdea, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const newIdea: RoughIdea = {
+      ...ideaData,
+      id: 'idea-' + Date.now(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    setRoughIdeas((prev) => [newIdea, ...prev]);
+    showToast(`Rough idea captured: "${newIdea.title}"`);
+    setIsQuickIdeationOpen(false);
   };
 
   // Add a new scene
@@ -1124,6 +1198,8 @@ function ThreadlineApp() {
     setNotes(INITIAL_NOTES);
     setSnapshots(INITIAL_SNAPSHOTS);
     setAiAuditLogs([]);
+    setRoughIdeas(INITIAL_ROUGH_IDEAS);
+    setFrameworkPointers(INITIAL_FRAMEWORK_POINTERS);
     setCurrentScreen('home');
     showToast('Demo project restored');
   };
@@ -1179,6 +1255,8 @@ function ThreadlineApp() {
     setNotes([]);
     setSnapshots([]);
     setAiAuditLogs([]);
+    setRoughIdeas([]);
+    setFrameworkPointers([]);
     setCurrentScreen('editor');
     showToast('Workspace reset to blank state');
   };
@@ -1197,6 +1275,8 @@ function ThreadlineApp() {
       notes,
       snapshots,
       aiAuditLogs,
+      roughIdeas,
+      frameworkPointers,
       exportedAt: new Date().toISOString()
     };
     const blob = new Blob([JSON.stringify(archive, null, 2)], { type: 'application/json' });
@@ -1225,6 +1305,8 @@ function ThreadlineApp() {
     notes,
     snapshots,
     aiAuditLogs,
+    roughIdeas,
+    frameworkPointers,
     activeSceneId
   };
 
@@ -1241,6 +1323,8 @@ function ThreadlineApp() {
     setCuttingRoom(newBundle.cuttingRoom || []);
     setNotes(newBundle.notes || []);
     setSnapshots(newBundle.snapshots || []);
+    setRoughIdeas(newBundle.roughIdeas || INITIAL_ROUGH_IDEAS);
+    setFrameworkPointers(newBundle.frameworkPointers || INITIAL_FRAMEWORK_POINTERS);
     setActiveSceneId(newBundle.activeSceneId || newBundle.scenes[0]?.id || 'scene-1');
     showToast(`Reloaded manuscript from ${vaultInfo?.folderName || 'folder'}!`);
   };
@@ -1346,6 +1430,7 @@ function ThreadlineApp() {
             onOpenVaultManager={() => setIsVaultModalOpen(true)}
             theme={theme}
             onToggleTheme={handleToggleTheme}
+            lastSavedText={lastSavedText}
           />
         )}
 
@@ -1397,6 +1482,7 @@ function ThreadlineApp() {
             onStartNewProject={() => setCurrentScreen('new-project')}
             onNavigateToProjects={() => setCurrentScreen('projects')}
             onAddScene={handleAddScene}
+            onNavigateToEditorial={() => setCurrentScreen('editorial')}
           />
         )}
 
@@ -1426,6 +1512,109 @@ function ThreadlineApp() {
             onUpdateChapter={handleUpdateChapter}
             onDeleteChapter={handleDeleteChapter}
             onAddSceneToChapter={handleAddSceneToChapter}
+          />
+        )}
+
+        {currentScreen === 'editorial' && (
+          <EditorialDeskScreen
+            project={project}
+            scenes={scenes}
+            chapters={chapters}
+            activeSceneId={activeSceneId}
+            onSelectScene={(sceneId) => setActiveSceneId(sceneId)}
+            onUpdateScene={(sceneId, fields) => handleUpdateActiveScene(fields, sceneId)}
+            onMergeSceneToManuscript={handleMergeSceneToManuscript}
+            onSwitchToDrafting={() => setCurrentScreen('editor')}
+          />
+        )}
+
+        {currentScreen === 'ideation' && (
+          <IdeationScreen
+            roughIdeas={roughIdeas}
+            frameworkPointers={frameworkPointers}
+            scenes={scenes}
+            entities={entities}
+            onAddRoughIdea={(ideaData) => {
+              const newIdea: RoughIdea = {
+                ...ideaData,
+                id: 'idea-' + Date.now(),
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+              };
+              setRoughIdeas((prev) => [newIdea, ...prev]);
+              showToast(`Idea "${newIdea.title}" captured`);
+            }}
+            onUpdateRoughIdea={(updated) => {
+              setRoughIdeas((prev) =>
+                prev.map((i) =>
+                  i.id === updated.id ? { ...updated, updatedAt: new Date().toISOString() } : i
+                )
+              );
+            }}
+            onDeleteRoughIdea={(id) => {
+              setRoughIdeas((prev) => prev.filter((i) => i.id !== id));
+              showToast('Idea removed');
+            }}
+            onAddFrameworkPointer={(ptrData) => {
+              const newPtr: FrameworkPointer = {
+                ...ptrData,
+                id: 'ptr-' + Date.now(),
+                createdAt: new Date().toISOString()
+              };
+              setFrameworkPointers((prev) => [...prev, newPtr]);
+              showToast('Pointer attached to framework beat');
+            }}
+            onDeleteFrameworkPointer={(id) => {
+              setFrameworkPointers((prev) => prev.filter((p) => p.id !== id));
+              showToast('Pointer removed');
+            }}
+            onConvertToScene={(idea) => {
+              const nextOrder = scenes.length + 1;
+              const newSceneId = 'scene-' + Date.now();
+              const newScene: Scene = {
+                id: newSceneId,
+                title: idea.title,
+                order: nextOrder,
+                premise: idea.description,
+                characters: project.protagonist ? [project.protagonist] : [],
+                location: '',
+                time: '',
+                pov: 'Third Limited',
+                status: 'draft',
+                wordCount: 0,
+                notes: `Promoted from rough idea (${idea.category})`,
+                comments: [],
+                proseContent: ''
+              };
+              setScenes((prev) => [...prev, newScene]);
+              setRoughIdeas((prev) =>
+                prev.map((i) => (i.id === idea.id ? { ...i, status: 'in-progress' } : i))
+              );
+              setActiveSceneId(newSceneId);
+              setCurrentScreen('editor');
+              showToast(`Idea converted into scene "${newScene.title}"`);
+            }}
+            onConvertToEntity={(idea) => {
+              const newEnt: Entity = {
+                id: 'ent-' + Date.now(),
+                name: idea.title,
+                type: idea.category === 'character' ? 'character' : idea.category === 'world' ? 'place' : 'concept',
+                status: 'tentative',
+                description: idea.description,
+                canonicalFacts: [`Origin rough idea: ${idea.title}`],
+                linkedSceneIds: []
+              };
+              setEntities((prev) => [...prev, newEnt]);
+              setRoughIdeas((prev) =>
+                prev.map((i) => (i.id === idea.id ? { ...i, status: 'incorporated' } : i))
+              );
+              setCurrentScreen('codex');
+              showToast(`Idea converted into Codex entity "${newEnt.name}"`);
+            }}
+            onNavigateToScene={(sceneId) => {
+              setActiveSceneId(sceneId);
+              setCurrentScreen('editor');
+            }}
           />
         )}
 
@@ -1604,7 +1793,7 @@ function ThreadlineApp() {
                 aiAuditLogs,
                 activeSceneId
               };
-              localStorage.setItem(`threadline_project_data_${activeProjectId}`, JSON.stringify(oldBundle));
+              safeSetItem(`threadline_project_data_${activeProjectId}`, JSON.stringify(oldBundle));
 
               const normalizedNewChapters = ensureChapters(newBundle.scenes, newBundle.chapters);
               const projectBundleToStore: ProjectBundle = {
@@ -1613,7 +1802,7 @@ function ThreadlineApp() {
               };
 
               // Register new project in state and bundle storage
-              localStorage.setItem(`threadline_project_data_${newBundle.project.id}`, JSON.stringify(projectBundleToStore));
+              safeSetItem(`threadline_project_data_${newBundle.project.id}`, JSON.stringify(projectBundleToStore));
 
               setProjects((prev) => [...prev, newBundle.project]);
               setActiveProjectId(newBundle.project.id);
@@ -1660,6 +1849,15 @@ function ThreadlineApp() {
         }}
         onAddScene={handleAddScene}
         onOpenTour={() => setIsTourOpen(true)}
+        onOpenQuickIdeation={() => setIsQuickIdeationOpen(true)}
+      />
+
+      {/* Quick Ideation Shortcut Modal (⌘I / Ctrl+I) */}
+      <QuickIdeationModal
+        isOpen={isQuickIdeationOpen}
+        onClose={() => setIsQuickIdeationOpen(false)}
+        onSaveIdea={handleSaveQuickIdea}
+        currentSceneTitle={activeScene?.title}
       />
 
       {/* Dedicated Local Project Folder / Vault Manager Modal */}

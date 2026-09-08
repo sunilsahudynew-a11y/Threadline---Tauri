@@ -789,7 +789,13 @@ Maya. Look out the bow port. Now.`
   aiAuditLogs: []
 };
 
+import { NOVELLA_PROJECT_BUNDLE, NOVELLA_PROJECT } from './novellaDemoProject';
+
+export { NOVELLA_PROJECT_BUNDLE, NOVELLA_PROJECT };
+
 export const INITIAL_PROJECTS: Project[] = [
-  INITIAL_PROJECT
+  INITIAL_PROJECT,
+  NOVELLA_PROJECT,
+  SECOND_PROJECT_BUNDLE.project
 ];
 

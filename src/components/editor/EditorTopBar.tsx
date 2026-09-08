@@ -16,6 +16,7 @@ import {
   History
 } from 'lucide-react';
 import { useToast } from '../Toast';
+import { AutosaveIndicator } from '../common/AutosaveIndicator';
 
 interface EditorTopBarProps {
   scene: Scene;
@@ -220,9 +221,9 @@ export const EditorTopBar: React.FC<EditorTopBarProps> = ({
 
         <div className="h-3 w-px bg-[rgba(34,30,24,0.12)] hidden md:block shrink-0" />
 
-        <span className="text-[#35505F] hidden md:flex items-center gap-1 font-medium text-[11px] shrink-0">
-          <Check size={12} /> {lastSavedText}
-        </span>
+        <div className="hidden md:flex items-center shrink-0">
+          <AutosaveIndicator lastSavedText={lastSavedText} />
+        </div>
       </div>
 
       {/* RIGHT: Scene Actions, Search, Focus Mode, Scene Facts Drawer */}

@@ -13,7 +13,9 @@ import {
   X,
   FolderKanban,
   Check,
-  History
+  History,
+  Lightbulb,
+  Edit3
 } from 'lucide-react';
 import { Scene, Entity, Thread } from '../types';
 import { ScreenType } from './Navigation';
@@ -30,6 +32,7 @@ interface CommandPaletteProps {
   onToggleFocusMode?: () => void;
   onToggleTypewriter?: () => void;
   onOpenTour?: () => void;
+  onOpenQuickIdeation?: () => void;
 }
 
 interface PaletteItem {
@@ -52,7 +55,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   onAddScene,
   onToggleFocusMode,
   onToggleTypewriter,
-  onOpenTour
+  onOpenTour,
+  onOpenQuickIdeation
 }) => {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -93,17 +97,20 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   // Screen items
   const screensList: PaletteItem[] = [
     { id: 'nav-editor', title: 'Manuscript Editor', category: 'Screens', icon: FileText, action: () => onNavigateToScreen('editor') },
+    { id: 'nav-editorial', title: 'Editor Mode (Editorial Desk & Style Sheets)', category: 'Screens', icon: Edit3, action: () => onNavigateToScreen('editorial') },
+    { id: 'nav-ideation', title: 'Ideation & Frameworks (3-Act, Hero\'s Journey, Rough Ideas)', category: 'Screens', icon: Lightbulb, action: () => onNavigateToScreen('ideation') },
     { id: 'nav-home', title: 'Project Overview', category: 'Screens', icon: BookOpen, action: () => onNavigateToScreen('home') },
     { id: 'nav-bible', title: 'Story Bible (Canon & Mythology)', category: 'Screens', icon: Compass, action: () => onNavigateToScreen('bible') },
     { id: 'nav-dash', title: 'Timeline Arc & Sequence', category: 'Screens', icon: Layers, action: () => onNavigateToScreen('dashboard') },
     { id: 'nav-cont', title: 'Continuity Inbox', category: 'Screens', icon: Sparkles, action: () => onNavigateToScreen('continuity') },
-    { id: 'nav-rev', title: 'Revisions & Snapshots', category: 'Screens', icon: Sliders, action: () => onNavigateToScreen('revisions') },
+    { id: 'nav-rev', title: 'Revisions, Snapshots & Version History', category: 'Screens', icon: History, action: () => onNavigateToScreen('revisions') },
     { id: 'nav-proj', title: 'All Projects Hub', category: 'Screens', icon: FolderKanban, action: () => onNavigateToScreen('projects') },
     { id: 'nav-landing', title: 'Product Landing Page (/landing)', category: 'Screens', icon: BookOpen, action: () => onNavigateToScreen('landing') }
   ];
 
   // Actions
   const actionsList: PaletteItem[] = [
+    ...(onOpenQuickIdeation ? [{ id: 'act-quick-ideation', title: 'Quick Rough Idea (Ideation)', subtitle: 'Shortcut: ⌘I / Ctrl+I', category: 'Actions', icon: Lightbulb, action: onOpenQuickIdeation }] : []),
     { id: 'act-add-scene', title: 'Create New Chapter Beat', category: 'Actions', icon: Plus, action: onAddScene },
     ...(onOpenTour ? [{ id: 'act-tour', title: 'Take Studio Orientation Tour', category: 'Actions', icon: Sparkles, action: onOpenTour }] : []),
     ...(onToggleFocusMode ? [{ id: 'act-focus', title: 'Toggle Focus Mode', category: 'Actions', icon: Eye, action: onToggleFocusMode }] : []),

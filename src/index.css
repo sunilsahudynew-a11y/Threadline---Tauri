@@ -1,6 +1,43 @@
 @import "tailwindcss";
 
 @layer base {
+  /* Global Application Font Scale Configurations */
+  html {
+    font-size: 15px;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  html[data-font-size="compact"] {
+    font-size: 13.5px;
+  }
+
+  html[data-font-size="default"] {
+    font-size: 15px;
+  }
+
+  html[data-font-size="comfortable"] {
+    font-size: 16.5px;
+  }
+
+  html[data-font-size="spacious"] {
+    font-size: 18px;
+  }
+
+  @media (max-width: 640px) {
+    html[data-font-size="compact"] {
+      font-size: 13px;
+    }
+    html[data-font-size="default"] {
+      font-size: 14px;
+    }
+    html[data-font-size="comfortable"] {
+      font-size: 15.5px;
+    }
+    html[data-font-size="spacious"] {
+      font-size: 17px;
+    }
+  }
+
   :root {
     /* Base CSS Variables for Threadline Standard (Light) */
     --canvas-bg: #FAF6EE;
