@@ -93,48 +93,50 @@ export const IdeationScreen: React.FC<IdeationScreenProps> = ({
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 pb-24 md:pb-12 text-[#221E18]">
       {/* ========================================================================= */}
-      {/* HEADER                                                                    */}
+      {/* HEADER & TABS                                                             */}
       {/* ========================================================================= */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
-        <div>
-          <span className="section-label block mb-1">
-            Story Architecture &amp; Ideation
-          </span>
-          <h1 className="text-2xl sm:text-3xl font-serif text-[#221E18] font-semibold">
-            Ideation &amp; Frameworks
-          </h1>
-          <p className="text-[#7A705F] text-xs sm:text-sm mt-1">
-            Visually map narrative tension on classic story structures and capture rough creative sparks.
+      <div className="mb-6 pb-2 border-b border-[rgba(34,30,24,0.12)]">
+        <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 mb-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-serif text-[#221E18] font-semibold">
+              Ideation &amp; Frameworks
+            </h1>
+          </div>
+          <p className="text-[#7A705F] text-xs sm:text-sm">
+            Story architecture &amp; ideation: visually map narrative tension on classic structures and capture rough creative sparks.
           </p>
         </div>
 
-        {/* Studio Primary View Switcher */}
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <div className="bg-[#F1EAD9] border border-[rgba(34,30,24,0.12)] p-0.5 rounded-[6px] flex text-xs font-medium w-full sm:w-auto overflow-x-auto">
-            <button
-              onClick={() => setActiveTab('frameworks')}
-              className={`flex-1 sm:flex-none px-3 py-1.5 rounded-[5px] text-xs font-medium transition-colors cursor-pointer min-h-[36px] flex items-center justify-center gap-1.5 border whitespace-nowrap ${
-                activeTab === 'frameworks'
-                  ? 'bg-[#FAF6EE] text-[#221E18] shadow-warm-sm border-[rgba(34,30,24,0.12)] font-semibold'
-                  : 'text-[#7A705F] hover:text-[#221E18] border-transparent'
-              }`}
-            >
-              <Activity size={14} className="text-[#B54B32]" />
-              <span>Visual Frameworks</span>
-            </button>
+        {/* Clean Underline Tabs */}
+        <div className="flex items-center gap-3 -mb-2">
+          <button
+            onClick={() => setActiveTab('frameworks')}
+            className={`py-2 px-1 text-xs font-medium transition-colors cursor-pointer border-b-2 flex items-center gap-1.5 ${
+              activeTab === 'frameworks'
+                ? 'border-[#B54B32] text-[#221E18] font-semibold'
+                : 'border-transparent text-[#7A705F] hover:text-[#221E18] hover:border-[rgba(34,30,24,0.2)]'
+            }`}
+          >
+            <Activity size={14} className={activeTab === 'frameworks' ? 'text-[#B54B32]' : ''} />
+            <span>Visual Frameworks</span>
+          </button>
 
-            <button
-              onClick={() => setActiveTab('ideas')}
-              className={`flex-1 sm:flex-none px-3 py-1.5 rounded-[5px] text-xs font-medium transition-colors cursor-pointer min-h-[36px] flex items-center justify-center gap-1.5 border whitespace-nowrap ${
-                activeTab === 'ideas'
-                  ? 'bg-[#FAF6EE] text-[#221E18] shadow-warm-sm border-[rgba(34,30,24,0.12)] font-semibold'
-                  : 'text-[#7A705F] hover:text-[#221E18] border-transparent'
-              }`}
-            >
-              <Lightbulb size={14} className="text-[#D17B2F]" />
-              <span>Rough Ideas ({roughIdeas.length})</span>
-            </button>
-          </div>
+          <button
+            onClick={() => setActiveTab('ideas')}
+            className={`py-2 px-1 text-xs font-medium transition-colors cursor-pointer border-b-2 flex items-center gap-1.5 ${
+              activeTab === 'ideas'
+                ? 'border-[#B54B32] text-[#221E18] font-semibold'
+                : 'border-transparent text-[#7A705F] hover:text-[#221E18] hover:border-[rgba(34,30,24,0.2)]'
+            }`}
+          >
+            <Lightbulb size={14} className={activeTab === 'ideas' ? 'text-[#D17B2F]' : ''} />
+            <span>Rough Ideas</span>
+            <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+              activeTab === 'ideas' ? 'bg-[#221E18] text-[#FAF6EE]' : 'bg-[rgba(34,30,24,0.08)] text-[#7A705F]'
+            }`}>
+              {roughIdeas.length}
+            </span>
+          </button>
         </div>
       </div>
 
@@ -145,7 +147,7 @@ export const IdeationScreen: React.FC<IdeationScreenProps> = ({
         <div className="space-y-6">
           {/* Framework Model Selector Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#F1EAD9] p-2.5 rounded-[8px] border border-[rgba(34,30,24,0.1)]">
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+            <div className="flex flex-wrap items-center gap-1.5">
               <span className="text-xs font-mono text-[#7A705F] uppercase font-semibold mr-1 shrink-0">
                 Model:
               </span>
@@ -156,7 +158,7 @@ export const IdeationScreen: React.FC<IdeationScreenProps> = ({
                     setSelectedFrameworkId(fw.id);
                     setSelectedBeatKey(fw.beats[0]?.key || null);
                   }}
-                  className={`px-3 py-1.5 rounded-[5px] text-xs font-medium transition-colors cursor-pointer flex items-center gap-1.5 border shrink-0 whitespace-nowrap ${
+                  className={`px-3 py-1.5 rounded-[5px] text-xs font-medium transition-colors cursor-pointer flex items-center gap-1.5 border shrink-0 ${
                     selectedFrameworkId === fw.id
                       ? 'bg-[#221E18] text-[#FAF6EE] border-[#221E18] shadow-2xs font-semibold'
                       : 'bg-[#FAF6EE] text-[#554D40] hover:text-[#221E18] border-[rgba(34,30,24,0.08)]'

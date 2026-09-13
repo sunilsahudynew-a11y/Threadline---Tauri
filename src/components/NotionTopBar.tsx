@@ -8,13 +8,14 @@ import {
   Folder,
   ChevronRight,
   Menu,
-  PenTool,
-  Edit3
+  Eye
 } from 'lucide-react';
 import { ScreenType } from './Navigation';
 import { Scene } from '../types';
 import { VaultInfo } from '../services/storage/vaultTypes';
 import { AutosaveIndicator } from './common/AutosaveIndicator';
+import { ColorBlindMode } from '../services/theme/themeConfig';
+import { InsightsBadge } from './common/InsightsBadge';
 
 export interface NotionTopBarProps {
   currentScreen: ScreenType;
@@ -30,6 +31,13 @@ export interface NotionTopBarProps {
   theme?: 'paper' | 'lamplight';
   onToggleTheme?: () => void;
   lastSavedText?: string;
+  colorBlindMode?: ColorBlindMode;
+  onToggleColorBlind?: () => void;
+  openContinuityCount?: number;
+  userRole?: 'author' | 'editor';
+  onToggleRole?: () => void;
+  projectType?: 'novel' | 'screenplay';
+  onToggleProjectType?: () => void;
 }
 
 export const NotionTopBar: React.FC<NotionTopBarProps> = ({
@@ -45,21 +53,34 @@ export const NotionTopBar: React.FC<NotionTopBarProps> = ({
   onOpenVaultManager,
   theme = 'paper',
   onToggleTheme,
-  lastSavedText
+  lastSavedText,
+  colorBlindMode,
+  onToggleColorBlind,
+  openContinuityCount = 0,
+  userRole = 'author',
+  onToggleRole,
+  projectType = 'novel',
+  onToggleProjectType
 }) => {
   // Screen display labels
   const screenLabels: Record<ScreenType, string> = {
     home: 'Overview',
     editor: 'Manuscript Draft',
-    editorial: 'Editor Mode',
-    dashboard: 'Corkboard',
-    codex: 'Codex & Lore',
-    bible: 'Codex & Lore',
-    ideation: 'Ideation & Frameworks',
-    continuity: 'Continuity Inbox',
+    screenplay: 'Screenplay Studio',
+    'plan-lore': 'Corkboard & Canon',
+    'editor-review': 'Editorial Review',
+    'version-history': 'Snapshots & History',
+    diagnostics: 'Continuity & Diagnostics',
+    editorial: 'Editorial Review',
+    dashboard: 'Corkboard Outline',
+    codex: 'Story Codex & Lore',
+    bible: 'Story Codex & Lore',
+    ideation: 'Ideation & Beats',
+    continuity: 'Continuity Diagnostics',
     revisions: 'Snapshots & History',
+    'research-vault': 'Research Vault',
     projects: 'All Manuscripts',
-    export: 'Export Manuscript',
+    export: 'Export Center',
     settings: 'Settings',
     'new-project': 'New Project',
     landing: 'Landing'
@@ -119,8 +140,8 @@ export const NotionTopBar: React.FC<NotionTopBarProps> = ({
             {currentLabel}
           </button>
 
-          {/* If on editor and scene is active, display scene title */}
-          {currentScreen === 'editor' && activeScene && (
+          {/* If on editor or screenplay and scene is active, display scene title */}
+          {(currentScreen === 'editor' || currentScreen === 'screenplay') && activeScene && (
             <>
               <ChevronRight size={12} className="text-[#9E9484] shrink-0" />
               <span className="text-[#221E18] font-serif truncate max-w-[150px] sm:max-w-[220px]">
@@ -133,32 +154,12 @@ export const NotionTopBar: React.FC<NotionTopBarProps> = ({
 
       {/* RIGHT: Quick Search, Vault Status, Export, Theme Toggle */}
       <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-        {/* Workspace Switcher Pill */}
-        <div className="hidden sm:flex items-center bg-[#F1EAD9] rounded-[6px] border border-[rgba(34,30,24,0.12)] p-0.5 text-xs font-medium mr-1">
-          <button
-            onClick={() => onNavigate('editor')}
-            className={`px-2 py-0.5 rounded-[4px] transition-colors cursor-pointer flex items-center gap-1 ${
-              currentScreen !== 'editorial'
-                ? 'bg-[#221E18] text-[#FAF6EE] font-semibold shadow-2xs'
-                : 'text-[#7A705F] hover:text-[#221E18]'
-            }`}
-            title="Switch to Author Drafting Workspace"
-          >
-            <PenTool size={11} />
-            <span>Author</span>
-          </button>
-          <button
-            onClick={() => onNavigate('editorial')}
-            className={`px-2 py-0.5 rounded-[4px] transition-colors cursor-pointer flex items-center gap-1 ${
-              currentScreen === 'editorial'
-                ? 'bg-[#221E18] text-[#FAF6EE] font-semibold shadow-2xs'
-                : 'text-[#7A705F] hover:text-[#221E18]'
-            }`}
-            title="Switch to Editor Desk Workspace (Working Copy)"
-          >
-            <Edit3 size={11} className={currentScreen === 'editorial' ? 'text-[#DE6346]' : ''} />
-            <span>Editor</span>
-          </button>
+        {/* Continuity Diagnostics Badge */}
+        <div className="hidden sm:flex items-center gap-1.5 mr-1">
+          <InsightsBadge
+            issueCount={openContinuityCount}
+            onClick={() => onNavigate('diagnostics')}
+          />
         </div>
 
         {/* Animated Autosave Indicator */}
@@ -214,6 +215,26 @@ export const NotionTopBar: React.FC<NotionTopBarProps> = ({
             aria-label="Toggle theme"
           >
             {theme === 'lamplight' ? <Sun size={14} className="text-[#B54B32]" /> : <Moon size={14} />}
+          </button>
+        )}
+
+        {/* Colorblind Accessibility Quick Toggle */}
+        {onToggleColorBlind && (
+          <button
+            onClick={onToggleColorBlind}
+            className={`p-1.5 rounded-[5px] transition-colors cursor-pointer ${
+              colorBlindMode && colorBlindMode !== 'none'
+                ? 'text-[#B54B32] bg-[#B54B32]/15 hover:bg-[#B54B32]/25 font-semibold ring-1 ring-[#B54B32]/30'
+                : 'text-[#7A705F] hover:text-[#221E18] hover:bg-[#F1EAD9]'
+            }`}
+            title={
+              colorBlindMode && colorBlindMode !== 'none'
+                ? `Color Vision Accessibility Mode: ${colorBlindMode} (Click to toggle)`
+                : 'Enable Color Vision Accessibility Mode'
+            }
+            aria-label="Toggle color vision accessibility"
+          >
+            <Eye size={14} />
           </button>
         )}
 

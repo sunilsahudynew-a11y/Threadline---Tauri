@@ -19,9 +19,23 @@ import {
   ChevronDown,
   AlignVerticalJustifyCenter,
   Sparkles,
-  Code2
+  Code2,
+  Check,
+  AlignLeft,
+  AlignJustify,
+  SlidersHorizontal
 } from 'lucide-react';
 import { SessionTimer } from './SessionTimer';
+import {
+  EditorLineSpacing,
+  EditorWordSpacing,
+  EditorTextAlign,
+  EditorPageWidth,
+  AVAILABLE_LINE_SPACINGS,
+  AVAILABLE_WORD_SPACINGS,
+  AVAILABLE_TEXT_ALIGNS,
+  AVAILABLE_PAGE_WIDTHS
+} from '../../services/theme/themeConfig';
 
 export type EditorViewMode = 'write' | 'split' | 'preview';
 export type EditorFontFamily = 'serif' | 'sans' | 'mono';
@@ -36,6 +50,14 @@ interface EditorFormatBarProps {
   onChangeFontFamily: (family: EditorFontFamily) => void;
   fontSize: EditorFontSize;
   onChangeFontSize: (size: EditorFontSize) => void;
+  lineSpacing?: EditorLineSpacing;
+  onChangeLineSpacing?: (spacing: EditorLineSpacing) => void;
+  wordSpacing?: EditorWordSpacing;
+  onChangeWordSpacing?: (spacing: EditorWordSpacing) => void;
+  textAlign?: EditorTextAlign;
+  onChangeTextAlign?: (align: EditorTextAlign) => void;
+  pageWidth?: EditorPageWidth;
+  onChangePageWidth?: (width: EditorPageWidth) => void;
   canUndo: boolean;
   canRedo: boolean;
   undoCount?: number;
@@ -49,6 +71,9 @@ interface EditorFormatBarProps {
   typewriterMode: boolean;
   onToggleTypewriterMode: () => void;
   currentWordCount: number;
+  isLineEditLensOpen?: boolean;
+  onToggleLineEditLens?: () => void;
+  lineEditCount?: number;
 }
 
 export const EditorFormatBar: React.FC<EditorFormatBarProps> = ({
@@ -60,6 +85,14 @@ export const EditorFormatBar: React.FC<EditorFormatBarProps> = ({
   onChangeFontFamily,
   fontSize,
   onChangeFontSize,
+  lineSpacing = 'normal',
+  onChangeLineSpacing,
+  wordSpacing = 'normal',
+  onChangeWordSpacing,
+  textAlign = 'left',
+  onChangeTextAlign,
+  pageWidth = 'standard',
+  onChangePageWidth,
   canUndo,
   canRedo,
   undoCount = 0,
@@ -72,7 +105,10 @@ export const EditorFormatBar: React.FC<EditorFormatBarProps> = ({
   focusMode,
   typewriterMode,
   onToggleTypewriterMode,
-  currentWordCount
+  currentWordCount,
+  isLineEditLensOpen,
+  onToggleLineEditLens,
+  lineEditCount = 0
 }) => {
   const [showHeadingMenu, setShowHeadingMenu] = useState(false);
   const [showHighlightMenu, setShowHighlightMenu] = useState(false);
@@ -100,11 +136,12 @@ export const EditorFormatBar: React.FC<EditorFormatBarProps> = ({
   }, []);
 
   const highlightColors = [
-    { key: 'yellow', label: 'Amber Yellow', bg: 'bg-amber-200', text: 'text-amber-900', border: 'border-amber-300' },
-    { key: 'mint', label: 'Mint Green', bg: 'bg-emerald-200', text: 'text-emerald-900', border: 'border-emerald-300' },
-    { key: 'rose', label: 'Warm Rose', bg: 'bg-rose-200', text: 'text-rose-900', border: 'border-rose-300' },
-    { key: 'blue', label: 'Sky Blue', bg: 'bg-sky-200', text: 'text-sky-900', border: 'border-sky-300' },
-    { key: 'purple', label: 'Lavender', bg: 'bg-purple-200', text: 'text-purple-900', border: 'border-purple-300' }
+    { key: 'pacing', label: 'Pacing & Flow', desc: 'Narrative speed, draggy beats', bg: 'bg-amber-400', border: 'border-amber-500' },
+    { key: 'voice', label: 'Voice & Sensory', desc: 'Evocative sensory textures', bg: 'bg-emerald-400', border: 'border-emerald-500' },
+    { key: 'tighten', label: 'Tighten & Cut', desc: 'Wordiness, filler, echoes', bg: 'bg-rose-500', border: 'border-rose-600' },
+    { key: 'continuity', label: 'Continuity & Logic', desc: 'Timeline & canon rules', bg: 'bg-sky-400', border: 'border-sky-500' },
+    { key: 'theme', label: 'Subtext & Theme', desc: 'Motifs & dramatic irony', bg: 'bg-purple-400', border: 'border-purple-500' },
+    { key: 'query', label: 'Author Query', desc: 'Margin question for author', bg: 'bg-orange-400', border: 'border-orange-500' }
   ];
 
   return (
@@ -234,15 +271,15 @@ export const EditorFormatBar: React.FC<EditorFormatBarProps> = ({
           </button>
         </div>
 
-        {/* Highlighter Tool */}
+        {/* Highlighter Tool with Line Edit Codes */}
         <div className="relative" ref={highlightRef}>
           <div className="flex items-center">
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
-              onClick={() => onApplyHighlight('yellow')}
+              onClick={() => onApplyHighlight('pacing')}
               className="p-1.5 text-[#7A705F] hover:text-[#221E18] hover:bg-[#F1EAD9] rounded-l transition-colors cursor-pointer"
-              title="Highlight selection (Ctrl+H)"
+              title="Line Edit highlight (Ctrl+H)"
             >
               <Highlighter size={14} />
             </button>
@@ -250,18 +287,21 @@ export const EditorFormatBar: React.FC<EditorFormatBarProps> = ({
               type="button"
               onClick={() => setShowHighlightMenu(!showHighlightMenu)}
               className="p-1 text-[#7A705F] hover:text-[#221E18] hover:bg-[#F1EAD9] rounded-r border-l border-[#E5DEC9] transition-colors cursor-pointer"
-              title="Choose highlight hue"
+              title="Select Line Edit Color Code"
             >
               <ChevronDown size={10} />
             </button>
           </div>
 
           {showHighlightMenu && (
-            <div className="absolute top-full left-0 mt-1.5 w-44 bg-[#FAF6EE] rounded-lg border border-[#E5DEC9] shadow-warm-modal p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
-              <span className="text-[10px] font-sans font-semibold text-[#7A705F] uppercase tracking-[0.14em] block px-1 mb-1">
-                Highlighter Hue
-              </span>
-              <div className="space-y-0.5">
+            <div className="absolute top-full left-0 mt-1.5 w-56 bg-[#FAF6EE] rounded-lg border border-[#E5DEC9] shadow-warm-modal p-2 z-50 animate-in fade-in zoom-in-95 duration-100">
+              <div className="flex items-center justify-between px-1 mb-1.5 border-b border-[#E5DEC9] pb-1">
+                <span className="text-[10px] font-sans font-semibold text-[#7A705F] uppercase tracking-[0.14em]">
+                  Line Edit Codes
+                </span>
+                <span className="text-[9px] text-[#A69B88]">Chicago Style</span>
+              </div>
+              <div className="space-y-1">
                 {highlightColors.map((color) => (
                   <button
                     key={color.key}
@@ -271,16 +311,41 @@ export const EditorFormatBar: React.FC<EditorFormatBarProps> = ({
                       onApplyHighlight(color.key);
                       setShowHighlightMenu(false);
                     }}
-                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-[#F1EAD9] text-left text-xs cursor-pointer text-[#221E18]"
+                    className="w-full flex items-start gap-2.5 px-2 py-1.5 rounded hover:bg-[#F1EAD9] text-left text-xs cursor-pointer text-[#221E18] transition-colors"
                   >
-                    <span className={`w-3.5 h-3.5 rounded-full ${color.bg} border ${color.border} shrink-0`} />
-                    <span className="text-[#221E18] text-xs">{color.label}</span>
+                    <span className={`w-3 h-3 rounded-full ${color.bg} border ${color.border} shrink-0 mt-0.5`} />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-xs leading-tight">{color.label}</div>
+                      <div className="text-[10px] text-[#7A705F] truncate">{color.desc}</div>
+                    </div>
                   </button>
                 ))}
               </div>
             </div>
           )}
         </div>
+
+        {/* Line Edit Lens Toggle Button */}
+        {onToggleLineEditLens && (
+          <button
+            type="button"
+            onClick={onToggleLineEditLens}
+            className={`px-2 py-1 rounded transition-colors cursor-pointer flex items-center gap-1.5 border text-xs ${
+              isLineEditLensOpen
+                ? 'bg-amber-100 text-amber-900 border-amber-300 font-semibold shadow-xs'
+                : 'bg-transparent text-[#7A705F] hover:text-[#221E18] hover:bg-[#F1EAD9] border-[#E5DEC9]'
+            }`}
+            title="Toggle Line Edit Inspector & Density Lens"
+          >
+            <Sparkles size={12} className={isLineEditLensOpen ? 'text-amber-600' : 'text-[#7A705F]'} />
+            <span className="hidden sm:inline">Line Edits</span>
+            {lineEditCount !== undefined && lineEditCount > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-white text-[9px] font-mono font-bold leading-none">
+                {lineEditCount}
+              </span>
+            )}
+          </button>
+        )}
 
         {/* Blockquote & Lists */}
         <div className="flex items-center gap-0.5 px-1 border-r border-[#E5DEC9]">
@@ -331,7 +396,9 @@ export const EditorFormatBar: React.FC<EditorFormatBarProps> = ({
             title="Typography & Text size options"
           >
             <Type size={14} />
-            <span className="text-[11px] font-mono capitalize hidden sm:inline text-[#221E18]">{fontSize}</span>
+            <span className="text-[11px] font-mono capitalize hidden sm:inline text-[#221E18]">
+              {fontFamily} · {fontSize}
+            </span>
           </button>
 
           {showTypeMenu && (
@@ -343,31 +410,40 @@ export const EditorFormatBar: React.FC<EditorFormatBarProps> = ({
                 <button
                   type="button"
                   onClick={() => onChangeFontFamily('serif')}
-                  className={`w-full py-1.5 px-2 text-xs rounded text-left flex items-center justify-between font-serif ${
+                  className={`w-full py-1.5 px-2 text-xs rounded text-left flex items-center justify-between font-serif cursor-pointer ${
                     fontFamily === 'serif' ? 'bg-[#221E18] text-[#FAF6EE]' : 'bg-[#F1EAD9] text-[#221E18] hover:bg-[#EAE4D6]'
                   }`}
                 >
-                  <span>Fraunces (Editorial)</span>
+                  <span className="flex items-center gap-1.5">
+                    {fontFamily === 'serif' && <Check size={12} className="text-[#DE6346]" />}
+                    <span>Fraunces (Editorial)</span>
+                  </span>
                   <span className="text-[10px] opacity-70">Serif</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => onChangeFontFamily('sans')}
-                  className={`w-full py-1.5 px-2 text-xs rounded text-left flex items-center justify-between font-sans ${
+                  className={`w-full py-1.5 px-2 text-xs rounded text-left flex items-center justify-between font-sans cursor-pointer ${
                     fontFamily === 'sans' ? 'bg-[#221E18] text-[#FAF6EE]' : 'bg-[#F1EAD9] text-[#221E18] hover:bg-[#EAE4D6]'
                   }`}
                 >
-                  <span>Inter (Clean UI)</span>
+                  <span className="flex items-center gap-1.5">
+                    {fontFamily === 'sans' && <Check size={12} className="text-[#DE6346]" />}
+                    <span>Inter (Clean UI)</span>
+                  </span>
                   <span className="text-[10px] opacity-70">Sans</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => onChangeFontFamily('mono')}
-                  className={`w-full py-1.5 px-2 text-xs rounded text-left flex items-center justify-between font-mono ${
+                  className={`w-full py-1.5 px-2 text-xs rounded text-left flex items-center justify-between font-mono cursor-pointer ${
                     fontFamily === 'mono' ? 'bg-[#221E18] text-[#FAF6EE]' : 'bg-[#F1EAD9] text-[#221E18] hover:bg-[#EAE4D6]'
                   }`}
                 >
-                  <span>Courier Prime</span>
+                  <span className="flex items-center gap-1.5">
+                    {fontFamily === 'mono' && <Check size={12} className="text-[#DE6346]" />}
+                    <span>Courier Prime</span>
+                  </span>
                   <span className="text-[10px] opacity-70">Mono</span>
                 </button>
               </div>
@@ -375,11 +451,11 @@ export const EditorFormatBar: React.FC<EditorFormatBarProps> = ({
               <span className="text-[10px] font-sans font-semibold text-[#7A705F] uppercase tracking-[0.14em] block mb-1.5">
                 Text Scale
               </span>
-              <div className="grid grid-cols-3 gap-1">
+              <div className="grid grid-cols-3 gap-1 mb-3">
                 <button
                   type="button"
                   onClick={() => onChangeFontSize('compact')}
-                  className={`py-1 text-xs rounded font-mono ${
+                  className={`py-1 text-xs rounded font-mono cursor-pointer ${
                     fontSize === 'compact' ? 'bg-[#221E18] text-[#FAF6EE]' : 'bg-[#F1EAD9] text-[#221E18] hover:bg-[#EAE4D6]'
                   }`}
                 >
@@ -388,7 +464,7 @@ export const EditorFormatBar: React.FC<EditorFormatBarProps> = ({
                 <button
                   type="button"
                   onClick={() => onChangeFontSize('normal')}
-                  className={`py-1 text-xs rounded font-mono ${
+                  className={`py-1 text-xs rounded font-mono cursor-pointer ${
                     fontSize === 'normal' ? 'bg-[#221E18] text-[#FAF6EE]' : 'bg-[#F1EAD9] text-[#221E18] hover:bg-[#EAE4D6]'
                   }`}
                 >
@@ -397,16 +473,140 @@ export const EditorFormatBar: React.FC<EditorFormatBarProps> = ({
                 <button
                   type="button"
                   onClick={() => onChangeFontSize('large')}
-                  className={`py-1 text-xs rounded font-mono ${
+                  className={`py-1 text-xs rounded font-mono cursor-pointer ${
                     fontSize === 'large' ? 'bg-[#221E18] text-[#FAF6EE]' : 'bg-[#F1EAD9] text-[#221E18] hover:bg-[#EAE4D6]'
                   }`}
                 >
                   Large
                 </button>
               </div>
+
+              {/* Line Spacing */}
+              {onChangeLineSpacing && (
+                <>
+                  <span className="text-[10px] font-sans font-semibold text-[#7A705F] uppercase tracking-[0.14em] block mb-1.5">
+                    Line Spacing
+                  </span>
+                  <div className="grid grid-cols-4 gap-1 mb-3">
+                    {AVAILABLE_LINE_SPACINGS.map((l) => (
+                      <button
+                        key={l.id}
+                        type="button"
+                        onClick={() => onChangeLineSpacing(l.id)}
+                        className={`py-1 text-xs rounded font-mono cursor-pointer text-center ${
+                          lineSpacing === l.id ? 'bg-[#221E18] text-[#FAF6EE]' : 'bg-[#F1EAD9] text-[#221E18] hover:bg-[#EAE4D6]'
+                        }`}
+                        title={`${l.label} (${l.cssValue}x)`}
+                      >
+                        {l.label}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {/* Word Spacing */}
+              {onChangeWordSpacing && (
+                <>
+                  <span className="text-[10px] font-sans font-semibold text-[#7A705F] uppercase tracking-[0.14em] block mb-1.5">
+                    Word Spacing
+                  </span>
+                  <div className="grid grid-cols-3 gap-1 mb-3">
+                    {AVAILABLE_WORD_SPACINGS.map((w) => (
+                      <button
+                        key={w.id}
+                        type="button"
+                        onClick={() => onChangeWordSpacing(w.id)}
+                        className={`py-1 text-xs rounded font-mono cursor-pointer text-center ${
+                          wordSpacing === w.id ? 'bg-[#221E18] text-[#FAF6EE]' : 'bg-[#F1EAD9] text-[#221E18] hover:bg-[#EAE4D6]'
+                        }`}
+                        title={`${w.label} (${w.cssValue})`}
+                      >
+                        {w.label}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {/* Text Alignment */}
+              {onChangeTextAlign && (
+                <>
+                  <span className="text-[10px] font-sans font-semibold text-[#7A705F] uppercase tracking-[0.14em] block mb-1.5">
+                    Text Alignment
+                  </span>
+                  <div className="grid grid-cols-2 gap-1">
+                    <button
+                      type="button"
+                      onClick={() => onChangeTextAlign('left')}
+                      className={`py-1 text-xs rounded font-sans cursor-pointer flex items-center justify-center gap-1.5 ${
+                        textAlign === 'left' ? 'bg-[#221E18] text-[#FAF6EE]' : 'bg-[#F1EAD9] text-[#221E18] hover:bg-[#EAE4D6]'
+                      }`}
+                      title="Left-aligned (ragged right margin)"
+                    >
+                      <AlignLeft size={12} />
+                      <span>Left</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onChangeTextAlign('justify')}
+                      className={`py-1 text-xs rounded font-sans cursor-pointer flex items-center justify-center gap-1.5 ${
+                        textAlign === 'justify' ? 'bg-[#221E18] text-[#FAF6EE]' : 'bg-[#F1EAD9] text-[#221E18] hover:bg-[#EAE4D6]'
+                      }`}
+                      title="Justified (book-style flush margins)"
+                    >
+                      <AlignJustify size={12} />
+                      <span>Justify</span>
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {/* Manuscript Page Width */}
+              {onChangePageWidth && (
+                <>
+                  <span className="text-[10px] font-sans font-semibold text-[#7A705F] uppercase tracking-[0.14em] block mt-3 mb-1.5">
+                    Page Width
+                  </span>
+                  <div className="grid grid-cols-3 gap-1">
+                    {AVAILABLE_PAGE_WIDTHS.map((pw) => (
+                      <button
+                        key={pw.id}
+                        type="button"
+                        onClick={() => onChangePageWidth(pw.id)}
+                        className={`py-1 text-xs rounded font-sans cursor-pointer text-center ${
+                          pageWidth === pw.id ? 'bg-[#221E18] text-[#FAF6EE]' : 'bg-[#F1EAD9] text-[#221E18] hover:bg-[#EAE4D6]'
+                        }`}
+                        title={pw.sublabel}
+                      >
+                        {pw.label}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
+
+        {/* Quick Text Alignment Toggle Button */}
+        {onChangeTextAlign && (
+          <button
+            type="button"
+            onClick={() => onChangeTextAlign(textAlign === 'justify' ? 'left' : 'justify')}
+            className={`p-1.5 rounded transition-colors cursor-pointer flex items-center gap-1 text-xs ${
+              textAlign === 'justify'
+                ? 'bg-[#F1EAD9] text-[#B54B32] font-semibold'
+                : 'text-[#7A705F] hover:text-[#221E18] hover:bg-[#F1EAD9]'
+            }`}
+            title={`Toggle Alignment (currently ${textAlign === 'justify' ? 'Justified' : 'Left Aligned'})`}
+          >
+            {textAlign === 'justify' ? <AlignJustify size={14} /> : <AlignLeft size={14} />}
+            <span className="hidden md:inline text-[11px] font-mono capitalize">
+              {textAlign === 'justify' ? 'Justified' : 'Left'}
+            </span>
+          </button>
+        )}
       </div>
 
       {/* RIGHT: Surface Switcher (Live vs Syntax), Typewriter Mode, Session Timer, and Segmented View Switcher */}

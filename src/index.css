@@ -1,10 +1,26 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-serif: 'Newsreader', 'Fraunces', Georgia, serif;
+  --font-display: 'Newsreader', 'Instrument Serif', Georgia, serif;
+  --font-mono: 'Courier Prime', Courier, monospace;
+}
+
 @layer base {
   /* Global Application Font Scale Configurations */
   html {
     font-size: 15px;
     -webkit-text-size-adjust: 100%;
+    font-family: var(--font-sans);
+  }
+
+  body {
+    font-family: var(--font-sans);
+    color: #221E18;
+    background-color: #FAF6EE;
+    line-height: 1.65;
+    font-size: 15px;
   }
 
   html[data-font-size="compact"] {
@@ -39,23 +55,35 @@
   }
 
   :root {
-    /* Base CSS Variables for Threadline Standard (Light) */
+    /* Exact Color Tokens from spec (no substitutions) */
+    --paper-primary: #FAF6EE;   /* main background, "the page" */
+    --paper-secondary: #F1EAD9; /* panels, drawers */
+    --ink-primary: #221E18;     /* primary text */
+    --ink-muted: #7A705F;       /* secondary text, captions */
+    --accent-wax: #B54B32;      /* PRIMARY accent — CTAs, active states */
+    --accent-focus: #35505F;    /* links, focus rings, secondary status */
+    --accent-destructive: #9B3B2C; /* dedicated critical red, distinct from --accent-wax */
+
+    /* Hairline construction */
+    --hairline-divider: rgba(34, 30, 24, 0.10);
+    --hairline-input: rgba(34, 30, 24, 0.16);
+
+    /* Base CSS Variables for Threadline Standard */
     --canvas-bg: #FAF6EE;
     --panel-bg: #F1EAD9;
     --panel-hover: #ECE5D6;
     --text-main: #221E18;
     --text-dim: #7A705F;
-    --border-hairline: rgba(34, 30, 24, 0.12);
+    --border-hairline: rgba(34, 30, 24, 0.10);
     --border-subtle: rgba(34, 30, 24, 0.08);
     --accent-color: #B54B32;
     --accent-secondary: #35505F;
 
+    /* Manuscript Page Sheet Standard Fixed Width */
+    --editor-page-width: 720px;
+
     /* Legacy compatibility variables */
-    --paper-primary: #FAF6EE;
-    --paper-secondary: #F1EAD9;
-    --ink-primary: #221E18;
-    --ink-muted: #7A705F;
-    --hairline-border: rgba(34, 30, 24, 0.12);
+    --hairline-border: rgba(34, 30, 24, 0.10);
     --hairline-subtle: rgba(34, 30, 24, 0.08);
     --accent-wax-seal: #B54B32;
     --accent-focus-blue: #35505F;
@@ -67,35 +95,36 @@
     --bg-aged: #F1EAD9;
     --text-ink: #221E18;
     --text-muted: #7A705F;
-    --border-paper: rgba(34, 30, 24, 0.12);
-    --accent-wax: #B54B32;
+    --border-paper: rgba(34, 30, 24, 0.10);
     --accent-blue: #35505F;
   }
 
-  /* 1. THREADLINE STANDARD - DARK (LAMPLIGHT) */
+  /* 1. THREADLINE STANDARD - DARK (LAMPLIGHT) - Brightened & clearly partitioned */
   html[data-theme="threadline-dark"],
   body.theme-threadline-dark,
   .theme-lamplight {
-    --canvas-bg: #151311;
-    --panel-bg: #231F1B;
-    --panel-hover: #2E2924;
-    --text-main: #F7F3E8;
-    --text-dim: #A89E8D;
-    --border-hairline: rgba(247, 243, 232, 0.14);
-    --border-subtle: rgba(247, 243, 232, 0.08);
-    --accent-color: #DE6346;
-    --accent-secondary: #6B96AE;
+    --canvas-bg: #26231F;
+    --panel-bg: #322D27;
+    --panel-hover: #3E3831;
+    --surface-card: #3A342D;
+    --elevated-surface: #443C34;
+    --text-main: #FAF6EE;
+    --text-dim: #BFB5A4;
+    --border-hairline: rgba(250, 246, 238, 0.22);
+    --border-subtle: rgba(250, 246, 238, 0.13);
+    --accent-color: #E6735A;
+    --accent-secondary: #85ACBE;
 
-    --paper-primary: #151311;
-    --paper-secondary: #231F1B;
-    --ink-primary: #F7F3E8;
-    --ink-muted: #A89E8D;
-    --hairline-border: rgba(247, 243, 232, 0.14);
-    --hairline-subtle: rgba(247, 243, 232, 0.08);
-    --bg-paper: #151311;
-    --bg-aged: #231F1B;
-    --text-ink: #F7F3E8;
-    --text-muted: #A89E8D;
+    --paper-primary: #26231F;
+    --paper-secondary: #322D27;
+    --ink-primary: #FAF6EE;
+    --ink-muted: #BFB5A4;
+    --hairline-border: rgba(250, 246, 238, 0.22);
+    --hairline-subtle: rgba(250, 246, 238, 0.13);
+    --bg-paper: #26231F;
+    --bg-aged: #322D27;
+    --text-ink: #FAF6EE;
+    --text-muted: #BFB5A4;
   }
 
   /* 2. NOTION - LIGHT (Modern, crisp white slate) */
@@ -104,6 +133,8 @@
     --canvas-bg: #FFFFFF;
     --panel-bg: #F7F6F3;
     --panel-hover: #EBEAE5;
+    --surface-card: #FFFFFF;
+    --elevated-surface: #F0EFEA;
     --text-main: #37352F;
     --text-dim: #787774;
     --border-hairline: rgba(55, 53, 47, 0.14);
@@ -121,27 +152,29 @@
     --text-muted: #787774;
   }
 
-  /* 2. NOTION - DARK (Charcoal slate & pure white) */
+  /* 2. NOTION - DARK (Brightened Charcoal slate with clear section separation) */
   html[data-theme="notion-dark"],
   body.theme-notion-dark {
-    --canvas-bg: #191919;
-    --panel-bg: #252525;
-    --panel-hover: #2F2F2F;
+    --canvas-bg: #282828;
+    --panel-bg: #333333;
+    --panel-hover: #404040;
+    --surface-card: #3C3C3C;
+    --elevated-surface: #464646;
     --text-main: #FFFFFF;
-    --text-dim: #9B9B9B;
-    --border-hairline: rgba(255, 255, 255, 0.13);
-    --border-subtle: rgba(255, 255, 255, 0.07);
-    --accent-color: #FF5C5C;
-    --accent-secondary: #2EAADC;
+    --text-dim: #C5C5C5;
+    --border-hairline: rgba(255, 255, 255, 0.22);
+    --border-subtle: rgba(255, 255, 255, 0.13);
+    --accent-color: #FF6E6E;
+    --accent-secondary: #4FBFE8;
 
-    --paper-primary: #191919;
-    --paper-secondary: #252525;
+    --paper-primary: #282828;
+    --paper-secondary: #333333;
     --ink-primary: #FFFFFF;
-    --ink-muted: #9B9B9B;
-    --bg-paper: #191919;
-    --bg-aged: #252525;
+    --ink-muted: #C5C5C5;
+    --bg-paper: #282828;
+    --bg-aged: #333333;
     --text-ink: #FFFFFF;
-    --text-muted: #9B9B9B;
+    --text-muted: #C5C5C5;
   }
 
   /* 3. OBSIDIAN - LIGHT (Zinc vault & Royal Violet) */
@@ -150,6 +183,8 @@
     --canvas-bg: #F8F9FA;
     --panel-bg: #EDEFF2;
     --panel-hover: #E1E4E8;
+    --surface-card: #FFFFFF;
+    --elevated-surface: #E5E8EC;
     --text-main: #181A1F;
     --text-dim: #62666D;
     --border-hairline: rgba(24, 26, 31, 0.14);
@@ -167,27 +202,29 @@
     --text-muted: #62666D;
   }
 
-  /* 3. OBSIDIAN - DARK (Deep Space Void & Electric Violet) */
+  /* 3. OBSIDIAN - DARK (Brightened Slate Indigo & Electric Violet) */
   html[data-theme="obsidian-dark"],
   body.theme-obsidian-dark {
-    --canvas-bg: #0F0F14;
-    --panel-bg: #1B1A24;
-    --panel-hover: #272535;
-    --text-main: #F5F5FA;
-    --text-dim: #A0A0B8;
-    --border-hairline: rgba(139, 92, 246, 0.22);
-    --border-subtle: rgba(139, 92, 246, 0.12);
-    --accent-color: #A78BFA;
-    --accent-secondary: #818CF8;
+    --canvas-bg: #23242E;
+    --panel-bg: #2E2F3C;
+    --panel-hover: #3B3C4C;
+    --surface-card: #363747;
+    --elevated-surface: #414357;
+    --text-main: #F8F9FC;
+    --text-dim: #BDC3DE;
+    --border-hairline: rgba(167, 139, 250, 0.32);
+    --border-subtle: rgba(167, 139, 250, 0.18);
+    --accent-color: #B794F6;
+    --accent-secondary: #939CF8;
 
-    --paper-primary: #0F0F14;
-    --paper-secondary: #1B1A24;
-    --ink-primary: #F5F5FA;
-    --ink-muted: #A0A0B8;
-    --bg-paper: #0F0F14;
-    --bg-aged: #1B1A24;
-    --text-ink: #F5F5FA;
-    --text-muted: #A0A0B8;
+    --paper-primary: #23242E;
+    --paper-secondary: #2E2F3C;
+    --ink-primary: #F8F9FC;
+    --ink-muted: #BDC3DE;
+    --bg-paper: #23242E;
+    --bg-aged: #2E2F3C;
+    --text-ink: #F8F9FC;
+    --text-muted: #BDC3DE;
   }
 
   /* 4. UBUNTU - LIGHT (Warm terminal canvas & Canonical orange) */
@@ -196,6 +233,8 @@
     --canvas-bg: #F7F7F7;
     --panel-bg: #EDE8E1;
     --panel-hover: #DDD6CC;
+    --surface-card: #FFFFFF;
+    --elevated-surface: #E5DFC8;
     --text-main: #2C001E;
     --text-dim: #736870;
     --border-hairline: rgba(44, 0, 30, 0.15);
@@ -213,27 +252,29 @@
     --text-muted: #736870;
   }
 
-  /* 4. UBUNTU - DARK (Iconic Canonical Deep Aubergine & Flaming Orange) */
+  /* 4. UBUNTU - DARK (Brightened Warm Aubergine & Flaming Orange) */
   html[data-theme="ubuntu-dark"],
   body.theme-ubuntu-dark {
-    --canvas-bg: #240018;
-    --panel-bg: #3B052B;
-    --panel-hover: #4D0938;
+    --canvas-bg: #381932;
+    --panel-bg: #4B2244;
+    --panel-hover: #5E2B55;
+    --surface-card: #54274C;
+    --elevated-surface: #652F5C;
     --text-main: #FFFFFF;
-    --text-dim: #DFC8D9;
-    --border-hairline: rgba(233, 84, 32, 0.25);
-    --border-subtle: rgba(233, 84, 32, 0.14);
-    --accent-color: #E95420;
-    --accent-secondary: #A02B8F;
+    --text-dim: #EAD6E6;
+    --border-hairline: rgba(233, 84, 32, 0.40);
+    --border-subtle: rgba(255, 255, 255, 0.18);
+    --accent-color: #FF753F;
+    --accent-secondary: #B83DA6;
 
-    --paper-primary: #240018;
-    --paper-secondary: #3B052B;
+    --paper-primary: #381932;
+    --paper-secondary: #4B2244;
     --ink-primary: #FFFFFF;
-    --ink-muted: #DFC8D9;
-    --bg-paper: #240018;
-    --bg-aged: #3B052B;
+    --ink-muted: #EAD6E6;
+    --bg-paper: #381932;
+    --bg-aged: #4B2244;
     --text-ink: #FFFFFF;
-    --text-muted: #DFC8D9;
+    --text-muted: #EAD6E6;
   }
 
   /* General Dark Mode Fallback and Overrides for elements */
@@ -247,7 +288,7 @@
     color: var(--text-main);
   }
 
-  /* Map hardcoded background colors to active theme variables for all non-default themes */
+  /* Map hardcoded background colors to active theme variables for all non-default themes and dark mode */
   html[data-theme="notion-light"] .bg-\[\#FAF6EE\],
   html[data-theme="notion-light"] .bg-\[\#F9F8F6\],
   html[data-theme="notion-light"] .bg-\[\#FAF9F5\],
@@ -263,7 +304,13 @@
   html[data-mode="dark"] .bg-\[\#FAF6EE\],
   html[data-mode="dark"] .bg-\[\#F9F8F6\],
   html[data-mode="dark"] .bg-\[\#FAF9F5\],
-  html[data-mode="dark"] .bg-\[\#F6F2EA\] {
+  html[data-mode="dark"] .bg-\[\#FDFBF7\],
+  html[data-mode="dark"] .bg-\[\#F6F2EA\],
+  html[data-mode="dark"] .bg-\[\#FAF8F5\],
+  html[data-mode="dark"] .bg-\[\#F8F5EE\],
+  html[data-mode="dark"] .bg-\[\#F8F4EC\],
+  html[data-mode="dark"] .bg-\[\#F7F3EB\],
+  html[data-mode="dark"] .bg-\[\#F5F0E4\] {
     background-color: var(--canvas-bg) !important;
   }
 
@@ -278,24 +325,70 @@
   html[data-theme="ubuntu-light"] .bg-\[\#ECE5D6\],
   html[data-mode="dark"] .bg-\[\#F1EAD9\],
   html[data-mode="dark"] .bg-\[\#EAE2D1\],
-  html[data-mode="dark"] .bg-\[\#ECE5D6\] {
+  html[data-mode="dark"] .bg-\[\#ECE5D6\],
+  html[data-mode="dark"] .bg-\[\#EAE4D6\],
+  html[data-mode="dark"] .bg-\[\#EBE5D8\],
+  html[data-mode="dark"] .bg-\[\#F3EDE0\],
+  html[data-mode="dark"] .bg-\[\#F6F1E6\],
+  html[data-mode="dark"] .bg-\[\#EAE3D2\],
+  html[data-mode="dark"] .bg-\[\#E8DFC9\],
+  html[data-mode="dark"] .bg-\[\#E0D5BE\],
+  html[data-mode="dark"] .bg-\[\#F5EEDB\],
+  html[data-mode="dark"] .bg-\[\#F4EFE6\],
+  html[data-mode="dark"] .bg-\[\#EFE8D8\],
+  html[data-mode="dark"] .bg-\[\#E2D8C3\] {
     background-color: var(--panel-bg) !important;
+  }
+
+  /* Elevated cards, modals, popovers, and containers in dark mode */
+  html[data-mode="dark"] .bg-white,
+  html[data-mode="dark"] .bg-\[\#E5DEC9\] {
+    background-color: var(--surface-card) !important;
   }
 
   html[data-theme="notion-light"] .hover\:bg-\[\#F1EAD9\]:hover,
   html[data-theme="obsidian-light"] .hover\:bg-\[\#F1EAD9\]:hover,
   html[data-theme="ubuntu-light"] .hover\:bg-\[\#F1EAD9\]:hover,
-  html[data-mode="dark"] .hover\:bg-\[\#F1EAD9\]:hover {
+  html[data-mode="dark"] .hover\:bg-\[\#F1EAD9\]:hover,
+  html[data-mode="dark"] .hover\:bg-\[\#ECE5D6\]:hover,
+  html[data-mode="dark"] .hover\:bg-\[\#EAE2D1\]:hover {
     background-color: var(--panel-hover) !important;
+  }
+
+  /* Buttons, active tabs, and badges that use dark ink in light mode */
+  html[data-mode="dark"] .bg-\[\#221E18\],
+  html[data-mode="dark"] .bg-\[\#1F1C1A\],
+  html[data-mode="dark"] .bg-\[\#25201A\],
+  html[data-mode="dark"] .bg-\[\#1C1816\],
+  html[data-mode="dark"] .bg-\[\#14110E\],
+  html[data-mode="dark"] .bg-\[\#100E0B\],
+  html[data-mode="dark"] button.bg-\[\#221E18\],
+  html[data-mode="dark"] div.bg-\[\#221E18\] {
+    background-color: var(--elevated-surface) !important;
+    color: var(--text-main) !important;
+    border: 1px solid var(--border-hairline) !important;
   }
 
   html[data-theme="notion-light"] .text-\[\#221E18\],
   html[data-theme="obsidian-light"] .text-\[\#221E18\],
   html[data-theme="ubuntu-light"] .text-\[\#221E18\],
   html[data-mode="dark"] .text-\[\#221E18\],
+  html[data-mode="dark"] .text-\[\#1A1814\],
+  html[data-mode="dark"] .text-\[\#1C1917\],
   html[data-mode="dark"] .text-\[\#3C3933\],
+  html[data-mode="dark"] .text-\[\#33312D\],
+  html[data-mode="dark"] .text-\[\#2D2A26\],
+  html[data-mode="dark"] .text-\[\#241F1A\],
+  html[data-mode="dark"] .text-\[\#11100E\],
   html[data-mode="dark"] .text-\[\#5C5346\],
-  html[data-mode="dark"] .text-\[\#5A5143\] {
+  html[data-mode="dark"] .text-\[\#5A5143\],
+  html[data-mode="dark"] .text-\[\#554D40\],
+  html[data-mode="dark"] .text-\[\#4A4031\],
+  html[data-mode="dark"] .text-\[\#4A463F\],
+  html[data-mode="dark"] .text-\[\#4A4235\],
+  html[data-mode="dark"] .text-\[\#3A3026\],
+  html[data-mode="dark"] .text-\[\#3E382E\],
+  html[data-mode="dark"] .text-\[\#6B6152\] {
     color: var(--text-main) !important;
   }
 
@@ -303,7 +396,15 @@
   html[data-theme="obsidian-light"] .text-\[\#7A705F\],
   html[data-theme="ubuntu-light"] .text-\[\#7A705F\],
   html[data-mode="dark"] .text-\[\#7A705F\],
-  html[data-mode="dark"] .text-\[\#8C887F\] {
+  html[data-mode="dark"] .text-\[\#8C887F\],
+  html[data-mode="dark"] .text-\[\#8C8271\],
+  html[data-mode="dark"] .text-\[\#9E9484\],
+  html[data-mode="dark"] .text-\[\#A39B8F\],
+  html[data-mode="dark"] .text-\[\#A09686\],
+  html[data-mode="dark"] .text-\[\#A89E8E\],
+  html[data-mode="dark"] .text-\[\#958C7C\],
+  html[data-mode="dark"] .text-\[\#787062\],
+  html[data-mode="dark"] .text-\[\#A69B88\] {
     color: var(--text-dim) !important;
   }
 
@@ -321,9 +422,17 @@
   html[data-theme="ubuntu-light"] .border-\[rgba\(34\,30\,24\,0\.08\)\],
   html[data-mode="dark"] .border-\[rgba\(34\,30\,24\,0\.12\)\],
   html[data-mode="dark"] .border-\[rgba\(34\,30\,24\,0\.1\)\],
+  html[data-mode="dark"] .border-\[rgba\(34\,30\,24\,0\.14\)\],
+  html[data-mode="dark"] .border-\[rgba\(34\,30\,24\,0\.15\)\],
   html[data-mode="dark"] .border-\[rgba\(34\,30\,24\,0\.16\)\],
+  html[data-mode="dark"] .border-\[rgba\(34\,30\,24\,0\.18\)\],
+  html[data-mode="dark"] .border-\[rgba\(34\,30\,24\,0\.2\)\],
   html[data-mode="dark"] .border-\[rgba\(34\,30\,24\,0\.08\)\],
-  html[data-mode="dark"] .border-\[\#EBE8E2\] {
+  html[data-mode="dark"] .border-\[rgba\(34\,30\,24\,0\.06\)\],
+  html[data-mode="dark"] .border-\[\#E5DEC9\],
+  html[data-mode="dark"] .border-\[\#EBE8E2\],
+  html[data-mode="dark"] .border-\[\#221E18\],
+  html[data-mode="dark"] .border-\[\#3D342B\] {
     border-color: var(--border-hairline) !important;
   }
 
@@ -350,10 +459,16 @@
     border-color: var(--border-hairline);
   }
 
+  html[data-mode="dark"] input::placeholder,
+  html[data-mode="dark"] textarea::placeholder {
+    color: var(--text-dim);
+    opacity: 0.75;
+  }
+
   body {
     background-color: var(--paper-primary);
     color: var(--ink-primary);
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     letter-spacing: -0.011em;
     min-height: 100vh;
   }
@@ -362,13 +477,13 @@
 /* Typography Hierarchy */
 .font-serif,
 .font-editorial {
-  font-family: 'Fraunces', Georgia, serif;
+  font-family: 'Newsreader', 'Fraunces', Georgia, serif;
   font-feature-settings: "liga" 1, "onum" 1;
 }
 
 .font-sans,
 .font-clean {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 .font-mono,
@@ -377,12 +492,12 @@
 }
 
 .font-manuscript {
-  font-family: 'Fraunces', Georgia, serif;
+  font-family: 'Newsreader', 'Fraunces', Georgia, serif;
 }
 
-/* Section label per brand guideline: Inter 600, 11px, tracking +0.16em */
+/* Section label per brand guideline: Plus Jakarta Sans 600, 11px, tracking +0.16em */
 .section-label {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 11px;
   line-height: 1;
   font-weight: 600;
@@ -398,30 +513,330 @@
   margin-right: auto;
 }
 
-/* Elevation tokens (§3.3): flat by default; raised only for dragged card / modal */
-.elevation-flat {
-  box-shadow: none;
+/* Elevation tokens: flat by default; raised ONLY for dragged card or open modal/popover */
+.elevation-flat,
+.shadow-xs,
+.shadow-sm,
+.shadow,
+.shadow-md,
+.shadow-lg,
+.shadow-xl,
+.shadow-2xl,
+.shadow-warm-sm,
+.shadow-warm-card,
+.shadow-subtle {
+  box-shadow: none !important;
 }
 
-.shadow-warm-sm {
-  box-shadow: 0 1px 3px rgba(34, 30, 24, 0.06), 0 1px 2px rgba(34, 30, 24, 0.03);
+/* The ONLY shadow in the entire app: a single soft, warm-toned shadow (rgba(34,30,24,0.12), never pure black) on a dragged Corkboard card or an open modal/popover */
+.shadow-warm-modal,
+.shadow-dragged,
+.shadow-popover {
+  box-shadow: 0 12px 32px -4px rgba(34, 30, 24, 0.12), 0 4px 12px -2px rgba(34, 30, 24, 0.06) !important;
 }
 
-.shadow-warm-modal {
-  box-shadow: 0 12px 32px -4px rgba(34, 30, 24, 0.16), 0 4px 12px -2px rgba(34, 30, 24, 0.08);
+.theme-lamplight .shadow-warm-modal,
+.theme-lamplight .shadow-dragged,
+.theme-lamplight .shadow-popover {
+  box-shadow: 0 14px 36px -4px rgba(0, 0, 0, 0.45), 0 4px 12px -2px rgba(0, 0, 0, 0.3) !important;
 }
 
-.theme-lamplight .shadow-warm-sm {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
-}
-
-.theme-lamplight .shadow-warm-modal {
-  box-shadow: 0 14px 36px -4px rgba(0, 0, 0, 0.6), 0 4px 12px -2px rgba(0, 0, 0, 0.4);
-}
-
-/* Radius token (§3.3): 6px soft radius */
-.radius-card {
+/* Radius tokens: 6px on cards, panels, and buttons; 4px on small chips/tags */
+.radius-card,
+.radius-panel,
+.radius-btn {
   border-radius: 6px;
+}
+
+.radius-tag,
+.radius-chip {
+  border-radius: 4px;
+}
+
+/* Hairline border construction tokens */
+.border-hairline {
+  border-color: rgba(34, 30, 24, 0.10);
+}
+
+.border-input-outline {
+  border-color: rgba(34, 30, 24, 0.16);
+}
+
+/* =========================================================================
+   TYPOGRAPHY SCALE — EXACT VALUES
+   ========================================================================= */
+/* Display / H1: Newsreader 600, 32px (28px mobile), line-height 1.15, tracking -0.01em */
+.font-display {
+  font-family: 'Newsreader', 'Fraunces', Georgia, serif;
+  font-weight: 600;
+  font-size: 28px;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  font-feature-settings: "liga" 1, "onum" 1;
+}
+@media (min-width: 640px) {
+  .font-display {
+    font-size: 32px;
+  }
+}
+
+/* Heading / H2: Newsreader 500, 22px, line-height 1.25, tracking normal */
+.font-heading {
+  font-family: 'Newsreader', 'Fraunces', Georgia, serif;
+  font-weight: 500;
+  font-size: 22px;
+  line-height: 1.25;
+  letter-spacing: normal;
+  font-feature-settings: "liga" 1, "onum" 1;
+}
+
+/* Section header: Plus Jakarta Sans 600, 15px, line-height 1.3, tracking 0.01em */
+.font-section-header,
+.section-header {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
+}
+
+/* Body: Plus Jakarta Sans 400, 15px, line-height 1.65 */
+.font-body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+/* Caption / metadata: Plus Jakarta Sans 400, 12.5px, line-height 1.4, color: --ink-muted */
+.font-caption,
+.text-caption {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-weight: 400;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: #7A705F;
+}
+
+/* Button label: Plus Jakarta Sans 600, 14px, line-height 1, tracking 0.01em */
+.font-btn-label {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+
+/* Typewriter/mono: Courier Prime 400, 15px, line-height 1.7 */
+.font-typewriter,
+.font-draft-mono {
+  font-family: 'Courier Prime', Courier, monospace;
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+/* =========================================================================
+   BUTTON SPECIFICATION CLASSES
+   ========================================================================= */
+.btn-primary {
+  height: 40px;
+  padding-left: 16px;
+  padding-right: 16px;
+  border-radius: 6px;
+  background-color: #B54B32;
+  color: #FAF6EE;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 150ms ease-in-out;
+}
+.btn-primary:hover:not(:disabled) {
+  background-color: #9E3E28;
+}
+.btn-primary:active:not(:disabled) {
+  background-color: #883421;
+}
+.btn-primary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px #FAF6EE, 0 0 0 4px #35505F;
+}
+.btn-primary:disabled {
+  background-color: rgba(122, 112, 95, 0.30);
+  color: #7A705F;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.btn-secondary {
+  height: 40px;
+  padding-left: 16px;
+  padding-right: 16px;
+  border-radius: 6px;
+  background-color: transparent;
+  color: #221E18;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  border: 1px solid rgba(34, 30, 24, 0.16);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 150ms ease-in-out;
+}
+.btn-secondary:hover:not(:disabled) {
+  background-color: rgba(34, 30, 24, 0.04);
+  border-color: rgba(34, 30, 24, 0.24);
+}
+.btn-secondary:active:not(:disabled) {
+  background-color: rgba(34, 30, 24, 0.07);
+}
+.btn-secondary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px #FAF6EE, 0 0 0 4px #35505F;
+}
+.btn-secondary:disabled {
+  color: rgba(34, 30, 24, 0.35);
+  border-color: rgba(34, 30, 24, 0.10);
+  cursor: not-allowed;
+}
+
+.btn-tertiary {
+  height: auto;
+  min-height: 32px;
+  padding-left: 8px;
+  padding-right: 8px;
+  background: none;
+  border: none;
+  color: #35505F;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.4;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 150ms ease-in-out;
+}
+.btn-tertiary:hover:not(:disabled) {
+  text-decoration: underline;
+  background: none;
+}
+.btn-tertiary:active:not(:disabled) {
+  color: #283C47;
+}
+.btn-tertiary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px #FAF6EE, 0 0 0 4px #35505F;
+  border-radius: 2px;
+}
+.btn-tertiary:disabled {
+  color: rgba(122, 112, 95, 0.40);
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
+.btn-destructive {
+  height: 40px;
+  padding-left: 16px;
+  padding-right: 16px;
+  border-radius: 6px;
+  background-color: transparent;
+  color: #9B3B2C;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  border: 1px solid rgba(155, 59, 44, 0.25);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 150ms ease-in-out;
+}
+.btn-destructive:hover:not(:disabled) {
+  background-color: rgba(155, 59, 44, 0.06);
+  border-color: #9B3B2C;
+}
+.btn-destructive:active:not(:disabled) {
+  background-color: rgba(155, 59, 44, 0.12);
+}
+.btn-destructive:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px #FAF6EE, 0 0 0 4px #9B3B2C;
+}
+.btn-destructive:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.btn-icon {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #7A705F;
+  cursor: pointer;
+  transition: all 150ms ease-in-out;
+}
+.btn-icon:hover:not(:disabled) {
+  background-color: rgba(34, 30, 24, 0.05);
+  color: #221E18;
+}
+.btn-icon:active:not(:disabled) {
+  background-color: rgba(34, 30, 24, 0.09);
+}
+.btn-icon:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px #FAF6EE, 0 0 0 4px #35505F;
+}
+
+/* =========================================================================
+   INPUT SPECIFICATION CLASSES
+   ========================================================================= */
+.input-standard {
+  height: 40px;
+  padding-left: 12px;
+  padding-right: 12px;
+  border: 1px solid rgba(34, 30, 24, 0.16);
+  border-radius: 6px;
+  background-color: #FAF6EE;
+  color: #221E18;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 15px;
+  line-height: normal;
+  transition: all 150ms ease-in-out;
+}
+.input-standard:focus {
+  outline: none;
+  border-color: #35505F;
+  box-shadow: 0 0 0 2px #FAF6EE, 0 0 0 4px #35505F;
 }
 
 /* Motion token (§3.3 & §7.4): 200-300ms ease, instant when reduced-motion */
@@ -478,40 +893,207 @@
   background: rgba(122, 112, 95, 0.4);
 }
 
-/* Rich Live Markdown Editor Canvas Typography */
+/* Standard Fixed Manuscript Page Sheet Container
+   Ensures editor maintains fixed standard width (default 720px) without stretching across screen */
+.manuscript-page-sheet {
+  width: 100%;
+  max-width: var(--editor-page-width, 720px);
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+}
+
+/* Rich Live Markdown Editor Canvas Typography & Anti-Overflow */
 .editor-rich-surface {
   outline: none;
   min-height: 520px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-wrap: anywhere;
   word-wrap: break-word;
+  word-break: break-word;
   white-space: pre-wrap;
   color: var(--ink-primary);
+  line-height: var(--editor-line-height, 1.75);
+  word-spacing: var(--editor-word-spacing, normal);
+  text-align: var(--editor-text-align, left);
 }
 
-/* Highlight badge & mark styles */
+/* Ensure all nested blocks strictly inherit the editor's configured line-height, word-spacing, and text-align */
+.editor-rich-surface p,
+.editor-rich-surface div,
+.editor-rich-surface li,
+.editor-rich-surface blockquote {
+  line-height: var(--editor-line-height, 1.75) !important;
+  word-spacing: var(--editor-word-spacing, normal) !important;
+  text-align: inherit;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow-wrap: anywhere !important;
+  word-wrap: break-word !important;
+  word-break: break-word !important;
+}
+
+/* Ensure inline elements never overflow width */
+.editor-rich-surface span,
+.editor-rich-surface font,
+.editor-rich-surface strong,
+.editor-rich-surface em,
+.editor-rich-surface a {
+  line-height: inherit !important;
+  word-spacing: inherit !important;
+  overflow-wrap: anywhere !important;
+  word-wrap: break-word !important;
+}
+
+/* Text Justification Mode */
+.editor-rich-surface[data-align="justify"],
+.editor-rich-surface.text-justify,
+[data-editor-text-align="justify"] .editor-rich-surface,
+[data-editor-text-align="justify"] .editor-rich-surface p,
+[data-editor-text-align="justify"] .editor-rich-surface div {
+  text-align: justify !important;
+  text-justify: inter-word !important;
+  hyphens: auto;
+}
+
+[data-editor-text-align="left"] .editor-rich-surface,
+[data-editor-text-align="left"] .editor-rich-surface p,
+[data-editor-text-align="left"] .editor-rich-surface div {
+  text-align: left !important;
+}
+
+/* Ensure code and preformatted text wraps cleanly instead of forcing horizontal overflow */
+.editor-rich-surface pre,
+.editor-rich-surface code {
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Editorial Typefaces for Threadline Manuscript Canvas & Rich Live Editor */
+.editor-rich-surface.font-serif,
+.editor-rich-surface.font-serif *,
+.prose-manuscript.font-serif,
+.prose-manuscript.font-serif * {
+  font-family: 'Newsreader', 'Fraunces', Georgia, serif !important;
+  font-feature-settings: "liga" 1, "onum" 1;
+}
+
+.editor-rich-surface.font-sans,
+.editor-rich-surface.font-sans *,
+.prose-manuscript.font-sans,
+.prose-manuscript.font-sans * {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
+.editor-rich-surface.font-mono,
+.editor-rich-surface.font-mono *,
+.prose-manuscript.font-mono,
+.prose-manuscript.font-mono * {
+  font-family: 'Courier Prime', Courier, monospace !important;
+}
+
+/* Raw Textarea font enforcement */
+textarea.font-serif {
+  font-family: 'Newsreader', 'Fraunces', Georgia, serif !important;
+}
+
+textarea.font-sans {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
+textarea.font-mono {
+  font-family: 'Courier Prime', Courier, monospace !important;
+}
+
+/* Code and pre elements inherit editor typography rather than forcing Courier monospace */
+.editor-rich-surface code,
+.editor-rich-surface pre,
+.editor-rich-surface kbd,
+.editor-rich-surface tt,
+.editor-rich-surface samp {
+  font-family: inherit !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+/* Normalize any pasted inline spans, fonts, or divs so foreign styling never overrides font size/color */
+.editor-rich-surface span:not([class*="hl-"]),
+.editor-rich-surface font {
+  font-size: inherit !important;
+  color: inherit !important;
+  background-color: transparent !important;
+  line-height: inherit !important;
+}
+
+.editor-rich-surface p,
+.editor-rich-surface div {
+  background-color: transparent !important;
+}
+
+/* Highlight badge & mark styles for Line Editing */
 mark {
   padding: 0.1em 0.25em;
   border-radius: 3px;
   color: inherit;
+  transition: background-color 0.15s ease;
 }
+mark.hl-pacing,
 mark.hl-yellow {
   background-color: rgba(245, 158, 11, 0.28);
-  border-bottom: 1.5px solid rgba(245, 158, 11, 0.65);
+  border-bottom: 2px solid rgba(217, 119, 6, 0.85);
 }
+mark.hl-voice,
 mark.hl-mint {
   background-color: rgba(16, 185, 129, 0.25);
-  border-bottom: 1.5px solid rgba(16, 185, 129, 0.65);
+  border-bottom: 2px solid rgba(5, 150, 105, 0.85);
 }
+mark.hl-tighten,
 mark.hl-rose {
   background-color: rgba(244, 63, 94, 0.25);
-  border-bottom: 1.5px solid rgba(244, 63, 94, 0.65);
+  border-bottom: 2px solid rgba(220, 38, 38, 0.85);
 }
+mark.hl-continuity,
 mark.hl-blue {
   background-color: rgba(59, 130, 246, 0.25);
-  border-bottom: 1.5px solid rgba(59, 130, 246, 0.65);
+  border-bottom: 2px solid rgba(37, 99, 235, 0.85);
 }
+mark.hl-theme,
 mark.hl-purple {
   background-color: rgba(168, 85, 247, 0.25);
-  border-bottom: 1.5px solid rgba(168, 85, 247, 0.65);
+  border-bottom: 2px solid rgba(124, 58, 237, 0.85);
+}
+mark.hl-query,
+mark.hl-orange {
+  background-color: rgba(249, 115, 22, 0.25);
+  border-bottom: 2px solid rgba(234, 88, 12, 0.85);
+}
+
+/* Skeleton Loading Shimmer for Threadline's Warm Paper Theme */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(235, 228, 214, 0.6) 25%,
+    rgba(250, 246, 238, 0.95) 50%,
+    rgba(235, 228, 214, 0.6) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.8s ease-in-out infinite;
 }
 
 .editor-rich-surface:focus {
@@ -519,7 +1101,7 @@ mark.hl-purple {
 }
 
 .editor-rich-surface h1 {
-  font-family: 'Fraunces', Georgia, serif;
+  font-family: inherit;
   font-size: 2.15rem;
   line-height: 1.15;
   font-weight: 600;
@@ -530,7 +1112,7 @@ mark.hl-purple {
 }
 
 .editor-rich-surface h2 {
-  font-family: 'Fraunces', Georgia, serif;
+  font-family: inherit;
   font-size: 1.45rem;
   line-height: 1.3;
   font-weight: 500;
@@ -541,7 +1123,7 @@ mark.hl-purple {
 }
 
 .editor-rich-surface h3 {
-  font-family: 'Fraunces', Georgia, serif;
+  font-family: inherit;
   font-size: 1.2rem;
   line-height: 1.35;
   font-weight: 500;
@@ -553,7 +1135,6 @@ mark.hl-purple {
 .editor-rich-surface p {
   margin-bottom: 1.15rem;
   color: var(--ink-primary);
-  line-height: 1.75;
 }
 
 .editor-rich-surface blockquote {
@@ -630,34 +1211,228 @@ mark.hl-purple {
   border: 1px solid var(--hairline-border);
 }
 
-/* Lamplight Mode Overrides for Hardcoded Background/Border Utilities */
-.theme-lamplight .bg-\[\#FAF6EE\] {
-  background-color: #191714 !important;
+/* Dark Mode Shimmer for Skeleton Loaders across all themes */
+html[data-mode="dark"] .animate-skeleton,
+.theme-lamplight .animate-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 25%,
+    rgba(255, 255, 255, 0.12) 50%,
+    rgba(255, 255, 255, 0.04) 75%
+  );
+  background-size: 200% 100%;
 }
-.theme-lamplight .bg-\[\#F1EAD9\] {
-  background-color: #24201C !important;
+
+/* =========================================================================
+   ACCESSIBILITY: COLOR-BLIND SAFE MODES & PATTERN DIFFERENTIATION
+   Adheres to WCAG 2.1 Guideline 1.4.1 (Never use color alone to convey meaning)
+   ========================================================================= */
+
+/* Accessible Focus Rings across all colorblind modes */
+html.colorblind-active button:focus-visible,
+html.colorblind-active a:focus-visible,
+html.colorblind-active input:focus-visible,
+html.colorblind-active select:focus-visible,
+html.colorblind-active [role="button"]:focus-visible {
+  outline: 2.5px solid var(--accent-color) !important;
+  outline-offset: 2px !important;
 }
-.theme-lamplight .text-\[\#221E18\] {
-  color: #FAF6EE !important;
+
+/* 1. DEUTERANOPIA (Green-Weak Safe - Okabe-Ito Palette + Distinct Underlines) */
+html[data-colorblind="deuteranopia"] mark.hl-pacing,
+html[data-colorblind="deuteranopia"] mark.hl-amber {
+  background-color: rgba(230, 159, 0, 0.28) !important;
+  border-bottom: 2.5px dotted #E69F00 !important;
 }
-.theme-lamplight .text-\[\#7A705F\] {
-  color: #A39885 !important;
+html[data-colorblind="deuteranopia"] mark.hl-voice,
+html[data-colorblind="deuteranopia"] mark.hl-mint {
+  background-color: rgba(86, 180, 233, 0.28) !important;
+  border-bottom: 2.5px solid #56B4E9 !important;
 }
-.theme-lamplight .border-\[\#E5DEC9\] {
-  border-color: rgba(250, 246, 238, 0.12) !important;
+html[data-colorblind="deuteranopia"] mark.hl-tighten,
+html[data-colorblind="deuteranopia"] mark.hl-rose {
+  background-color: rgba(213, 94, 0, 0.28) !important;
+  border-bottom: 3px double #D55E00 !important;
 }
-.theme-lamplight .border-\[\#EBE8E2\] {
-  border-color: rgba(250, 246, 238, 0.12) !important;
+html[data-colorblind="deuteranopia"] mark.hl-continuity,
+html[data-colorblind="deuteranopia"] mark.hl-blue {
+  background-color: rgba(0, 114, 178, 0.28) !important;
+  border-bottom: 2.5px dashed #0072B2 !important;
 }
-.theme-lamplight .bg-\[\#FAF9F5\] {
-  background-color: #201D19 !important;
+html[data-colorblind="deuteranopia"] mark.hl-theme,
+html[data-colorblind="deuteranopia"] mark.hl-purple {
+  background-color: rgba(204, 121, 167, 0.28) !important;
+  border-bottom: 2.5px wavy #CC79A7 !important;
 }
-.theme-lamplight .bg-white {
-  background-color: #24201C !important;
+html[data-colorblind="deuteranopia"] mark.hl-query,
+html[data-colorblind="deuteranopia"] mark.hl-orange {
+  background-color: rgba(240, 228, 66, 0.35) !important;
+  border-bottom: 2.5px solid #D9A800 !important;
+  outline: 1px solid rgba(217, 168, 0, 0.5) !important;
 }
-.theme-lamplight .text-\[\#1A1814\] {
-  color: #FAF6EE !important;
+
+/* 2. PROTANOPIA (Red-Weak Safe - Enhanced Luminance & Shape Differentiation) */
+html[data-colorblind="protanopia"] mark.hl-pacing,
+html[data-colorblind="protanopia"] mark.hl-amber {
+  background-color: rgba(240, 228, 66, 0.30) !important;
+  border-bottom: 2.5px dotted #E69F00 !important;
 }
-.theme-lamplight .text-\[\#8C887F\] {
-  color: #A39885 !important;
+html[data-colorblind="protanopia"] mark.hl-voice,
+html[data-colorblind="protanopia"] mark.hl-mint {
+  background-color: rgba(86, 180, 233, 0.28) !important;
+  border-bottom: 2.5px solid #0072B2 !important;
 }
+html[data-colorblind="protanopia"] mark.hl-tighten,
+html[data-colorblind="protanopia"] mark.hl-rose {
+  background-color: rgba(213, 94, 0, 0.30) !important;
+  border-bottom: 3px double #D55E00 !important;
+  text-decoration: underline double #D55E00 !important;
+}
+html[data-colorblind="protanopia"] mark.hl-continuity,
+html[data-colorblind="protanopia"] mark.hl-blue {
+  background-color: rgba(0, 114, 178, 0.25) !important;
+  border-bottom: 2.5px dashed #0072B2 !important;
+}
+html[data-colorblind="protanopia"] mark.hl-theme,
+html[data-colorblind="protanopia"] mark.hl-purple {
+  background-color: rgba(204, 121, 167, 0.30) !important;
+  border-bottom: 2.5px wavy #CC79A7 !important;
+}
+html[data-colorblind="protanopia"] mark.hl-query,
+html[data-colorblind="protanopia"] mark.hl-orange {
+  background-color: rgba(240, 228, 66, 0.35) !important;
+  border-bottom: 2.5px solid #C49800 !important;
+  outline: 1px solid rgba(196, 152, 0, 0.6) !important;
+}
+
+/* 3. TRITANOPIA (Blue-Yellow Safe - Magenta, Mint, Coral) */
+html[data-colorblind="tritanopia"] mark.hl-pacing,
+html[data-colorblind="tritanopia"] mark.hl-amber {
+  background-color: rgba(224, 82, 99, 0.28) !important;
+  border-bottom: 2.5px dotted #E05263 !important;
+}
+html[data-colorblind="tritanopia"] mark.hl-voice,
+html[data-colorblind="tritanopia"] mark.hl-mint {
+  background-color: rgba(0, 158, 115, 0.28) !important;
+  border-bottom: 2.5px solid #009E73 !important;
+}
+html[data-colorblind="tritanopia"] mark.hl-tighten,
+html[data-colorblind="tritanopia"] mark.hl-rose {
+  background-color: rgba(213, 94, 0, 0.28) !important;
+  border-bottom: 3px double #D55E00 !important;
+}
+html[data-colorblind="tritanopia"] mark.hl-continuity,
+html[data-colorblind="tritanopia"] mark.hl-blue {
+  background-color: rgba(204, 121, 167, 0.28) !important;
+  border-bottom: 2.5px dashed #CC79A7 !important;
+}
+html[data-colorblind="tritanopia"] mark.hl-theme,
+html[data-colorblind="tritanopia"] mark.hl-purple {
+  background-color: rgba(184, 51, 106, 0.28) !important;
+  border-bottom: 2.5px wavy #B8336A !important;
+}
+html[data-colorblind="tritanopia"] mark.hl-query,
+html[data-colorblind="tritanopia"] mark.hl-orange {
+  background-color: rgba(0, 114, 178, 0.25) !important;
+  border-bottom: 2.5px solid #0072B2 !important;
+  outline: 1px solid rgba(0, 114, 178, 0.4) !important;
+}
+
+/* 4. HIGH-CONTRAST MONOCHROME / ACHROMATOPSIA (WCAG AAA) */
+html[data-colorblind="high-contrast"] mark.hl-pacing,
+html[data-colorblind="high-contrast"] mark.hl-amber {
+  background-color: rgba(128, 128, 128, 0.25) !important;
+  border-bottom: 3px dotted currentColor !important;
+}
+html[data-colorblind="high-contrast"] mark.hl-voice,
+html[data-colorblind="high-contrast"] mark.hl-mint {
+  background-color: rgba(128, 128, 128, 0.20) !important;
+  border-bottom: 2.5px solid currentColor !important;
+}
+html[data-colorblind="high-contrast"] mark.hl-tighten,
+html[data-colorblind="high-contrast"] mark.hl-rose {
+  background-color: rgba(128, 128, 128, 0.30) !important;
+  border-bottom: 3.5px double currentColor !important;
+  text-decoration: underline double currentColor !important;
+}
+html[data-colorblind="high-contrast"] mark.hl-continuity,
+html[data-colorblind="high-contrast"] mark.hl-blue {
+  background-color: rgba(128, 128, 128, 0.22) !important;
+  border-bottom: 2.5px dashed currentColor !important;
+}
+html[data-colorblind="high-contrast"] mark.hl-theme,
+html[data-colorblind="high-contrast"] mark.hl-purple {
+  background-color: rgba(128, 128, 128, 0.26) !important;
+  border-bottom: 2.5px wavy currentColor !important;
+}
+html[data-colorblind="high-contrast"] mark.hl-query,
+html[data-colorblind="high-contrast"] mark.hl-orange {
+  background-color: rgba(128, 128, 128, 0.35) !important;
+  border: 1.5px solid currentColor !important;
+  border-radius: 2px !important;
+}
+
+/* Structural Contrast Enhancements for High Contrast Mode */
+html[data-colorblind="high-contrast"] {
+  --border-hairline: rgba(0, 0, 0, 0.45);
+  --border-subtle: rgba(0, 0, 0, 0.30);
+}
+html[data-colorblind="high-contrast"][data-mode="dark"] {
+  --border-hairline: rgba(255, 255, 255, 0.45);
+  --border-subtle: rgba(255, 255, 255, 0.30);
+}
+html[data-colorblind="high-contrast"] button,
+html[data-colorblind="high-contrast"] input,
+html[data-colorblind="high-contrast"] select,
+html[data-colorblind="high-contrast"] textarea {
+  border-width: 1.5px !important;
+}
+
+/* ==========================================================================
+   Threadline Typewriter Horizon Animation & Landing Transitions
+   ========================================================================== */
+@keyframes typewriterHorizonScroll {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  75% {
+    transform: translateY(-110px);
+    opacity: 1;
+  }
+  88% {
+    transform: translateY(-125px);
+    opacity: 0.1;
+  }
+  92% {
+    transform: translateY(15px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-horizon-scroll {
+  animation: typewriterHorizonScroll 9s cubic-bezier(0.25, 1, 0.5, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-horizon-scroll {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+

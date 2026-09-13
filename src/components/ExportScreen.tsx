@@ -1,8 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Project, Scene, Entity, Thread, Chapter } from '../types';
-import { Download, Printer, FileText, Code, Check, Eye, BookOpen, Sparkles, BookCheck, Loader2 } from 'lucide-react';
+import {
+  Download,
+  Printer,
+  FileText,
+  Code,
+  Check,
+  Eye,
+  BookOpen,
+  Sparkles,
+  BookCheck,
+  Loader2,
+  Sliders,
+  Type,
+  Layout,
+  Bookmark,
+  AlignLeft,
+  ChevronDown
+} from 'lucide-react';
 import { ensureChapters, getScenesForChapter } from '../utils/chapterUtils';
-import { generateBookPdf, BookPdfOptions, DEFAULT_BOOK_PDF_OPTIONS } from '../services/pdf/bookPdfGenerator';
+import {
+  generateBookPdf,
+  BookPdfOptions,
+  DEFAULT_BOOK_PDF_OPTIONS
+} from '../services/pdf/bookPdfGenerator';
+import {
+  calculateBookLayout,
+  TrimSize,
+  BookFontChoice,
+  SceneBreakOrnament,
+  NumberingPlacement,
+  RunningHeaderStyle,
+  LineSpacingChoice,
+  FontSizeChoice,
+  MarginChoice
+} from '../services/pdf/bookTypesetter';
+import { BookLivePreview } from './export/BookLivePreview';
 import { useToast } from './Toast';
 
 interface ExportScreenProps {
@@ -12,6 +45,8 @@ interface ExportScreenProps {
   entities: Entity[];
   threads: Thread[];
 }
+
+type SettingTab = 'geometry' | 'typography' | 'chapters' | 'matter' | 'headers';
 
 export const ExportScreen: React.FC<ExportScreenProps> = ({
   project,
@@ -26,25 +61,33 @@ export const ExportScreen: React.FC<ExportScreenProps> = ({
   const [downloadSuccess, setDownloadSuccess] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
+  // Active settings category tab
+  const [activeTab, setActiveTab] = useState<SettingTab>('geometry');
+
   // PDF Book Customization Options
   const [pdfOptions, setPdfOptions] = useState<BookPdfOptions>({
     ...DEFAULT_BOOK_PDF_OPTIONS,
-    authorName: project.protagonist ? `Author of ${project.title}` : ''
+    authorName: project.protagonist ? `Author of ${project.title}` : 'Threadline Author'
   });
 
   const effectiveChapters = ensureChapters(scenes, chapters);
+
+  // Calculate live typeset book model for the preview
+  const typesetBook = useMemo(() => {
+    return calculateBookLayout(project, scenes, chapters, pdfOptions);
+  }, [project, scenes, chapters, pdfOptions]);
 
   // Handle PDF Generation
   const handleDownloadBookPdf = async () => {
     try {
       setIsGeneratingPdf(true);
-      showToast('Compiling manuscript chapters into print PDF...');
+      showToast('Compiling manuscript into print-ready typeset PDF...');
       const doc = await generateBookPdf(project, scenes, chapters, pdfOptions);
-      const safeFilename = `${project.title.toLowerCase().replace(/[^a-z0-9]/g, '_')}_book.pdf`;
+      const safeFilename = `${project.title.toLowerCase().replace(/[^a-z0-9]/g, '_')}_typeset_book.pdf`;
       doc.save(safeFilename);
       setDownloadSuccess(true);
       setTimeout(() => setDownloadSuccess(false), 2500);
-      showToast('Book PDF generated and downloaded successfully!');
+      showToast('Typeset Book PDF downloaded successfully!');
     } catch (err) {
       console.error('Failed to generate Book PDF:', err);
       showToast('Failed to compile Book PDF', 'error');
@@ -167,19 +210,18 @@ export const ExportScreen: React.FC<ExportScreenProps> = ({
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-10 text-[#221E18]">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 text-[#221E18]">
+      {/* HEADER */}
       <div className="mb-6 sm:mb-8">
-        <span className="section-label block mb-1">
-          Manuscript Output &amp; Typesetting
-        </span>
         <h2 className="text-2xl sm:text-3xl font-serif text-[#221E18] font-semibold">
-          Export &amp; Print Manuscript
+          Export &amp; Typeset Manuscript
         </h2>
-        <p className="text-[#7A705F] text-xs sm:text-sm mt-1">
-          Export your story in universal, future-proof plain text formats structured with chapters, acts, and scene beats.
+        <p className="text-[#7A705F] text-xs sm:text-sm mt-1.5">
+          Manuscript output &amp; typesetting: produce publication-ready typeset books with authentic trim sizes, drop caps, running headers, and dot-leader tables of contents.
         </p>
       </div>
 
+      {/* FORMAT SELECTOR TILES */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 mb-6 sm:mb-8">
         <button
           type="button"
@@ -195,7 +237,7 @@ export const ExportScreen: React.FC<ExportScreenProps> = ({
             <span className="font-semibold text-xs text-[#221E18]">Book PDF (.pdf)</span>
           </div>
           <p className="text-[11px] text-[#7A705F] leading-snug">
-            Real typeset book layout with chapter pages, running headers, and table of contents.
+            Holistic typeset book with facing pages, drop caps, and front matter.
           </p>
         </button>
 
@@ -231,7 +273,7 @@ export const ExportScreen: React.FC<ExportScreenProps> = ({
             <span className="font-semibold text-xs text-[#221E18]">Plain Text (.txt)</span>
           </div>
           <p className="text-[11px] text-[#7A705F] leading-snug">
-            Pristine, unformatted standard typewriter manuscript chapter layout.
+            Standard typewriter submission manuscript chapter layout.
           </p>
         </button>
 
@@ -272,102 +314,23 @@ export const ExportScreen: React.FC<ExportScreenProps> = ({
         </button>
       </div>
 
-      {/* Book PDF Configuration Box */}
+      {/* HOLISTIC TYPESET BOOK CONFIGURATION SUITE */}
       {format === 'book-pdf' && (
-        <div className="bg-[#FAF6EE] p-5 sm:p-6 rounded-[6px] border border-[#B54B32]/30 shadow-warm-sm mb-6 sm:mb-8 space-y-4">
-          <div className="flex items-center justify-between border-b border-[rgba(34,30,24,0.1)] pb-3">
-            <div className="flex items-center gap-2">
-              <Sparkles size={16} className="text-[#B54B32]" />
-              <h3 className="font-serif font-bold text-sm text-[#221E18]">
-                Typeset Book PDF Formatting
-              </h3>
-            </div>
-            <span className="text-[10px] font-mono uppercase bg-[#F1EAD9] text-[#7A705F] px-2 py-0.5 rounded">
-              Print-Ready Book Engine
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-            <div>
-              <label className="block text-[#7A705F] text-[11px] font-medium mb-1">
-                Trim Size
-              </label>
-              <select
-                value={pdfOptions.pageSize}
-                onChange={(e) => setPdfOptions({ ...pdfOptions, pageSize: e.target.value as BookPdfOptions['pageSize'] })}
-                className="w-full p-2 bg-[#F1EAD9] border border-[rgba(34,30,24,0.14)] rounded-[4px] text-[#221E18] text-xs focus:outline-none"
-              >
-                <option value="trade">US Trade (6&quot; × 9&quot; standard novel)</option>
-                <option value="a5">A5 International (148 × 210 mm)</option>
-                <option value="letter">US Letter (8.5&quot; × 11&quot; manuscript)</option>
-              </select>
+        <div className="bg-[#FAF6EE] rounded-[8px] border border-[#B54B32]/30 shadow-warm-sm mb-6 sm:mb-8 overflow-hidden">
+          {/* Top Bar */}
+          <div className="px-5 sm:px-6 py-4 bg-[#F1EAD9] border-b border-[rgba(34,30,24,0.1)] flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <Sparkles size={18} className="text-[#B54B32]" />
+              <div>
+                <h3 className="font-serif font-bold text-base text-[#221E18]">
+                  Holistic Book Typesetting Studio
+                </h3>
+                <p className="text-[11px] text-[#7A705F]">
+                  Configure book geometry, classical typography, drop caps, and front matter with instant live preview.
+                </p>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-[#7A705F] text-[11px] font-medium mb-1">
-                Book Font Style
-              </label>
-              <select
-                value={pdfOptions.fontStyle}
-                onChange={(e) => setPdfOptions({ ...pdfOptions, fontStyle: e.target.value as BookPdfOptions['fontStyle'] })}
-                className="w-full p-2 bg-[#F1EAD9] border border-[rgba(34,30,24,0.14)] rounded-[4px] text-[#221E18] text-xs focus:outline-none"
-              >
-                <option value="times">Literary Serif (Times New Roman style)</option>
-                <option value="helvetica">Modern Clean (Helvetica style)</option>
-                <option value="courier">Classic Typewriter (Courier style)</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-[#7A705F] text-[11px] font-medium mb-1">
-                Author Byline
-              </label>
-              <input
-                type="text"
-                placeholder="Author Name"
-                value={pdfOptions.authorName || ''}
-                onChange={(e) => setPdfOptions({ ...pdfOptions, authorName: e.target.value })}
-                className="w-full p-2 bg-[#F1EAD9] border border-[rgba(34,30,24,0.14)] rounded-[4px] text-[#221E18] text-xs focus:outline-none"
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-4 pt-1 text-xs text-[#221E18]">
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={pdfOptions.includeCoverPage}
-                onChange={(e) => setPdfOptions({ ...pdfOptions, includeCoverPage: e.target.checked })}
-                className="rounded text-[#B54B32] accent-[#B54B32]"
-              />
-              <span>Include Half-Title &amp; Cover Page</span>
-            </label>
-
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={pdfOptions.includeTableOfContents}
-                onChange={(e) => setPdfOptions({ ...pdfOptions, includeTableOfContents: e.target.checked })}
-                className="rounded text-[#B54B32] accent-[#B54B32]"
-              />
-              <span>Include Table of Contents</span>
-            </label>
-
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={pdfOptions.includeSceneTitles}
-                onChange={(e) => setPdfOptions({ ...pdfOptions, includeSceneTitles: e.target.checked })}
-                className="rounded text-[#B54B32] accent-[#B54B32]"
-              />
-              <span>Include Scene Headings (uncheck for traditional novel flow)</span>
-            </label>
-          </div>
-
-          <div className="pt-2 border-t border-[rgba(34,30,24,0.1)] flex items-center justify-between">
-            <span className="text-[11px] text-[#7A705F]">
-              Each chapter opens on a new page with running headers, ornament glyphs, and authentic page numbers.
-            </span>
             <button
               onClick={handleDownloadBookPdf}
               disabled={isGeneratingPdf}
@@ -386,10 +349,529 @@ export const ExportScreen: React.FC<ExportScreenProps> = ({
               ) : (
                 <>
                   <Download size={15} />
-                  <span>Download Book PDF</span>
+                  <span>Compile &amp; Download Book PDF</span>
                 </>
               )}
             </button>
+          </div>
+
+          {/* Navigation Category Tabs */}
+          <div className="px-5 sm:px-6 pt-3 border-b border-[rgba(34,30,24,0.1)] flex flex-wrap gap-2 text-xs">
+            <button
+              type="button"
+              onClick={() => setActiveTab('geometry')}
+              className={`px-3 py-2 rounded-t-[5px] font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+                activeTab === 'geometry'
+                  ? 'border-[#B54B32] text-[#B54B32] font-semibold bg-[#FAF6EE]'
+                  : 'border-transparent text-[#7A705F] hover:text-[#221E18]'
+              }`}
+            >
+              <Layout size={13} />
+              <span>Trim &amp; Geometry</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('typography')}
+              className={`px-3 py-2 rounded-t-[5px] font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+                activeTab === 'typography'
+                  ? 'border-[#B54B32] text-[#B54B32] font-semibold bg-[#FAF6EE]'
+                  : 'border-transparent text-[#7A705F] hover:text-[#221E18]'
+              }`}
+            >
+              <Type size={13} />
+              <span>Typography &amp; Spacing</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('chapters')}
+              className={`px-3 py-2 rounded-t-[5px] font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+                activeTab === 'chapters'
+                  ? 'border-[#B54B32] text-[#B54B32] font-semibold bg-[#FAF6EE]'
+                  : 'border-transparent text-[#7A705F] hover:text-[#221E18]'
+              }`}
+            >
+              <BookOpen size={13} />
+              <span>Chapters &amp; Ornaments</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('matter')}
+              className={`px-3 py-2 rounded-t-[5px] font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+                activeTab === 'matter'
+                  ? 'border-[#B54B32] text-[#B54B32] font-semibold bg-[#FAF6EE]'
+                  : 'border-transparent text-[#7A705F] hover:text-[#221E18]'
+              }`}
+            >
+              <Bookmark size={13} />
+              <span>Front &amp; Back Matter</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('headers')}
+              className={`px-3 py-2 rounded-t-[5px] font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+                activeTab === 'headers'
+                  ? 'border-[#B54B32] text-[#B54B32] font-semibold bg-[#FAF6EE]'
+                  : 'border-transparent text-[#7A705F] hover:text-[#221E18]'
+              }`}
+            >
+              <Sliders size={13} />
+              <span>Headers &amp; Pagination</span>
+            </button>
+          </div>
+
+          {/* Active Tab Configuration Panels */}
+          <div className="p-5 sm:p-6">
+            {/* TAB 1: GEOMETRY & TRIM */}
+            {activeTab === 'geometry' && (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 text-xs">
+                <div>
+                  <label className="block text-[#7A705F] text-[11px] font-medium mb-1.5">
+                    Book Trim Size
+                  </label>
+                  <select
+                    value={pdfOptions.pageSize}
+                    onChange={(e) =>
+                      setPdfOptions({ ...pdfOptions, pageSize: e.target.value as TrimSize })
+                    }
+                    className="w-full p-2 bg-[#F1EAD9] border border-[rgba(34,30,24,0.14)] rounded-[4px] text-[#221E18] text-xs focus:outline-none focus:border-[#B54B32]"
+                  >
+                    <option value="trade">US Trade 6&quot; × 9&quot; (Standard Fiction &amp; Non-Fiction)</option>
+                    <option value="digest">Digest 5.5&quot; × 8.5&quot; (Literary Fiction &amp; Memoirs)</option>
+                    <option value="mass-market">Mass Market 4.25&quot; × 6.87&quot; (Pocket Paperback)</option>
+                    <option value="a5">A5 International (148 × 210 mm)</option>
+                    <option value="letter">US Letter 8.5&quot; × 11&quot; (Manuscript &amp; Binder)</option>
+                    <option value="royal">Royal Octavo 6.14&quot; × 9.21&quot; (Deluxe Hardcover)</option>
+                  </select>
+                  <p className="text-[10px] text-[#7A705F] mt-1">
+                    Standardizes exact physical page aspect ratio and printable area.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-[#7A705F] text-[11px] font-medium mb-1.5">
+                    Page Margins
+                  </label>
+                  <select
+                    value={pdfOptions.marginSize}
+                    onChange={(e) =>
+                      setPdfOptions({ ...pdfOptions, marginSize: e.target.value as MarginChoice })
+                    }
+                    className="w-full p-2 bg-[#F1EAD9] border border-[rgba(34,30,24,0.14)] rounded-[4px] text-[#221E18] text-xs focus:outline-none focus:border-[#B54B32]"
+                  >
+                    <option value="compact">Compact Margins (0.50&quot; / 36pt — dense)</option>
+                    <option value="standard">Standard Book Margins (0.65&quot; / 46pt — classical)</option>
+                    <option value="generous">Generous Deluxe Margins (0.85&quot; / 58pt — airy)</option>
+                  </select>
+                  <p className="text-[10px] text-[#7A705F] mt-1">
+                    Controls breathing room around prose text block.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-[#7A705F] text-[11px] font-medium mb-1.5">
+                    Binding Spine Gutter
+                  </label>
+                  <div className="pt-1">
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={pdfOptions.bindingGutter}
+                        onChange={(e) =>
+                          setPdfOptions({ ...pdfOptions, bindingGutter: e.target.checked })
+                        }
+                        className="rounded text-[#B54B32] accent-[#B54B32]"
+                      />
+                      <span className="text-xs text-[#221E18] font-medium">
+                        Inside Gutter (+12pt shift for spine binding)
+                      </span>
+                    </label>
+                    <p className="text-[10px] text-[#7A705F] mt-1.5">
+                      Offsets recto pages right and verso pages left so bound paper doesn&apos;t hide words.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 2: TYPOGRAPHY & SPACING */}
+            {activeTab === 'typography' && (
+              <div className="space-y-4 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-[#7A705F] text-[11px] font-medium mb-1">
+                      Typeface Family
+                    </label>
+                    <select
+                      value={pdfOptions.fontStyle}
+                      onChange={(e) =>
+                        setPdfOptions({ ...pdfOptions, fontStyle: e.target.value as BookFontChoice })
+                      }
+                      className="w-full p-2 bg-[#F1EAD9] border border-[rgba(34,30,24,0.14)] rounded-[4px] text-[#221E18] text-xs focus:outline-none"
+                    >
+                      <option value="times">Literary Serif (Times / Garamond style)</option>
+                      <option value="helvetica">Modern Clean (Helvetica / Sans style)</option>
+                      <option value="courier">Standard Typewriter (Courier manuscript)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[#7A705F] text-[11px] font-medium mb-1">
+                      Body Font Size
+                    </label>
+                    <select
+                      value={pdfOptions.fontSize}
+                      onChange={(e) =>
+                        setPdfOptions({ ...pdfOptions, fontSize: e.target.value as FontSizeChoice })
+                      }
+                      className="w-full p-2 bg-[#F1EAD9] border border-[rgba(34,30,24,0.14)] rounded-[4px] text-[#221E18] text-xs focus:outline-none"
+                    >
+                      <option value="compact">Compact (9.5pt body)</option>
+                      <option value="standard">Standard Trade (10.5pt body)</option>
+                      <option value="large">Comfortable (11.5pt body)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[#7A705F] text-[11px] font-medium mb-1">
+                      Line Leading / Spacing
+                    </label>
+                    <select
+                      value={pdfOptions.lineSpacing}
+                      onChange={(e) =>
+                        setPdfOptions({ ...pdfOptions, lineSpacing: e.target.value as LineSpacingChoice })
+                      }
+                      className="w-full p-2 bg-[#F1EAD9] border border-[rgba(34,30,24,0.14)] rounded-[4px] text-[#221E18] text-xs focus:outline-none"
+                    >
+                      <option value="compact">Compact (1.25x leading)</option>
+                      <option value="standard">Standard Book (1.50x leading)</option>
+                      <option value="generous">Generous (1.75x leading)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-5 pt-2 border-t border-[rgba(34,30,24,0.08)]">
+                  <div>
+                    <label className="block text-[#7A705F] text-[11px] font-medium mb-1">
+                      Text Alignment
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <label className="flex items-center gap-1.5 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="textAlign"
+                          checked={pdfOptions.textAlign === 'justified'}
+                          onChange={() => setPdfOptions({ ...pdfOptions, textAlign: 'justified' })}
+                          className="accent-[#B54B32]"
+                        />
+                        <span>Fully Justified (Book Standard)</span>
+                      </label>
+                      <label className="flex items-center gap-1.5 cursor-pointer ml-3">
+                        <input
+                          type="radio"
+                          name="textAlign"
+                          checked={pdfOptions.textAlign === 'left'}
+                          onChange={() => setPdfOptions({ ...pdfOptions, textAlign: 'left' })}
+                          className="accent-[#B54B32]"
+                        />
+                        <span>Flush Left (Ragged Right)</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <label className="flex items-center gap-2 cursor-pointer select-none mt-4 sm:mt-0">
+                    <input
+                      type="checkbox"
+                      checked={pdfOptions.firstLineIndent}
+                      onChange={(e) =>
+                        setPdfOptions({ ...pdfOptions, firstLineIndent: e.target.checked })
+                      }
+                      className="rounded text-[#B54B32] accent-[#B54B32]"
+                    />
+                    <span>First-Line Indent on paragraphs</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer select-none mt-4 sm:mt-0">
+                    <input
+                      type="checkbox"
+                      checked={pdfOptions.smartQuotes}
+                      onChange={(e) =>
+                        setPdfOptions({ ...pdfOptions, smartQuotes: e.target.checked })
+                      }
+                      className="rounded text-[#B54B32] accent-[#B54B32]"
+                    />
+                    <span>Smart curly quotes (“ ” ‘ ’) &amp; Em-dashes (—)</span>
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 3: CHAPTERS & ORNAMENTS */}
+            {activeTab === 'chapters' && (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                <div>
+                  <label className="block text-[#7A705F] text-[11px] font-medium mb-1">
+                    Chapter Numeral Format
+                  </label>
+                  <select
+                    value={pdfOptions.numeralStyle}
+                    onChange={(e) =>
+                      setPdfOptions({
+                        ...pdfOptions,
+                        numeralStyle: e.target.value as BookPdfOptions['numeralStyle']
+                      })
+                    }
+                    className="w-full p-2 bg-[#F1EAD9] border border-[rgba(34,30,24,0.14)] rounded-[4px] text-[#221E18] text-xs focus:outline-none"
+                  >
+                    <option value="words">Spelled Out (CHAPTER ONE, TWO...)</option>
+                    <option value="roman">Roman Numerals (CHAPTER I, II, III...)</option>
+                    <option value="arabic">Arabic Numbers (CHAPTER 1, 2, 3...)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[#7A705F] text-[11px] font-medium mb-1">
+                    Scene Break Ornament
+                  </label>
+                  <select
+                    value={pdfOptions.sceneBreakOrnament}
+                    onChange={(e) =>
+                      setPdfOptions({
+                        ...pdfOptions,
+                        sceneBreakOrnament: e.target.value as SceneBreakOrnament
+                      })
+                    }
+                    className="w-full p-2 bg-[#F1EAD9] border border-[rgba(34,30,24,0.14)] rounded-[4px] text-[#221E18] text-xs focus:outline-none"
+                  >
+                    <option value="asterism">Classic Asterism (*   *   *)</option>
+                    <option value="fleuron">Literary Fleuron (❦)</option>
+                    <option value="diamond">Geometric Diamonds (✦   ✧   ✦)</option>
+                    <option value="line">Subtle Hair-rule (— — —)</option>
+                    <option value="blank">Blank line spacing only</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2 pt-2">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={pdfOptions.dropCaps}
+                      onChange={(e) =>
+                        setPdfOptions({ ...pdfOptions, dropCaps: e.target.checked })
+                      }
+                      className="rounded text-[#B54B32] accent-[#B54B32]"
+                    />
+                    <span className="font-medium">Illuminated Drop Cap on chapter openings</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={pdfOptions.includeSceneTitles}
+                      onChange={(e) =>
+                        setPdfOptions({ ...pdfOptions, includeSceneTitles: e.target.checked })
+                      }
+                      className="rounded text-[#B54B32] accent-[#B54B32]"
+                    />
+                    <span>Include Scene Headings (uncheck for seamless fiction flow)</span>
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 4: FRONT & BACK MATTER */}
+            {activeTab === 'matter' && (
+              <div className="space-y-4 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-[#7A705F] text-[11px] font-medium mb-1">
+                      Author Byline
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Author Name"
+                      value={pdfOptions.authorName || ''}
+                      onChange={(e) => setPdfOptions({ ...pdfOptions, authorName: e.target.value })}
+                      className="w-full p-2 bg-[#F1EAD9] border border-[rgba(34,30,24,0.14)] rounded-[4px] text-[#221E18] text-xs focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[#7A705F] text-[11px] font-medium mb-1">
+                      Imprint / Publisher Name
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Threadline Press"
+                      value={pdfOptions.imprintName || ''}
+                      onChange={(e) => setPdfOptions({ ...pdfOptions, imprintName: e.target.value })}
+                      className="w-full p-2 bg-[#F1EAD9] border border-[rgba(34,30,24,0.14)] rounded-[4px] text-[#221E18] text-xs focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[#7A705F] text-[11px] font-medium mb-1">
+                      Publication Year
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="2025"
+                      value={pdfOptions.publicationYear || ''}
+                      onChange={(e) =>
+                        setPdfOptions({ ...pdfOptions, publicationYear: e.target.value })
+                      }
+                      className="w-full p-2 bg-[#F1EAD9] border border-[rgba(34,30,24,0.14)] rounded-[4px] text-[#221E18] text-xs focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-[rgba(34,30,24,0.08)]">
+                  {/* Front matter toggles */}
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={pdfOptions.includeCoverPage}
+                        onChange={(e) =>
+                          setPdfOptions({ ...pdfOptions, includeCoverPage: e.target.checked })
+                        }
+                        className="rounded text-[#B54B32] accent-[#B54B32]"
+                      />
+                      <span className="font-medium">Include Title &amp; Half-Title Page</span>
+                    </label>
+
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={pdfOptions.includeTableOfContents}
+                        onChange={(e) =>
+                          setPdfOptions({ ...pdfOptions, includeTableOfContents: e.target.checked })
+                        }
+                        className="rounded text-[#B54B32] accent-[#B54B32]"
+                      />
+                      <span className="font-medium">Include Table of Contents (with dot leaders)</span>
+                    </label>
+
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={pdfOptions.includeCopyright}
+                        onChange={(e) =>
+                          setPdfOptions({ ...pdfOptions, includeCopyright: e.target.checked })
+                        }
+                        className="rounded text-[#B54B32] accent-[#B54B32]"
+                      />
+                      <span className="font-medium">Include Copyright / Colophon Page</span>
+                    </label>
+                  </div>
+
+                  {/* Dedication and Back matter toggles */}
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={pdfOptions.includeDedication}
+                        onChange={(e) =>
+                          setPdfOptions({ ...pdfOptions, includeDedication: e.target.checked })
+                        }
+                        className="rounded text-[#B54B32] accent-[#B54B32]"
+                      />
+                      <span className="font-medium">Include Dedication / Epigraph</span>
+                    </label>
+                    {pdfOptions.includeDedication && (
+                      <input
+                        type="text"
+                        value={pdfOptions.dedicationText || ''}
+                        onChange={(e) =>
+                          setPdfOptions({ ...pdfOptions, dedicationText: e.target.value })
+                        }
+                        placeholder="For all who build worlds out of quiet rooms."
+                        className="w-full p-1.5 text-[11px] bg-[#F1EAD9] border border-[rgba(34,30,24,0.14)] rounded"
+                      />
+                    )}
+
+                    <label className="flex items-center gap-2 cursor-pointer select-none pt-1">
+                      <input
+                        type="checkbox"
+                        checked={pdfOptions.includeAcknowledgments}
+                        onChange={(e) =>
+                          setPdfOptions({ ...pdfOptions, includeAcknowledgments: e.target.checked })
+                        }
+                        className="rounded text-[#B54B32] accent-[#B54B32]"
+                      />
+                      <span className="font-medium">Include Back Matter Acknowledgments</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 5: HEADERS & NUMBERS */}
+            {activeTab === 'headers' && (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                <div>
+                  <label className="block text-[#7A705F] text-[11px] font-medium mb-1">
+                    Running Headers Style
+                  </label>
+                  <select
+                    value={pdfOptions.runningHeaders}
+                    onChange={(e) =>
+                      setPdfOptions({
+                        ...pdfOptions,
+                        runningHeaders: e.target.value as RunningHeaderStyle
+                      })
+                    }
+                    className="w-full p-2 bg-[#F1EAD9] border border-[rgba(34,30,24,0.14)] rounded-[4px] text-[#221E18] text-xs focus:outline-none"
+                  >
+                    <option value="alternating">Alternating Recto/Verso (Title on Left, Chapter on Right)</option>
+                    <option value="author-title">Author (Left) &amp; Book Title (Right)</option>
+                    <option value="chapter-only">Chapter Title Only (All Body Pages)</option>
+                    <option value="none">No Running Headers</option>
+                  </select>
+                  <p className="text-[10px] text-[#7A705F] mt-1">
+                    Headers are automatically suppressed on chapter opener pages per Chicago Manual of Style.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-[#7A705F] text-[11px] font-medium mb-1">
+                    Page Number Placement
+                  </label>
+                  <select
+                    value={pdfOptions.pageNumberPlacement}
+                    onChange={(e) =>
+                      setPdfOptions({
+                        ...pdfOptions,
+                        pageNumberPlacement: e.target.value as NumberingPlacement
+                      })
+                    }
+                    className="w-full p-2 bg-[#F1EAD9] border border-[rgba(34,30,24,0.14)] rounded-[4px] text-[#221E18] text-xs focus:outline-none"
+                  >
+                    <option value="bottom-center">Bottom Center (— 12 —)</option>
+                    <option value="bottom-outer">Bottom Outer (Mirroring Left/Right)</option>
+                    <option value="top-outer">Top Outer (Alongside Header)</option>
+                    <option value="none">No Page Numbers</option>
+                  </select>
+                </div>
+
+                <div className="pt-4">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={pdfOptions.headerDividerRule}
+                      onChange={(e) =>
+                        setPdfOptions({ ...pdfOptions, headerDividerRule: e.target.checked })
+                      }
+                      className="rounded text-[#B54B32] accent-[#B54B32]"
+                    />
+                    <span className="font-medium">Subtle hairline divider rule below headers</span>
+                  </label>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -438,82 +920,39 @@ export const ExportScreen: React.FC<ExportScreenProps> = ({
         </div>
       )}
 
-      {/* Live Manuscript Preview */}
-      <div className="bg-[#FAF6EE] rounded-[6px] border border-[rgba(34,30,24,0.12)] p-6 sm:p-8 shadow-warm-sm">
+      {/* LIVE MANUSCRIPT & BOOK PREVIEW STAGE */}
+      <div className="bg-[#FAF6EE] rounded-[8px] border border-[rgba(34,30,24,0.12)] p-4 sm:p-6 shadow-warm-sm">
         <div className="flex items-center justify-between mb-4 pb-2.5 border-b border-[rgba(34,30,24,0.12)]">
-          <span className="text-[10px] uppercase font-bold text-[#7A705F] font-mono flex items-center gap-1.5">
-            <Eye size={12} /> Live Preview Output ({effectiveChapters.length} Chapters)
+          <span className="text-xs uppercase font-bold text-[#7A705F] font-mono flex items-center gap-2">
+            <Eye size={14} className="text-[#B54B32]" />
+            Live Preview Output ({effectiveChapters.length} Chapters · {scenes.length} Scenes)
           </span>
           <span className="text-xs text-[#7A705F] font-mono">
-            {scenes.reduce((a, s) => a + s.wordCount, 0).toLocaleString()} words
+            Total Manuscript: {scenes.reduce((a, s) => a + (s.wordCount || 0), 0).toLocaleString()} words
           </span>
         </div>
 
-        <div className="max-h-[500px] overflow-y-auto p-4 bg-[#F1EAD9]/50 rounded-[5px] border border-[rgba(34,30,24,0.08)]">
-          {format === 'book-pdf' ? (
-            <div className="space-y-6 max-w-lg mx-auto py-4">
-              {/* Simulated Book Page */}
-              <div className="bg-[#FAF6EE] p-8 rounded border border-[rgba(34,30,24,0.15)] shadow-warm-sm text-center font-serif">
-                <div className="text-[10px] uppercase font-mono tracking-widest text-[#7A705F] mb-6">
-                  [ Book Title Page Preview ]
-                </div>
-                <h1 className="text-xl font-bold uppercase tracking-wider text-[#221E18] mb-2">
-                  {project.title}
-                </h1>
-                <div className="w-12 h-0.5 bg-[#B54B32] mx-auto mb-3" />
-                <p className="text-xs italic text-[#7A705F] mb-4">
-                  {project.type ? `A ${project.type}` : 'A Novel Manuscript'}
-                </p>
-                {pdfOptions.authorName && (
-                  <p className="text-xs uppercase tracking-widest text-[#221E18] mt-6">
-                    BY {pdfOptions.authorName}
-                  </p>
-                )}
+        {format === 'book-pdf' ? (
+          /* High-Fidelity Interactive Typeset Book Live Preview */
+          <BookLivePreview book={typesetBook} />
+        ) : (
+          /* Plain Text, Markdown, or JSON Preview */
+          <div className="max-h-[520px] overflow-y-auto p-4 bg-[#F1EAD9]/50 rounded-[5px] border border-[rgba(34,30,24,0.08)]">
+            {format === 'json' ? (
+              <pre className="text-[11px] font-mono text-[#221E18] whitespace-pre-wrap">
+                {generateJSON()}
+              </pre>
+            ) : format === 'text' ? (
+              <pre className="text-xs font-mono text-[#221E18] whitespace-pre-wrap leading-relaxed">
+                {generatePlainText()}
+              </pre>
+            ) : (
+              <div className="font-serif text-sm text-[#221E18] whitespace-pre-wrap leading-loose">
+                {generateMarkdown()}
               </div>
-
-              {/* Simulated Chapter Page */}
-              <div className="bg-[#FAF6EE] p-8 rounded border border-[rgba(34,30,24,0.15)] shadow-warm-sm font-serif">
-                <div className="text-center mb-6">
-                  <div className="text-[10px] font-mono uppercase tracking-widest text-[#B54B32] mb-1">
-                    C H A P T E R &nbsp; 1
-                  </div>
-                  <h2 className="text-base font-bold text-[#221E18]">
-                    {effectiveChapters[0]?.title || 'Opening'}
-                  </h2>
-                  <div className="text-[#B54B32] text-xs mt-2">• &nbsp; ✦ &nbsp; •</div>
-                </div>
-
-                <div className="text-xs text-[#221E18] leading-relaxed text-justify space-y-3">
-                  {getScenesForChapter(scenes, effectiveChapters[0])[0]?.proseContent ? (
-                    <p className="indent-6">
-                      {getScenesForChapter(scenes, effectiveChapters[0])[0].proseContent.slice(0, 450)}...
-                    </p>
-                  ) : (
-                    <p className="text-[#7A705F] italic text-center">
-                      (Prose content will flow seamlessly across pages with running headers and authentic page numbering)
-                    </p>
-                  )}
-                </div>
-
-                <div className="text-center text-[10px] font-mono text-[#7A705F] mt-8 pt-4 border-t border-[rgba(34,30,24,0.06)]">
-                  — 1 —
-                </div>
-              </div>
-            </div>
-          ) : format === 'json' ? (
-            <pre className="text-[11px] font-mono text-[#221E18] whitespace-pre-wrap">
-              {generateJSON()}
-            </pre>
-          ) : format === 'text' ? (
-            <pre className="text-xs font-mono text-[#221E18] whitespace-pre-wrap leading-relaxed">
-              {generatePlainText()}
-            </pre>
-          ) : (
-            <div className="font-serif text-sm text-[#221E18] whitespace-pre-wrap leading-loose">
-              {generateMarkdown()}
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

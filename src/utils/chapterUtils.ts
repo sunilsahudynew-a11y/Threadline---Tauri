@@ -1,6 +1,32 @@
 import { Chapter, Scene, Project } from '../types';
 
 /**
+ * Determines whether a given scene belongs to a specified chapter.
+ * Enforces a strict single-chapter ownership hierarchy to prevent scene duplication across chapters:
+ * 1. If the scene has an explicit `chapterId`, that is the primary source of truth. It belongs to
+ *    the chapter if and only if `scene.chapterId === chapter.id`.
+ * 2. If the scene lacks a `chapterId`, but the chapter's `sceneIds` contains `scene.id`, it belongs to this chapter.
+ * 3. Fallback: If neither `chapterId` nor `sceneIds` provides a match, matches by `chapterNumber`
+ *    provided the scene does NOT specify a different `chapterId`.
+ */
+export function isSceneInChapter(scene: Scene, chapter: Chapter): boolean {
+  if (!scene || !chapter) return false;
+  // 1. Primary rule: explicit chapterId
+  if (scene.chapterId) {
+    return scene.chapterId === chapter.id;
+  }
+  // 2. Secondary rule: chapter's registered sceneIds (only when scene has no explicit chapterId)
+  if (chapter.sceneIds && chapter.sceneIds.includes(scene.id)) {
+    return true;
+  }
+  // 3. Fallback rule: chapterNumber if scene has no conflicting chapterId
+  if (scene.chapterNumber !== undefined && chapter.number !== undefined) {
+    return scene.chapterNumber === chapter.number;
+  }
+  return false;
+}
+
+/**
  * Ensures that a project bundle or scene collection always has a clean, consistent list of Chapters.
  * If explicit chapters exist, it validates their scene mappings.
  * If scenes already have chapter attributes, it synthesizes the chapter records.
@@ -24,13 +50,9 @@ export function ensureChapters(
   if (chapters && chapters.length > 0) {
     // Sync sceneIds in chapters to ensure consistency with current scenes
     return chapters.map((chap, idx) => {
-      // Find scenes that explicitly point to this chapter
-      const matchingScenes = scenes.filter(
-        (s) => s && (s.chapterId === chap.id || (s.chapterNumber !== undefined && s.chapterNumber === chap.number))
-      );
-      const sceneIds = matchingScenes.length > 0
-        ? matchingScenes.map((s) => s.id)
-        : (chap.sceneIds || []).filter((id) => scenes.some((s) => s && s.id === id));
+      // Find scenes that strictly belong to this chapter
+      const matchingScenes = scenes.filter((s) => s && isSceneInChapter(s, chap));
+      const sceneIds = matchingScenes.map((s) => s.id);
 
       return {
         ...chap,
@@ -101,7 +123,7 @@ export function calculateChapterWordCount(a: Chapter | Scene[], b: Chapter | Sce
   const allScenes = (Array.isArray(a) ? a : b) as Scene[];
   if (!chapter || !Array.isArray(allScenes)) return 0;
   return allScenes
-    .filter((s) => (chapter.sceneIds || []).includes(s.id) || s.chapterId === chapter.id || s.chapterNumber === chapter.number)
+    .filter((s) => isSceneInChapter(s, chapter))
     .reduce((acc, s) => acc + (s.wordCount || 0), 0);
 }
 
@@ -113,9 +135,7 @@ export function getChapterStatus(a: Chapter | Scene[], b: Chapter | Scene[]): 'd
   const chapter = (Array.isArray(a) ? b : a) as Chapter;
   const allScenes = (Array.isArray(a) ? a : b) as Scene[];
   if (!chapter || !Array.isArray(allScenes)) return 'draft';
-  const chapterScenes = allScenes.filter(
-    (s) => (chapter.sceneIds || []).includes(s.id) || s.chapterId === chapter.id || s.chapterNumber === chapter.number
-  );
+  const chapterScenes = allScenes.filter((s) => isSceneInChapter(s, chapter));
   if (chapterScenes.length === 0) return 'draft';
   if (chapterScenes.every((s) => s.status === 'complete')) return 'complete';
   if (chapterScenes.some((s) => s.status === 'revised' || s.status === 'complete')) return 'revised';
@@ -131,7 +151,7 @@ export function getScenesForChapter(a: Chapter | Scene[], b: Chapter | Scene[]):
   const allScenes = (Array.isArray(a) ? a : b) as Scene[];
   if (!chapter || !Array.isArray(allScenes)) return [];
   return allScenes
-    .filter((s) => (chapter.sceneIds || []).includes(s.id) || s.chapterId === chapter.id || s.chapterNumber === chapter.number)
+    .filter((s) => isSceneInChapter(s, chapter))
     .sort((x, y) => (x.order || 0) - (y.order || 0));
 }
 
@@ -143,17 +163,8 @@ export function getUnassignedScenes(scenes: Scene[], chapters: Chapter[]): Scene
   if (!Array.isArray(scenes)) return [];
   if (!Array.isArray(chapters) || chapters.length === 0) return scenes;
 
-  const assignedSceneIds = new Set<string>();
-  chapters.forEach((c) => {
-    (c.sceneIds || []).forEach((id) => assignedSceneIds.add(id));
-  });
-
   return scenes.filter((s) => {
-    if (assignedSceneIds.has(s.id)) return false;
-    const matchesChapter = chapters.some(
-      (c) => c.id === s.chapterId || (s.chapterNumber !== undefined && c.number === s.chapterNumber)
-    );
-    return !matchesChapter;
+    return !chapters.some((c) => isSceneInChapter(s, c));
   });
 }
 

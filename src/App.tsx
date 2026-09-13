@@ -14,7 +14,8 @@ import {
   AIAuditLog,
   Chapter,
   RoughIdea,
-  FrameworkPointer
+  FrameworkPointer,
+  ResearchVaultItem
 } from './types';
 import {
   INITIAL_PROJECT,
@@ -30,7 +31,8 @@ import {
   INITIAL_SNAPSHOTS,
   INITIAL_PROJECTS,
   SECOND_PROJECT_BUNDLE,
-  NOVELLA_PROJECT_BUNDLE
+  NOVELLA_PROJECT_BUNDLE,
+  INITIAL_RESEARCH_VAULT
 } from './data/initialData';
 import {
   INITIAL_ROUGH_IDEAS,
@@ -40,7 +42,23 @@ import { Navigation, ScreenType, NotionSidebar, NotionTopBar } from './component
 import { AppTourModal } from './components/AppTourModal';
 import { hasCompletedTour } from './utils/cookieUtils';
 import { motion, AnimatePresence } from 'motion/react';
-import { ThemeConfig, ThemeFamily, ThemeMode, AVAILABLE_THEMES, getSavedTheme, applyThemeToDOM } from './services/theme/themeConfig';
+import {
+  ThemeConfig,
+  ThemeFamily,
+  ThemeMode,
+  AVAILABLE_THEMES,
+  getSavedTheme,
+  applyThemeToDOM,
+  ColorBlindMode,
+  AVAILABLE_COLORBLIND_MODES,
+  EditorLineSpacing,
+  EditorWordSpacing,
+  EditorTextAlign,
+  EditorPageWidth,
+  ManuscriptTypographySettings,
+  getSavedTypographySettings,
+  applyTypographySettingsToDOM
+} from './services/theme/themeConfig';
 import {
   FileText,
   Layers,
@@ -56,11 +74,19 @@ import {
   Moon,
   Sun,
   X,
-  Lightbulb
+  Lightbulb,
+  Film,
+  Feather,
+  ArrowRight
 } from 'lucide-react';
 import { HomeScreen } from './components/HomeScreen';
 import { EditorScreen } from './components/EditorScreen';
+import { ScreenplayWorkspaceScreen } from './components/screenplay/ScreenplayWorkspaceScreen';
 import { EditorialDeskScreen } from './components/editorial/EditorialDeskScreen';
+import { PlanAndLoreHub } from './components/planlore/PlanAndLoreHub';
+import { EditorReviewScreen } from './components/editorial/EditorReviewScreen';
+import { VersionHistoryScreen } from './components/editorial/VersionHistoryScreen';
+import { InsightsView } from './components/diagnostics/InsightsView';
 import { StoryBibleScreen } from './components/StoryBibleScreen';
 import { IdeationScreen } from './components/ideation/IdeationScreen';
 import { QuickIdeationModal } from './components/ideation/QuickIdeationModal';
@@ -72,6 +98,7 @@ import { SettingsScreen } from './components/SettingsScreen';
 import { NewProjectWizard } from './components/NewProjectWizard';
 import { ProjectsRootScreen } from './components/ProjectsRootScreen';
 import { LandingPage } from './components/LandingPage';
+import { ResearchVaultScreen } from './components/vault/ResearchVaultScreen';
 import { ToastProvider, useToast } from './components/Toast';
 import { CommandPalette } from './components/CommandPalette';
 import { VaultManagerModal } from './components/VaultManagerModal';
@@ -228,24 +255,29 @@ function ThreadlineApp() {
   // Keyboard shortcut: Cmd+K / Ctrl+K for search, Cmd+\ or Ctrl+\ to toggle Notion sidebar, Cmd+I / Ctrl+I for quick ideation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
+      const isK = e.key === 'k' || e.key === 'K' || e.key?.toLowerCase() === 'k' || e.code === 'KeyK';
+      if ((e.metaKey || e.ctrlKey) && isK) {
         e.preventDefault();
+        e.stopPropagation();
         setIsCommandPaletteOpen((prev) => !prev);
         return;
       }
-      if ((e.metaKey || e.ctrlKey) && (e.key === 'i' || e.key === 'I')) {
+      const isI = e.key === 'i' || e.key === 'I' || e.key?.toLowerCase() === 'i' || e.code === 'KeyI';
+      if ((e.metaKey || e.ctrlKey) && isI) {
         e.preventDefault();
+        e.stopPropagation();
         setIsQuickIdeationOpen((prev) => !prev);
         return;
       }
-      if ((e.metaKey || e.ctrlKey) && e.key === '\\') {
+      if ((e.metaKey || e.ctrlKey) && (e.key === '\\' || e.code === 'Backslash')) {
         e.preventDefault();
+        e.stopPropagation();
         handleToggleSidebar();
         return;
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, []);
 
   // Full Theme System State (Threadline, Notion, Obsidian, Ubuntu x Light/Dark)
@@ -280,6 +312,117 @@ function ThreadlineApp() {
     setThemeConfig(nextConfig);
     applyThemeToDOM(nextConfig);
     showToast(mode === 'dark' ? 'Switched to Dark Mode' : 'Switched to Light Mode');
+  };
+
+  const handleSelectColorBlindMode = (colorBlindMode: ColorBlindMode) => {
+    const nextConfig: ThemeConfig = { ...themeConfig, colorBlindMode };
+    setThemeConfig(nextConfig);
+    applyThemeToDOM(nextConfig);
+    const modeName = AVAILABLE_COLORBLIND_MODES.find((m) => m.id === colorBlindMode)?.name || colorBlindMode;
+    showToast(`Color Vision Mode: ${modeName}`);
+  };
+
+  const handleToggleColorBlind = () => {
+    const cycle: ColorBlindMode[] = ['none', 'deuteranopia', 'protanopia', 'tritanopia', 'high-contrast'];
+    const currentIdx = cycle.indexOf(themeConfig.colorBlindMode || 'none');
+    const nextIdx = (currentIdx + 1) % cycle.length;
+    const nextMode = cycle[nextIdx];
+    handleSelectColorBlindMode(nextMode);
+  };
+
+  // Manuscript Typography Settings State (Line Spacing, Word Spacing, Alignment)
+  const [typographySettings, setTypographySettings] = useState<ManuscriptTypographySettings>(() => getSavedTypographySettings());
+
+  useEffect(() => {
+    applyTypographySettingsToDOM(typographySettings);
+  }, [typographySettings]);
+
+  const handleSelectLineSpacing = (lineSpacing: EditorLineSpacing) => {
+    const next: ManuscriptTypographySettings = { ...typographySettings, lineSpacing };
+    setTypographySettings(next);
+    applyTypographySettingsToDOM(next);
+    showToast(`Manuscript Line Spacing: ${lineSpacing}`);
+  };
+
+  const handleSelectWordSpacing = (wordSpacing: EditorWordSpacing) => {
+    const next: ManuscriptTypographySettings = { ...typographySettings, wordSpacing };
+    setTypographySettings(next);
+    applyTypographySettingsToDOM(next);
+    showToast(`Manuscript Word Spacing: ${wordSpacing}`);
+  };
+
+  const handleSelectTextAlign = (textAlign: EditorTextAlign) => {
+    const next: ManuscriptTypographySettings = { ...typographySettings, textAlign };
+    setTypographySettings(next);
+    applyTypographySettingsToDOM(next);
+    showToast(`Manuscript Alignment: ${textAlign === 'justify' ? 'Justified' : 'Left'}`);
+  };
+
+  const handleSelectPageWidth = (pageWidth: EditorPageWidth) => {
+    const next: ManuscriptTypographySettings = { ...typographySettings, pageWidth };
+    setTypographySettings(next);
+    applyTypographySettingsToDOM(next);
+    showToast(`Manuscript Width: ${pageWidth.charAt(0).toUpperCase() + pageWidth.slice(1)}`);
+  };
+
+  // Persona & Role State (Author vs Editor)
+  const [userRole, setUserRole] = useState<'author' | 'editor'>('author');
+
+  // Role Switch Confirmation Modal state for "Continue Writing" flow
+  const [showRoleSwitchModal, setShowRoleSwitchModal] = useState(false);
+  const [pendingSceneId, setPendingSceneId] = useState<string | null>(null);
+
+  const handleContinueWritingFlow = (targetSceneId?: string) => {
+    if (userRole === 'editor') {
+      // In Editor mode: open confirmation dialogue mentioning the switch to Author mode
+      setPendingSceneId(targetSceneId || null);
+      setShowRoleSwitchModal(true);
+    } else {
+      // In Author mode: directly navigate to editor
+      if (targetSceneId) {
+        setActiveSceneId(targetSceneId);
+      }
+      setCurrentScreen(project.type === 'Screenplay' ? 'screenplay' : 'editor');
+    }
+  };
+
+  const handleConfirmRoleSwitchToAuthor = () => {
+    setUserRole('author');
+    if (pendingSceneId) {
+      setActiveSceneId(pendingSceneId);
+    }
+    setCurrentScreen(project.type === 'Screenplay' ? 'screenplay' : 'editor');
+    setShowRoleSwitchModal(false);
+    setPendingSceneId(null);
+    showToast('Switched to Author Mode — Manuscript drafting active');
+  };
+
+  const handleContinueInEditorReview = () => {
+    if (pendingSceneId) {
+      setActiveSceneId(pendingSceneId);
+    }
+    setCurrentScreen('editor-review');
+    setShowRoleSwitchModal(false);
+    setPendingSceneId(null);
+    showToast('Opened scene in Editor Review Mode');
+  };
+
+  const handleCancelRoleSwitch = () => {
+    setShowRoleSwitchModal(false);
+    setPendingSceneId(null);
+  };
+
+  const handleToggleRole = () => {
+    setUserRole((prev) => {
+      const next = prev === 'author' ? 'editor' : 'author';
+      if (next === 'editor') {
+        setCurrentScreen('editor-review');
+      } else {
+        setCurrentScreen(project.type === 'Screenplay' ? 'screenplay' : 'editor');
+      }
+      showToast(`Switched to ${next === 'editor' ? 'Editor Desk' : 'Author Mode'}`);
+      return next;
+    });
   };
 
   // Synchronize browser history / URL with /landing and reset scroll to top smoothly
@@ -383,6 +526,31 @@ function ThreadlineApp() {
       ? initialBundle.frameworkPointers
       : INITIAL_FRAMEWORK_POINTERS;
   });
+
+  // Multi-Media Research Vault State
+  const [researchVault, setResearchVault] = useState<ResearchVaultItem[]>(() => {
+    const saved = safeGetItem(`threadline_research_vault_${activeProjectId}`);
+    return safeJsonParse(saved, INITIAL_RESEARCH_VAULT);
+  });
+
+  useEffect(() => {
+    if (activeProjectId) {
+      safeSetItem(`threadline_research_vault_${activeProjectId}`, JSON.stringify(researchVault));
+    }
+  }, [activeProjectId, researchVault]);
+
+  // Strict format locking enforcement: Novel projects only show Novel format (cannot switch to screenplay),
+  // Screenplay projects only show Screenplay format (cannot switch to novel)
+  useEffect(() => {
+    const isScreenplay = project.type === 'Screenplay' || project.type === 'Screenplay Experiment';
+    if (userRole === 'author') {
+      if (currentScreen === 'screenplay' && !isScreenplay) {
+        setCurrentScreen('editor');
+      } else if (currentScreen === 'editor' && isScreenplay) {
+        setCurrentScreen('screenplay');
+      }
+    }
+  }, [project.type, currentScreen, userRole]);
 
   const [lastSavedText, setLastSavedText] = useState('Saved locally');
   const saveTimerRef = useRef<any>(null);
@@ -573,8 +741,15 @@ function ThreadlineApp() {
 
   // Handler: Switch between projects
   const handleSwitchProject = (targetProjectId: string, targetScreen: ScreenType = 'home') => {
+    const resolveFormatScreen = (projType: Project['type'] | undefined, screen: ScreenType): ScreenType => {
+      const isScreenplay = projType === 'Screenplay' || projType === 'Screenplay Experiment';
+      if (screen === 'editor' && isScreenplay) return 'screenplay';
+      if (screen === 'screenplay' && !isScreenplay) return 'editor';
+      return screen;
+    };
+
     if (targetProjectId === activeProjectId) {
-      setCurrentScreen(targetScreen);
+      setCurrentScreen(resolveFormatScreen(project.type, targetScreen));
       return;
     }
 
@@ -621,7 +796,8 @@ function ThreadlineApp() {
               notes: '',
               status: 'draft',
               wordCount: 0,
-              comments: []
+              comments: [],
+              editorMode: (newBundle.project.type === 'Screenplay' || newBundle.project.type === 'Screenplay Experiment') ? 'screenplay' : 'prose'
             }
           ]
     );
@@ -640,7 +816,10 @@ function ThreadlineApp() {
     setRoughIdeas(newBundle.roughIdeas || INITIAL_ROUGH_IDEAS);
     setFrameworkPointers(newBundle.frameworkPointers || INITIAL_FRAMEWORK_POINTERS);
 
-    setCurrentScreen(targetScreen);
+    const targetVault = safeGetItem(`threadline_research_vault_${targetProjectId}`);
+    setResearchVault(safeJsonParse(targetVault, INITIAL_RESEARCH_VAULT));
+
+    setCurrentScreen(resolveFormatScreen(newBundle.project.type, targetScreen));
   };
 
   // Handler: Edit Project Metadata
@@ -842,10 +1021,72 @@ function ThreadlineApp() {
     comments: []
   };
 
-  // Scene Update Handler with automatic Word Count Calculation
+  // Scene Update Handler with automatic Word Count Calculation and atomic chapter synchronization
   const handleUpdateActiveScene = (updatedFields: Partial<Scene>, targetSceneId?: string) => {
     const targetId = targetSceneId || activeScene.id;
     setLastSavedText('Saving...');
+
+    // Synchronize chapter fields to prevent scene duplication or orphan states
+    if ('chapterId' in updatedFields) {
+      const newChapId = updatedFields.chapterId;
+      if (newChapId) {
+        const targetChap = chapters.find((c) => c.id === newChapId);
+        if (targetChap) {
+          if (updatedFields.chapterNumber === undefined) {
+            updatedFields.chapterNumber = targetChap.number;
+          }
+          if (updatedFields.chapterTitle === undefined) {
+            updatedFields.chapterTitle = targetChap.title;
+          }
+          if (updatedFields.actOrPhase === undefined && targetChap.actOrPhase) {
+            updatedFields.actOrPhase = targetChap.actOrPhase;
+          }
+        }
+      } else {
+        updatedFields.chapterNumber = undefined;
+        updatedFields.chapterTitle = undefined;
+      }
+
+      // Atomically remove scene from all other chapters and add only to target chapter
+      setChapters((prev) =>
+        prev.map((c) => {
+          const filteredIds = (c.sceneIds || []).filter((id) => id !== targetId);
+          if (newChapId && c.id === newChapId) {
+            return {
+              ...c,
+              sceneIds: [...filteredIds, targetId]
+            };
+          }
+          return {
+            ...c,
+            sceneIds: filteredIds
+          };
+        })
+      );
+    } else if (updatedFields.chapterNumber !== undefined) {
+      const targetChap = chapters.find((c) => c.number === updatedFields.chapterNumber);
+      if (targetChap) {
+        updatedFields.chapterId = targetChap.id;
+        if (updatedFields.chapterTitle === undefined) {
+          updatedFields.chapterTitle = targetChap.title;
+        }
+        setChapters((prev) =>
+          prev.map((c) => {
+            const filteredIds = (c.sceneIds || []).filter((id) => id !== targetId);
+            if (c.id === targetChap.id) {
+              return {
+                ...c,
+                sceneIds: [...filteredIds, targetId]
+              };
+            }
+            return {
+              ...c,
+              sceneIds: filteredIds
+            };
+          })
+        );
+      }
+    }
 
     setScenes((prev) =>
       prev.map((s) => {
@@ -931,6 +1172,8 @@ function ThreadlineApp() {
       (c) => c.id === activeScene.chapterId || c.number === activeScene.chapterNumber || c.sceneIds.includes(activeScene.id)
     ) || chapters[chapters.length - 1];
 
+    const isScreenplay = project.type === 'Screenplay' || project.type === 'Screenplay Experiment';
+
     const newScene: Scene = {
       id: newId,
       title: `${nextOrder}. Next Chapter Beat`,
@@ -948,7 +1191,8 @@ function ThreadlineApp() {
       status: 'draft',
       wordCount: 0,
       notes: '',
-      comments: []
+      comments: [],
+      editorMode: isScreenplay ? 'screenplay' : 'prose'
     };
 
     setScenes((prev) => [...prev, newScene]);
@@ -962,7 +1206,7 @@ function ThreadlineApp() {
       );
     }
     setActiveSceneId(newId);
-    setCurrentScreen('editor');
+    setCurrentScreen(isScreenplay ? 'screenplay' : 'editor');
     showToast(`Scene created: "${newScene.title}"`);
   };
 
@@ -1025,6 +1269,8 @@ function ThreadlineApp() {
     const nextOrder = scenes.length + 1;
     const newSceneId = 'scene-' + Date.now();
     const sceneTitle = customTitle || `${nextOrder}. New Scene`;
+    const isScreenplay = project.type === 'Screenplay' || project.type === 'Screenplay Experiment';
+
     const newScene: Scene = {
       id: newSceneId,
       title: sceneTitle,
@@ -1042,7 +1288,8 @@ function ThreadlineApp() {
       status: 'draft',
       wordCount: 0,
       notes: '',
-      comments: []
+      comments: [],
+      editorMode: isScreenplay ? 'screenplay' : 'prose'
     };
 
     setScenes((prev) => [...prev, newScene]);
@@ -1054,6 +1301,7 @@ function ThreadlineApp() {
       )
     );
     setActiveSceneId(newSceneId);
+    setCurrentScreen(isScreenplay ? 'screenplay' : 'editor');
     showToast(`Added scene to Chapter ${targetChapter?.number || ''}`);
   };
 
@@ -1134,7 +1382,7 @@ function ThreadlineApp() {
 
     setScenes(restoredScenes);
     setActiveSceneId(restoredScenes[0]?.id || 'scene-1');
-    setCurrentScreen('editor');
+    setCurrentScreen(project.type === 'Screenplay' ? 'screenplay' : 'editor');
   };
 
   // Restore Cutting Room Item directly to active scene
@@ -1152,7 +1400,7 @@ function ThreadlineApp() {
     );
     // Remove from cutting room
     setCuttingRoom((prev) => prev.filter((c) => c.id !== item.id));
-    setCurrentScreen('editor');
+    setCurrentScreen(project.type === 'Screenplay' ? 'screenplay' : 'editor');
   };
 
   // Convert Cutting Room Item to Scratchpad Note
@@ -1257,7 +1505,7 @@ function ThreadlineApp() {
     setAiAuditLogs([]);
     setRoughIdeas([]);
     setFrameworkPointers([]);
-    setCurrentScreen('editor');
+    setCurrentScreen(project.type === 'Screenplay' ? 'screenplay' : 'editor');
     showToast('Workspace reset to blank state');
   };
 
@@ -1349,7 +1597,7 @@ function ThreadlineApp() {
             projectTitle={project.title}
             allProjects={projects}
             activeProjectId={activeProjectId}
-            onSelectProject={(id) => handleSwitchProject(id, 'editor')}
+            onSelectProject={(id) => handleSwitchProject(id, userRole === 'editor' ? 'editor-review' : project.type === 'Screenplay' ? 'screenplay' : 'editor')}
             onStartNewProject={() => setCurrentScreen('new-project')}
             onOpenSearch={() => setIsCommandPaletteOpen(true)}
             vaultInfo={vaultInfo}
@@ -1361,13 +1609,16 @@ function ThreadlineApp() {
             activeSceneId={activeSceneId}
             onSelectScene={(sceneId) => {
               setActiveSceneId(sceneId);
-              setCurrentScreen('editor');
+              setCurrentScreen(userRole === 'editor' ? 'editor-review' : project.type === 'Screenplay' ? 'screenplay' : 'editor');
             }}
             onAddScene={handleAddScene}
             onAddChapter={() => handleAddChapter()}
             isOpen={isSidebarOpen}
             onClose={handleToggleSidebar}
             isMobile={false}
+            userRole={userRole}
+            onToggleRole={handleToggleRole}
+            projectType={project.type === 'Screenplay' ? 'screenplay' : 'novel'}
           />
         </div>
       )}
@@ -1389,7 +1640,7 @@ function ThreadlineApp() {
               projectTitle={project.title}
               allProjects={projects}
               activeProjectId={activeProjectId}
-              onSelectProject={(id) => handleSwitchProject(id, 'editor')}
+              onSelectProject={(id) => handleSwitchProject(id, userRole === 'editor' ? 'editor-review' : project.type === 'Screenplay' ? 'screenplay' : 'editor')}
               onStartNewProject={() => setCurrentScreen('new-project')}
               onOpenSearch={() => setIsCommandPaletteOpen(true)}
               vaultInfo={vaultInfo}
@@ -1401,13 +1652,16 @@ function ThreadlineApp() {
               activeSceneId={activeSceneId}
               onSelectScene={(sceneId) => {
                 setActiveSceneId(sceneId);
-                setCurrentScreen('editor');
+                setCurrentScreen(userRole === 'editor' ? 'editor-review' : project.type === 'Screenplay' ? 'screenplay' : 'editor');
               }}
               onAddScene={handleAddScene}
               onAddChapter={() => handleAddChapter()}
               isOpen={true}
               onClose={() => setIsMobileSidebarOpen(false)}
               isMobile={true}
+              userRole={userRole}
+              onToggleRole={handleToggleRole}
+              projectType={project.type === 'Screenplay' ? 'screenplay' : 'novel'}
             />
           </div>
         </div>
@@ -1415,8 +1669,8 @@ function ThreadlineApp() {
 
       {/* 3. MAIN WORKSPACE / CONTENT COLUMN */}
       <div className={`flex-1 flex flex-col min-w-0 h-full overflow-hidden relative ${isFullScreenPage ? 'min-h-screen' : ''}`}>
-        {/* Notion Top Breadcrumb Bar */}
-        {!isFullScreenPage && (
+        {/* Notion Top Breadcrumb Bar (rendered for all views except editor and screenplay, which use the single consolidated adaptive header) */}
+        {!isFullScreenPage && currentScreen !== 'editor' && currentScreen !== 'screenplay' && (
           <NotionTopBar
             currentScreen={currentScreen}
             onNavigate={(screen) => setCurrentScreen(screen)}
@@ -1431,11 +1685,17 @@ function ThreadlineApp() {
             theme={theme}
             onToggleTheme={handleToggleTheme}
             lastSavedText={lastSavedText}
+            colorBlindMode={themeConfig.colorBlindMode || 'none'}
+            onToggleColorBlind={handleToggleColorBlind}
+            userRole={userRole}
+            onToggleRole={handleToggleRole}
+            projectType={project.type === 'Screenplay' ? 'screenplay' : 'novel'}
+            openContinuityCount={openContinuityCount}
           />
         )}
 
         {/* Screen Routing */}
-        <main className={`flex-1 min-h-0 w-full max-w-full overflow-x-hidden flex flex-col ${currentScreen === 'editor' ? 'overflow-hidden' : 'overflow-y-auto'} ${!isFullScreenPage ? 'pb-20 md:pb-0' : ''}`}>
+        <main className={`flex-1 min-h-0 w-full max-w-full overflow-x-hidden flex flex-col ${(currentScreen === 'editor' || currentScreen === 'screenplay') ? 'overflow-hidden' : 'overflow-y-auto'} ${!isFullScreenPage ? 'pb-20 md:pb-0' : ''}`}>
           <AnimatePresence mode="wait">
             <motion.div
               key={currentScreen}
@@ -1471,11 +1731,8 @@ function ThreadlineApp() {
             continuityIssues={continuityIssues}
             notes={notes}
             entities={entities}
-            onContinueWriting={() => setCurrentScreen('editor')}
-            onNavigateToScene={(sceneId) => {
-              setActiveSceneId(sceneId);
-              setCurrentScreen('editor');
-            }}
+            onContinueWriting={() => handleContinueWritingFlow()}
+            onNavigateToScene={(sceneId) => handleContinueWritingFlow(sceneId)}
             onNavigateToRevisions={() => setCurrentScreen('revisions')}
             onNavigateToContinuity={() => setCurrentScreen('continuity')}
             onNavigateToBible={() => setCurrentScreen('codex')}
@@ -1512,19 +1769,108 @@ function ThreadlineApp() {
             onUpdateChapter={handleUpdateChapter}
             onDeleteChapter={handleDeleteChapter}
             onAddSceneToChapter={handleAddSceneToChapter}
+            researchVault={researchVault}
+            onUpdateSceneById={(sceneId, fields) => handleUpdateActiveScene(fields, sceneId)}
+            onOpenResearchItem={() => setCurrentScreen('research-vault')}
+            onOpenCodexEntity={() => setCurrentScreen('codex')}
+            project={project}
+            projectTitle={project.title}
+            authorName={project.protagonist ? `${project.protagonist} & Author` : 'Author'}
+            lineSpacing={typographySettings.lineSpacing}
+            wordSpacing={typographySettings.wordSpacing}
+            textAlign={typographySettings.textAlign}
+            pageWidth={typographySettings.pageWidth || 'standard'}
+            onChangeLineSpacing={handleSelectLineSpacing}
+            onChangeWordSpacing={handleSelectWordSpacing}
+            onChangeTextAlign={handleSelectTextAlign}
+            onChangePageWidth={handleSelectPageWidth}
+            isSidebarOpen={isSidebarOpen}
+            onToggleSidebarNav={handleToggleSidebar}
+            onOpenMobileDrawer={() => setIsMobileSidebarOpen(true)}
+            onNavigate={(screen) => setCurrentScreen(screen)}
+            onOpenSearch={() => setIsCommandPaletteOpen(true)}
+            userRole={userRole}
+            onToggleRole={handleToggleRole}
+            openContinuityCount={openContinuityCount}
+            theme={theme}
+            onToggleTheme={handleToggleTheme}
+            colorBlindMode={themeConfig.colorBlindMode || 'none'}
+            onToggleColorBlind={handleToggleColorBlind}
+            vaultInfo={vaultInfo}
+            onOpenVaultManager={() => setIsVaultModalOpen(true)}
           />
         )}
 
-        {currentScreen === 'editorial' && (
-          <EditorialDeskScreen
-            project={project}
-            scenes={scenes}
+        {currentScreen === 'screenplay' && (
+          <ScreenplayWorkspaceScreen
+            scene={activeScene}
+            allScenes={scenes}
             chapters={chapters}
+            project={project}
+            projectTitle={project.title}
+            authorName={project.author || (project.protagonist ? `${project.protagonist} & Author` : 'Screenwriter')}
+            onUpdateScene={handleUpdateActiveScene}
+            onNavigateToScene={(sceneId) => setActiveSceneId(sceneId)}
+            onAddScene={handleAddScene}
+            onDuplicateScene={handleDuplicateScene}
+            onDeleteScene={handleDeleteScene}
+            onOpenStoryBible={() => setCurrentScreen('codex')}
+            onOpenResearchVault={() => setCurrentScreen('research-vault')}
+            isSidebarOpen={isSidebarOpen}
+            onToggleSidebarNav={handleToggleSidebar}
+            onOpenMobileDrawer={() => setIsMobileSidebarOpen(true)}
+            onNavigate={(screen) => setCurrentScreen(screen)}
+            onOpenSearch={() => setIsCommandPaletteOpen(true)}
+            userRole={userRole}
+            onToggleRole={handleToggleRole}
+            lastSavedText={lastSavedText}
+          />
+        )}
+
+        {currentScreen === 'research-vault' && (
+          <ResearchVaultScreen
+            vaultItems={researchVault}
+            activeScene={activeScene}
+            allScenes={scenes}
+            entities={entities}
+            onUpdateVaultItems={(items) => setResearchVault(items)}
+            onPinToScene={(sceneId, bookmark) => {
+              setScenes((prev) =>
+                prev.map((s) => {
+                  if (s.id !== sceneId) return s;
+                  const existing = s.bookmarks || [];
+                  return { ...s, bookmarks: [...existing, bookmark] };
+                })
+              );
+              showToast(`Pinned bookmark to "${scenes.find((s) => s.id === sceneId)?.title || 'Scene'}"`);
+            }}
+            onNavigateToScene={(sceneId) => {
+              setActiveSceneId(sceneId);
+              setCurrentScreen('editor');
+            }}
+          />
+        )}
+
+        {(currentScreen === 'editor-review' || currentScreen === 'editorial') && (
+          <EditorReviewScreen
+            project={project}
+            projectType={project.type === 'Screenplay' ? 'screenplay' : 'novel'}
+            scenes={scenes}
+            entities={entities}
+            issues={continuityIssues}
             activeSceneId={activeSceneId}
             onSelectScene={(sceneId) => setActiveSceneId(sceneId)}
             onUpdateScene={(sceneId, fields) => handleUpdateActiveScene(fields, sceneId)}
-            onMergeSceneToManuscript={handleMergeSceneToManuscript}
-            onSwitchToDrafting={() => setCurrentScreen('editor')}
+          />
+        )}
+
+        {currentScreen === 'version-history' && (
+          <VersionHistoryScreen
+            project={project}
+            projectType={project.type === 'Screenplay' ? 'screenplay' : 'novel'}
+            scenes={scenes}
+            snapshots={snapshots}
+            revisionPasses={revisionPasses}
           />
         )}
 
@@ -1591,7 +1937,7 @@ function ThreadlineApp() {
                 prev.map((i) => (i.id === idea.id ? { ...i, status: 'in-progress' } : i))
               );
               setActiveSceneId(newSceneId);
-              setCurrentScreen('editor');
+              setCurrentScreen(userRole === 'editor' ? 'editor-review' : project.type === 'Screenplay' ? 'screenplay' : 'editor');
               showToast(`Idea converted into scene "${newScene.title}"`);
             }}
             onConvertToEntity={(idea) => {
@@ -1608,22 +1954,55 @@ function ThreadlineApp() {
               setRoughIdeas((prev) =>
                 prev.map((i) => (i.id === idea.id ? { ...i, status: 'incorporated' } : i))
               );
-              setCurrentScreen('codex');
-              showToast(`Idea converted into Codex entity "${newEnt.name}"`);
+              setCurrentScreen('plan-lore');
+              showToast(`Idea converted into Lore entity "${newEnt.name}"`);
             }}
             onNavigateToScene={(sceneId) => {
               setActiveSceneId(sceneId);
-              setCurrentScreen('editor');
+              setCurrentScreen(userRole === 'editor' ? 'editor-review' : project.type === 'Screenplay' ? 'screenplay' : 'editor');
             }}
           />
         )}
 
-        {(currentScreen === 'codex' || currentScreen === 'bible') && (
-          <StoryBibleScreen
-            entities={entities}
-            threads={threads}
-            events={events}
+        {(currentScreen === 'plan-lore' || currentScreen === 'dashboard' || currentScreen === 'codex' || currentScreen === 'bible') && (
+          <PlanAndLoreHub
+            project={project}
+            projectType={project.type === 'Screenplay' ? 'screenplay' : 'novel'}
             scenes={scenes}
+            chapters={chapters}
+            threads={threads}
+            notes={notes}
+            entities={entities}
+            events={events}
+            initialSubView={currentScreen === 'codex' || currentScreen === 'bible' ? 'wiki' : 'corkboard'}
+            onNavigateToScene={(sceneId) => {
+              setActiveSceneId(sceneId);
+              setCurrentScreen(userRole === 'editor' ? 'editor-review' : project.type === 'Screenplay' ? 'screenplay' : 'editor');
+            }}
+            onReorderScenes={(reordered) => setScenes(reordered)}
+            onAddScene={handleAddScene}
+            onAddSceneToChapter={handleAddSceneToChapter}
+            onAddChapter={handleAddChapter}
+            onUpdateChapter={handleUpdateChapter}
+            onDeleteChapter={handleDeleteChapter}
+            onUpdateChapters={setChapters}
+            onUpdateScene={(targetSceneId, updatedFields) => {
+              handleUpdateActiveScene(updatedFields, targetSceneId);
+            }}
+            onUpdateNote={(updated) =>
+              setNotes((prev) => prev.map((n) => (n.id === updated.id ? updated : n)))
+            }
+            onAddNote={() => {
+              const newN: NoteItem = {
+                id: 'note-' + Date.now(),
+                title: 'New Research Inquiry',
+                content: 'Notes, questions, or historical details to explore...',
+                category: 'question',
+                resolved: false
+              };
+              setNotes((prev) => [...prev, newN]);
+              showToast('Research inquiry added');
+            }}
             onUpdateEntity={(updated) =>
               setEntities((prev) => prev.map((e) => (e.id === updated.id ? updated : e)))
             }
@@ -1657,63 +2036,27 @@ function ThreadlineApp() {
               setEvents((prev) => prev.filter((ev) => ev.id !== id));
               showToast('Event removed');
             }}
-            onNavigateToScene={(sceneId) => {
-              setActiveSceneId(sceneId);
-              setCurrentScreen('editor');
-            }}
           />
         )}
 
-        {currentScreen === 'dashboard' && (
-          <DashboardScreen
+        {(currentScreen === 'diagnostics' || currentScreen === 'continuity') && (
+          <InsightsView
             project={project}
-            scenes={scenes}
-            chapters={chapters}
-            threads={threads}
-            notes={notes}
-            entities={entities}
-            onNavigateToScene={(sceneId) => {
-              setActiveSceneId(sceneId);
-              setCurrentScreen('editor');
-            }}
-            onReorderScenes={(reordered) => setScenes(reordered)}
-            onAddScene={handleAddScene}
-            onAddSceneToChapter={handleAddSceneToChapter}
-            onAddChapter={handleAddChapter}
-            onUpdateChapter={handleUpdateChapter}
-            onDeleteChapter={handleDeleteChapter}
-            onUpdateChapters={setChapters}
-            onUpdateScene={(targetSceneId, updatedFields) => {
-              handleUpdateActiveScene(updatedFields, targetSceneId);
-            }}
-            onUpdateNote={(updated) =>
-              setNotes((prev) => prev.map((n) => (n.id === updated.id ? updated : n)))
-            }
-            onAddNote={() => {
-              const newN: NoteItem = {
-                id: 'note-' + Date.now(),
-                title: 'New Research Inquiry',
-                content: 'Notes, questions, or historical details to explore...',
-                category: 'question',
-                resolved: false
-              };
-              setNotes((prev) => [...prev, newN]);
-              showToast('Research inquiry added');
-            }}
-          />
-        )}
-
-        {currentScreen === 'continuity' && (
-          <ContinuityInboxScreen
+            projectType={project.type === 'Screenplay' ? 'screenplay' : 'novel'}
             issues={continuityIssues}
             scenes={scenes}
+            chapters={chapters}
+            entities={entities}
             onUpdateIssue={(updated) => {
               setContinuityIssues((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
               showToast(`Inquiry marked as ${updated.status}`);
             }}
+            onSetIssues={(newIssues) => {
+              setContinuityIssues(newIssues);
+            }}
             onNavigateToScene={(sceneId) => {
               setActiveSceneId(sceneId);
-              setCurrentScreen('editor');
+              setCurrentScreen(userRole === 'editor' ? 'editor-review' : project.type === 'Screenplay' ? 'screenplay' : 'editor');
             }}
             onCreateNoteFromIssue={handleCreateNoteFromIssue}
             onCreateIssue={(issue) => {
@@ -1739,7 +2082,7 @@ function ThreadlineApp() {
             onConvertCutToNote={handleConvertCutToNote}
             onNavigateToScene={(sceneId) => {
               setActiveSceneId(sceneId);
-              setCurrentScreen('editor');
+              setCurrentScreen(project.type === 'Screenplay' ? 'screenplay' : 'editor');
             }}
             onUpdateScene={(sceneId, fields) => {
               handleUpdateActiveScene(fields, sceneId);
@@ -1770,6 +2113,13 @@ function ThreadlineApp() {
             onSelectThemeFamily={handleSelectThemeFamily}
             onSelectThemeMode={handleSelectThemeMode}
             onToggleTheme={handleToggleTheme}
+            colorBlindMode={themeConfig.colorBlindMode || 'none'}
+            onSelectColorBlindMode={handleSelectColorBlindMode}
+            typographySettings={typographySettings}
+            onSelectLineSpacing={handleSelectLineSpacing}
+            onSelectWordSpacing={handleSelectWordSpacing}
+            onSelectTextAlign={handleSelectTextAlign}
+            onSelectPageWidth={handleSelectPageWidth}
           />
         )}
 
@@ -1819,7 +2169,8 @@ function ThreadlineApp() {
               setNotes(newBundle.notes);
               setSnapshots(newBundle.snapshots);
               setAiAuditLogs(newBundle.aiAuditLogs);
-              setCurrentScreen('editor');
+              const isNewScreenplay = newBundle.project.type === 'Screenplay' || newBundle.project.type === 'Screenplay Experiment';
+              setCurrentScreen(isNewScreenplay ? 'screenplay' : 'editor');
               showToast(`Created project with ${newBundle.scenes.length} framework beats: "${newBundle.project.title}"`);
             }}
           />
@@ -1827,7 +2178,7 @@ function ThreadlineApp() {
         {currentScreen === 'landing' && (
           <LandingPage
             onEnterStudio={(targetScreen = 'home') => setCurrentScreen(targetScreen)}
-            onOpenSampleProject={(projId) => handleSwitchProject(projId, 'editor')}
+            onOpenSampleProject={(projId) => handleSwitchProject(projId, 'home')}
           />
         )}
             </motion.div>
@@ -1845,11 +2196,12 @@ function ThreadlineApp() {
         onNavigateToScreen={(screen) => setCurrentScreen(screen)}
         onNavigateToScene={(sceneId) => {
           setActiveSceneId(sceneId);
-          setCurrentScreen('editor');
+          setCurrentScreen(project.type === 'Screenplay' ? 'screenplay' : 'editor');
         }}
         onAddScene={handleAddScene}
         onOpenTour={() => setIsTourOpen(true)}
         onOpenQuickIdeation={() => setIsQuickIdeationOpen(true)}
+        projectType={project.type === 'Screenplay' ? 'screenplay' : 'novel'}
       />
 
       {/* Quick Ideation Shortcut Modal (⌘I / Ctrl+I) */}
@@ -1880,14 +2232,14 @@ function ThreadlineApp() {
               id="mobile-nav-editor"
               onClick={() => {
                 setShowMobileMoreSheet(false);
-                setCurrentScreen('editor');
+                setCurrentScreen(project.type === 'Screenplay' ? 'screenplay' : 'editor');
               }}
               className={`flex flex-col items-center justify-center flex-1 py-1 rounded-[5px] transition-colors cursor-pointer min-h-[44px] ${
-                currentScreen === 'editor' ? 'text-[#B54B32]' : 'text-[#7A705F] hover:text-[#221E18]'
+                currentScreen === 'editor' || currentScreen === 'screenplay' ? 'text-[#B54B32]' : 'text-[#7A705F] hover:text-[#221E18]'
               }`}
             >
-              <FileText size={18} />
-              <span className="text-[10px] font-medium mt-0.5">Write</span>
+              {project.type === 'Screenplay' ? <Film size={18} /> : <FileText size={18} />}
+              <span className="text-[10px] font-medium mt-0.5">{project.type === 'Screenplay' ? 'Script' : 'Write'}</span>
             </button>
 
             <button
@@ -1994,6 +2346,17 @@ function ThreadlineApp() {
 
                   <button
                     onClick={() => {
+                      setCurrentScreen('screenplay');
+                      setShowMobileMoreSheet(false);
+                    }}
+                    className="flex items-center gap-2 p-2.5 rounded-[6px] border border-[rgba(34,30,24,0.12)] bg-[#F1EAD9] hover:bg-[#FAF6EE] text-[#221E18] text-left cursor-pointer"
+                  >
+                    <Film size={15} className="text-[#E05238]" />
+                    <span className="font-medium">Screenplay</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
                       setCurrentScreen('revisions');
                       setShowMobileMoreSheet(false);
                     }}
@@ -2059,6 +2422,87 @@ function ThreadlineApp() {
             </div>
           )}
         </>
+      )}
+
+      {/* DIALOGUE: SWITCH FROM EDITOR TO AUTHOR MODE CONFIRMATION */}
+      {showRoleSwitchModal && (
+        <div
+          id="role-switch-dialog-backdrop"
+          className="fixed inset-0 bg-black/45 backdrop-blur-xs z-50 flex items-center justify-center p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) handleCancelRoleSwitch();
+          }}
+        >
+          <div
+            id="role-switch-dialog-card"
+            className="bg-[#FAF6EE] rounded-[8px] border border-[rgba(34,30,24,0.14)] shadow-warm-modal max-w-md w-full p-6 animate-in fade-in zoom-in-95 duration-150 space-y-4"
+          >
+            <div className="flex items-start gap-3.5">
+              <div className="p-2.5 rounded-[6px] bg-[#F1EAD9] text-[#B54B32] border border-[rgba(34,30,24,0.1)] shrink-0">
+                <Feather size={20} />
+              </div>
+              <div>
+                <span className="text-[10px] font-mono uppercase tracking-wider text-[#7A705F] block mb-0.5">
+                  Role Transition Required
+                </span>
+                <h3 className="text-base sm:text-lg font-serif font-bold text-[#221E18]">
+                  Switch to Author Mode?
+                </h3>
+                <p className="text-xs text-[#5A5143] mt-1.5 leading-relaxed">
+                  You are currently in <strong className="text-[#221E18]">Editor Mode</strong>. Continuing to write will switch your active role to <strong className="text-[#221E18]">Author Mode</strong> so you can draft and compose scenes directly in the manuscript canvas.
+                </p>
+              </div>
+            </div>
+
+            {/* Role comparison preview */}
+            <div className="bg-[#F1EAD9]/70 rounded-[6px] border border-[rgba(34,30,24,0.1)] p-3 space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-[#7A705F]">Current Active Role:</span>
+                <span className="font-mono text-[11px] font-semibold text-[#35505F] bg-[#FAF6EE] px-2 py-0.5 rounded border border-[rgba(34,30,24,0.08)]">
+                  Editor (Review &amp; Line Edits)
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-[#7A705F]">New Role upon Continuing:</span>
+                <span className="font-mono text-[11px] font-semibold text-[#B54B32] bg-[#B54B32]/10 px-2 py-0.5 rounded border border-[#B54B32]/20">
+                  Author (Drafting &amp; Composition)
+                </span>
+              </div>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-2 border-t border-[rgba(34,30,24,0.1)]">
+              <button
+                type="button"
+                id="cancel-role-switch-btn"
+                onClick={handleCancelRoleSwitch}
+                className="px-3.5 py-2 rounded-[6px] text-xs font-medium text-[#7A705F] hover:text-[#221E18] hover:bg-[#F1EAD9] transition-colors cursor-pointer min-h-[38px] text-center"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                id="review-in-editor-btn"
+                onClick={handleContinueInEditorReview}
+                className="px-3.5 py-2 rounded-[6px] text-xs font-medium text-[#35505F] bg-[#F1EAD9] hover:bg-[#EAE4D6] border border-[rgba(34,30,24,0.12)] transition-colors cursor-pointer min-h-[38px] text-center"
+                title="Open scene in Editor Review without changing role"
+              >
+                Open in Editor Review
+              </button>
+
+              <button
+                type="button"
+                id="confirm-role-switch-btn"
+                onClick={handleConfirmRoleSwitchToAuthor}
+                className="px-4 py-2 bg-[#B54B32] hover:bg-[#9E3E27] text-[#FAF6EE] rounded-[6px] text-xs font-bold transition-all shadow-warm-sm cursor-pointer min-h-[38px] flex items-center justify-center gap-1.5"
+              >
+                <span>Switch to Author &amp; Write</span>
+                <ArrowRight size={13} />
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* First-Time User Onboarding Studio Tour Modal */}

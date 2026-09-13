@@ -63,14 +63,11 @@ export const ContinuityInboxScreen: React.FC<ContinuityInboxScreenProps> = ({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8 w-full min-w-0">
         <div>
-          <span className="text-[10px] font-mono font-semibold tracking-[0.14em] text-[#7A705F] uppercase">
-            Evidence-Based Analysis
-          </span>
-          <h1 className="text-2xl sm:text-3xl font-serif text-[#221E18] font-semibold mt-1">
+          <h1 className="text-2xl sm:text-3xl font-serif text-[#221E18] font-semibold">
             Continuity Inbox
           </h1>
-          <p className="text-[#7A705F] text-xs sm:text-sm mt-1 max-w-2xl leading-relaxed">
-            Non-authoritative observations across chapters. Every inquiry presents side-by-side textual evidence so you make the final authorial decision.
+          <p className="text-[#7A705F] text-xs sm:text-sm mt-1.5 max-w-2xl leading-relaxed">
+            Evidence-based observations across chapters. Every inquiry presents side-by-side textual evidence so you make the final authorial decision.
           </p>
         </div>
 

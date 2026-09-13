@@ -91,17 +91,63 @@ export const FloatingSelectionToolbar: React.FC<FloatingSelectionToolbarProps> =
               <Strikethrough size={13} />
             </button>
             {onApplyHighlight && (
-              <button
-                type="button"
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  onApplyHighlight('yellow');
-                }}
-                className="p-1 text-amber-300 hover:text-amber-200 hover:bg-white/10 rounded transition-colors cursor-pointer"
-                title="Highlight"
-              >
-                <Highlighter size={13} />
-              </button>
+              <div className="flex items-center gap-1 pl-1">
+                {/* 6 Line Edit Color Codes */}
+                <button
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    onApplyHighlight('pacing');
+                  }}
+                  className="w-4 h-4 rounded-full bg-amber-400 hover:scale-125 transition-transform cursor-pointer border border-black/30"
+                  title="Line Edit: Pacing & Rhythm (Amber)"
+                />
+                <button
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    onApplyHighlight('voice');
+                  }}
+                  className="w-4 h-4 rounded-full bg-emerald-400 hover:scale-125 transition-transform cursor-pointer border border-black/30"
+                  title="Line Edit: Voice & Sensory (Emerald)"
+                />
+                <button
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    onApplyHighlight('tighten');
+                  }}
+                  className="w-4 h-4 rounded-full bg-rose-500 hover:scale-125 transition-transform cursor-pointer border border-black/30"
+                  title="Line Edit: Tighten & Cut (Crimson)"
+                />
+                <button
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    onApplyHighlight('continuity');
+                  }}
+                  className="w-4 h-4 rounded-full bg-sky-400 hover:scale-125 transition-transform cursor-pointer border border-black/30"
+                  title="Line Edit: Continuity & Logic (Sky)"
+                />
+                <button
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    onApplyHighlight('theme');
+                  }}
+                  className="w-4 h-4 rounded-full bg-purple-400 hover:scale-125 transition-transform cursor-pointer border border-black/30"
+                  title="Line Edit: Subtext & Theme (Purple)"
+                />
+                <button
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    onApplyHighlight('query');
+                  }}
+                  className="w-4 h-4 rounded-full bg-orange-400 hover:scale-125 transition-transform cursor-pointer border border-black/30"
+                  title="Line Edit: Author Query (Ochre)"
+                />
+              </div>
             )}
           </div>
         )}

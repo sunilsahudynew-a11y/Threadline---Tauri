@@ -23,7 +23,7 @@ interface ProjectsRootScreenProps {
   projects: Project[];
   activeProjectId: string;
   projectStatsMap: Record<string, { wordCount: number; sceneCount: number; lastSceneTitle?: string }>;
-  onSelectProject: (projectId: string, targetScreen?: 'home' | 'editor') => void;
+  onSelectProject: (projectId: string, targetScreen?: 'home' | 'editor' | 'screenplay') => void;
   onCreateNewProject: () => void;
   onEditProject: (updated: Project) => void;
   onDuplicateProject: (projectId: string) => void;
@@ -169,22 +169,16 @@ export const ProjectsRootScreen: React.FC<ProjectsRootScreenProps> = ({
         {/* TOP ROOT BANNER */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-[rgba(34,30,24,0.12)]">
           <div>
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="text-[11px] font-mono font-semibold tracking-[0.14em] text-[#7A705F] uppercase">
-                Threadline Root Workspace
-              </span>
-              <span className="text-[#7A705F]/40">·</span>
-              <span className="text-[11px] text-[#7A705F] font-mono flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#35505F]"></span>
-                Multi-Project Local Storage
-              </span>
-            </div>
             <h1 className="text-3xl sm:text-4xl font-serif text-[#221E18] font-semibold tracking-tight">
               Manuscripts &amp; Projects
             </h1>
-            <p className="text-[#7A705F] text-xs sm:text-sm mt-1 max-w-xl leading-relaxed">
+            <p className="text-[#7A705F] text-xs sm:text-sm mt-1.5 max-w-xl leading-relaxed">
               Switch between your active novels, screenplays, and story bibles. Each work maintains its own scenes, characters, timeline threads, and revisions.
             </p>
+            <div className="flex items-center gap-2 mt-2 text-[11px] text-[#7A705F] font-mono">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#35505F]"></span>
+              <span>Multi-Project Local Storage · Saved directly on your device</span>
+            </div>
           </div>
 
           {/* Action buttons */}
@@ -527,14 +521,14 @@ export const ProjectsRootScreen: React.FC<ProjectsRootScreenProps> = ({
 
                     {/* Primary Open/Resume Button */}
                     <button
-                      onClick={() => onSelectProject(proj.id, 'editor')}
+                      onClick={() => onSelectProject(proj.id, proj.type === 'Screenplay' ? 'screenplay' : 'editor')}
                       className={`px-3.5 py-1.5 rounded-[6px] text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer min-h-[36px] ${
                         isActive
                           ? 'bg-[#221E18] text-[#FAF6EE] hover:bg-black'
                           : 'bg-[#F1EAD9] text-[#221E18] hover:bg-[#FAF6EE] border border-[rgba(34,30,24,0.12)]'
                       }`}
                     >
-                      <span>{isActive ? 'Continue Writing' : 'Open Manuscript'}</span>
+                      <span>{isActive ? (proj.type === 'Screenplay' ? 'Continue Script' : 'Continue Writing') : (proj.type === 'Screenplay' ? 'Open Script' : 'Open Manuscript')}</span>
                       <ArrowRight size={12} className={isActive ? 'text-[#B54B32]' : ''} />
                     </button>
                   </div>
@@ -579,22 +573,12 @@ export const ProjectsRootScreen: React.FC<ProjectsRootScreenProps> = ({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-mono font-semibold text-[#7A705F] uppercase tracking-wider text-[10px] mb-1">
-                    Medium
+                    Medium (Format Locked)
                   </label>
-                  <select
-                    value={editingProject.type}
-                    onChange={(e) =>
-                      setEditingProject({ ...editingProject, type: e.target.value as ProjectType })
-                    }
-                    className="w-full px-3 py-2 bg-[#FAF6EE] border border-[rgba(34,30,24,0.12)] rounded-[6px] text-[#221E18] focus:outline-none min-h-[36px]"
-                  >
-                    <option value="Novel">Novel</option>
-                    <option value="Screenplay">Screenplay</option>
-                    <option value="Screenplay Experiment">Screenplay Experiment</option>
-                    <option value="Novella">Novella</option>
-                    <option value="Short Story">Short Story</option>
-                    <option value="Worldbuilding Bible">Worldbuilding Bible</option>
-                  </select>
+                  <div className="w-full px-3 py-2 bg-[#FAF6EE]/80 border border-[rgba(34,30,24,0.12)] rounded-[6px] text-[#221E18] font-mono text-[11px] min-h-[36px] flex items-center justify-between select-none">
+                    <span>{editingProject.type === 'Screenplay' ? '🎬 Screenplay Studio' : '📖 Novel & Fiction Studio'}</span>
+                    <span className="text-[10px] text-[#7A705F] font-mono uppercase bg-[#F1EAD9] px-1.5 py-0.5 rounded border border-[rgba(34,30,24,0.08)]">Locked</span>
+                  </div>
                 </div>
 
                 <div>

@@ -1,4 +1,6 @@
 export type ProjectType = 'Novel' | 'Screenplay' | 'Novella' | 'Short Story' | 'Screenplay Experiment' | 'Worldbuilding Bible';
+export type PersonaProjectType = 'novel' | 'screenplay';
+export type UserRole = 'author' | 'editor';
 export type WritingFramework = 'three-act' | 'save-the-cat' | 'heros-journey' | 'story-circle' | 'blank';
 
 export interface Chapter {
@@ -125,6 +127,7 @@ export interface Scene {
   pov: string;
   status: 'draft' | 'revised' | 'complete';
   wordCount: number;
+  targetWordCount?: number;
   notes: string;
   comments: SceneComment[];
   versions?: SceneVersion[];
@@ -132,6 +135,102 @@ export interface Scene {
   editorialBaseline?: string;
   editorialQueries?: EditorialQuery[];
   editorialStatus?: 'unedited' | 'in-review' | 'line-edited' | 'copyedited' | 'clean-approved';
+  // Binder & metadata features
+  labelColor?: string; // Hex color code or label identifier
+  labelName?: string;  // Label title (e.g. "POV: Silas Vance", "Main Plotline")
+  statusTint?: string; // e.g. "Draft", "First Polish", "Final Lock"
+  bookmarks?: DocumentBookmark[]; // Pinned scene references and bookmarks
+  editorMode?: 'prose' | 'screenplay';
+  // Screenplay script features
+  sceneNumber?: string;
+  isLocked?: boolean;
+  revisionColor?: ScreenplayRevisionColor;
+  revisionAsterisks?: number[]; // Line indices with revision marks
+  productionTags?: ProductionTag[];
+}
+
+export type ScreenplayRevisionColor =
+  | 'white'
+  | 'blue'
+  | 'pink'
+  | 'yellow'
+  | 'green'
+  | 'goldenrod'
+  | 'buff'
+  | 'salmon'
+  | 'cherry';
+
+export type ProductionTagCategory =
+  | 'cast'
+  | 'prop'
+  | 'wardrobe'
+  | 'vehicle'
+  | 'sfx'
+  | 'stunt'
+  | 'sound'
+  | 'extras';
+
+export interface ProductionTag {
+  id: string;
+  category: ProductionTagCategory;
+  name: string;
+  notes?: string;
+  color?: string;
+  sceneId?: string;
+}
+
+export interface ScreenplaySettings {
+  isLocked?: boolean;
+  activeRevisionColor?: ScreenplayRevisionColor;
+  showSceneNumbers?: boolean;
+  sceneNumberLocation?: 'both' | 'left' | 'right';
+  watermarkText?: string;
+  moreContdEnabled?: boolean;
+  scriptHeader?: string;
+}
+
+export type ScriveningsMode = 'single' | 'chapter' | 'all' | 'manuscript';
+
+export type ScreenplayElementType =
+  | 'scene_heading'
+  | 'scene-heading'
+  | 'action'
+  | 'character'
+  | 'parenthetical'
+  | 'dialogue'
+  | 'dual_dialogue'
+  | 'transition'
+  | 'shot';
+
+export interface DocumentBookmark {
+  id: string;
+  type: 'scene' | 'entity' | 'research' | 'external';
+  targetId: string;
+  title: string;
+  note?: string;
+  pinnedAt: string;
+}
+
+export interface LabelDefinition {
+  id: string;
+  name: string;
+  color: string;
+  description?: string;
+}
+
+export interface ResearchVaultItem {
+  id: string;
+  title: string;
+  type: 'image' | 'audio' | 'pdf' | 'web-link' | 'text-note';
+  url?: string;
+  description?: string;
+  tags: string[];
+  notes?: string;
+  transcriptions?: { time: number; note: string; author?: string }[];
+  linkedSceneIds?: string[];
+  linkedEntityIds?: string[];
+  createdAt: string;
+  fileSize?: string;
 }
 
 export type EditorialCategory = 'developmental' | 'line-edit' | 'continuity' | 'pacing' | 'author-query' | 'grammar';
@@ -169,6 +268,16 @@ export interface ManuscriptStyleSheet {
   flaggedEchoes: string[];
 }
 
+export type ContinuityIssueCategory =
+  | 'canon'
+  | 'timeline'
+  | 'pov'
+  | 'pacing'
+  | 'formatting'
+  | 'passive-voice'
+  | 'filter-words'
+  | 'logic';
+
 export interface ContinuityIssue {
   id: string;
   title: string;
@@ -177,6 +286,8 @@ export interface ContinuityIssue {
   passageB: { sceneTitle: string; sceneId: string; excerpt: string };
   status: 'open' | 'intentional' | 'dismissed' | 'resolved';
   severity: 'high' | 'medium' | 'low';
+  category?: ContinuityIssueCategory;
+  suggestion?: string;
 }
 
 export interface RevisionCheckItem {
@@ -184,6 +295,19 @@ export interface RevisionCheckItem {
   label: string;
   done: boolean;
   sceneId?: string;
+}
+
+export type SidebarTodoCategory = 'writing' | 'revision' | 'character' | 'worldbuilding' | 'general';
+
+export interface SidebarTodoItem {
+  id: string;
+  projectId?: string;
+  text: string;
+  completed: boolean;
+  category?: SidebarTodoCategory;
+  priority?: 'normal' | 'high';
+  sceneId?: string;
+  createdAt: number;
 }
 
 export interface RevisionPass {
@@ -264,10 +388,54 @@ export interface FrameworkPointer {
   createdAt: string;
 }
 
+export type LineEditColorCode = 'pacing' | 'voice' | 'tighten' | 'continuity' | 'theme' | 'query';
+
+export interface LineEditItem {
+  id: string;
+  code: LineEditColorCode;
+  text: string;
+  note?: string;
+  sceneId?: string;
+  sceneTitle?: string;
+}
+
+export type BookCoverTheme =
+  | 'antique-linen'
+  | 'leather-gilt'
+  | 'victorian-botanical'
+  | 'noir-minimal'
+  | 'crimson-velvet'
+  | 'celestial-ink'
+  | 'forest-moss'
+  | 'parchment-gold'
+  | 'custom-art';
+
+export type BookCoverLayout =
+  | 'classical-frame'
+  | 'full-bleed'
+  | 'minimalist-centered'
+  | 'split-band'
+  | 'ornamental-crest';
+
+export interface BookCoverConfig {
+  imageUrl?: string;
+  titleOverride?: string;
+  subtitle?: string;
+  authorOverride?: string;
+  imprint?: string;
+  theme: BookCoverTheme;
+  layout: BookCoverLayout;
+  accentColor?: string;
+  textColor?: string;
+  overlayOpacity?: number;
+}
+
 export interface Project {
   id: string;
   title: string;
   type: ProjectType;
+  projectType?: PersonaProjectType;
+  role?: UserRole;
   author?: string;
   protagonist?: string;
   situation?: string;
@@ -279,6 +447,18 @@ export interface Project {
   lastActiveSceneId: string;
   createdAt?: string;
   updatedAt: string;
+  // Book Cover configuration
+  coverImage?: string;
+  coverTitle?: string;
+  coverSubtitle?: string;
+  coverAuthor?: string;
+  coverImprint?: string;
+  coverTheme?: BookCoverTheme;
+  coverLayout?: BookCoverLayout;
+  coverAccentColor?: string;
+  coverOverlayOpacity?: number;
+  // Screenplay settings
+  screenplaySettings?: ScreenplaySettings;
 }
 
 export interface ProjectBundle {
@@ -299,4 +479,6 @@ export interface ProjectBundle {
   frameworkPointers?: FrameworkPointer[];
   editorialStyleSheet?: ManuscriptStyleSheet;
   editorialPasses?: EditorialPassDef[];
+  researchVault?: ResearchVaultItem[];
+  projectLabels?: LabelDefinition[];
 }

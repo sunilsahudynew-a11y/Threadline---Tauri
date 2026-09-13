@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   Scene,
   Entity,
@@ -7,19 +7,40 @@ import {
   AIAuditLog,
   EntityType,
   EntityStatus,
-  Chapter
+  Chapter,
+  ResearchVaultItem,
+  ScriveningsMode,
+  Project,
+  LineEditColorCode
 } from '../types';
 import { Search, X } from 'lucide-react';
 import { QuickEntityModal } from './QuickEntityModal';
 import { AIPanel } from './AIPanel';
-import { EditorTopBar } from './editor/EditorTopBar';
-import { EditorFormatBar, EditorViewMode, EditorFontFamily, EditorFontSize } from './editor/EditorFormatBar';
+import { UnifiedEditorBar, EditorViewMode, EditorFontFamily, EditorFontSize } from './editor/UnifiedEditorBar';
 import { SceneOutlineDrawer } from './editor/SceneOutlineDrawer';
 import { SceneMetadataPanel } from './editor/SceneMetadataPanel';
+import { LineEditLensPanel } from './editor/LineEditLensPanel';
+import { extractLineEditsFromMarkdown } from '../utils/lineEditConstants';
 import { ManuscriptCanvas } from './editor/ManuscriptCanvas';
+import { ScriveningsCanvas } from './editor/ScriveningsCanvas';
+import { LinguisticStatsModal } from './statistics/LinguisticStatsModal';
+import { CompileModal } from './compile/CompileModal';
 import { RichEditorHandle } from './editor/RichLiveEditor';
 import { EditorFloatingDock } from './editor/EditorFloatingDock';
 import { useEditorHistory } from '../hooks/useEditorHistory';
+import { getScenesForChapter } from '../utils/chapterUtils';
+import { ScreenType } from './Navigation';
+import { VaultInfo } from '../services/storage/vaultTypes';
+import {
+  EditorLineSpacing,
+  EditorWordSpacing,
+  EditorTextAlign,
+  EditorPageWidth,
+  ColorBlindMode,
+  ManuscriptTypographySettings,
+  getSavedTypographySettings,
+  applyTypographySettingsToDOM
+} from '../services/theme/themeConfig';
 
 interface EditorScreenProps {
   scene: Scene;
@@ -40,6 +61,38 @@ interface EditorScreenProps {
   onUpdateChapter?: (chapterId: string, fields: Partial<Chapter>) => void;
   onDeleteChapter?: (chapterId: string) => void;
   onAddSceneToChapter?: (chapterId: string) => void;
+  researchVault?: ResearchVaultItem[];
+  onUpdateSceneById?: (sceneId: string, updatedFields: Partial<Scene>) => void;
+  onOpenResearchItem?: (itemId: string) => void;
+  onOpenCodexEntity?: (entityId: string) => void;
+  onNavigateToScreenplay?: () => void;
+  project?: Project;
+  projectTitle?: string;
+  authorName?: string;
+  lineSpacing?: EditorLineSpacing;
+  wordSpacing?: EditorWordSpacing;
+  textAlign?: EditorTextAlign;
+  pageWidth?: EditorPageWidth;
+  onChangeLineSpacing?: (spacing: EditorLineSpacing) => void;
+  onChangeWordSpacing?: (spacing: EditorWordSpacing) => void;
+  onChangeTextAlign?: (align: EditorTextAlign) => void;
+  onChangePageWidth?: (width: EditorPageWidth) => void;
+
+  // Single adaptive header integration props
+  isSidebarOpen?: boolean;
+  onToggleSidebarNav?: () => void;
+  onOpenMobileDrawer?: () => void;
+  onNavigate?: (screen: ScreenType) => void;
+  onOpenSearch?: () => void;
+  userRole?: 'author' | 'editor';
+  onToggleRole?: () => void;
+  openContinuityCount?: number;
+  theme?: 'paper' | 'lamplight';
+  onToggleTheme?: () => void;
+  colorBlindMode?: ColorBlindMode;
+  onToggleColorBlind?: () => void;
+  vaultInfo?: VaultInfo | null;
+  onOpenVaultManager?: () => void;
 }
 
 export const EditorScreen: React.FC<EditorScreenProps> = ({
@@ -60,14 +113,50 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
   onAddChapter,
   onUpdateChapter,
   onDeleteChapter,
-  onAddSceneToChapter
+  onAddSceneToChapter,
+  researchVault = [],
+  onUpdateSceneById,
+  onOpenResearchItem,
+  onOpenCodexEntity,
+  onNavigateToScreenplay,
+  project,
+  projectTitle,
+  authorName,
+  lineSpacing: propLineSpacing,
+  wordSpacing: propWordSpacing,
+  textAlign: propTextAlign,
+  pageWidth: propPageWidth,
+  onChangeLineSpacing,
+  onChangeWordSpacing,
+  onChangeTextAlign,
+  onChangePageWidth,
+
+  isSidebarOpen,
+  onToggleSidebarNav,
+  onOpenMobileDrawer,
+  onNavigate,
+  onOpenSearch,
+  userRole = 'author',
+  onToggleRole,
+  openContinuityCount = 0,
+  theme = 'paper',
+  onToggleTheme,
+  colorBlindMode = 'none',
+  onToggleColorBlind,
+  vaultInfo,
+  onOpenVaultManager
 }) => {
   // Focus Mode & Sidebar states (default closed on mobile/tablet to ensure spacious canvas)
   const [isSmallScreen, setIsSmallScreen] = useState(() => typeof window !== 'undefined' && window.innerWidth < 1024);
   const [focusMode, setFocusMode] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 1024);
   const [leftNavOpen, setLeftNavOpen] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 1024);
-  const [metadataTab, setMetadataTab] = useState<'facts' | 'history'>('facts');
+  const [metadataTab, setMetadataTab] = useState<'facts' | 'history' | 'bookmarks'>('facts');
+
+  // Scrivenings & Advanced Mode Modals
+  const [scriveningsMode, setScriveningsMode] = useState<ScriveningsMode>('single');
+  const [showLinguisticStats, setShowLinguisticStats] = useState(false);
+  const [showCompileModal, setShowCompileModal] = useState(false);
 
   const handleToggleFacts = () => {
     if (sidebarOpen && metadataTab === 'facts') {
@@ -107,8 +196,240 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
   const [fontFamily, setFontFamily] = useState<EditorFontFamily>('serif');
   const [fontSize, setFontSize] = useState<EditorFontSize>('normal');
 
+  // Manuscript Typography (Line, Word, Alignment, Page Width) Fallback & State
+  const [localTypography, setLocalTypography] = useState<ManuscriptTypographySettings>(() => getSavedTypographySettings());
+  const activeLineSpacing = propLineSpacing || localTypography.lineSpacing;
+  const activeWordSpacing = propWordSpacing || localTypography.wordSpacing;
+  const activeTextAlign = propTextAlign || localTypography.textAlign;
+  const activePageWidth = propPageWidth || localTypography.pageWidth || 'standard';
+
+  const handleUpdateLineSpacing = (spacing: EditorLineSpacing) => {
+    if (onChangeLineSpacing) {
+      onChangeLineSpacing(spacing);
+    } else {
+      const next = { ...localTypography, lineSpacing: spacing };
+      setLocalTypography(next);
+      applyTypographySettingsToDOM(next);
+    }
+  };
+
+  const handleUpdateWordSpacing = (spacing: EditorWordSpacing) => {
+    if (onChangeWordSpacing) {
+      onChangeWordSpacing(spacing);
+    } else {
+      const next = { ...localTypography, wordSpacing: spacing };
+      setLocalTypography(next);
+      applyTypographySettingsToDOM(next);
+    }
+  };
+
+  const handleUpdateTextAlign = (align: EditorTextAlign) => {
+    if (onChangeTextAlign) {
+      onChangeTextAlign(align);
+    } else {
+      const next = { ...localTypography, textAlign: align };
+      setLocalTypography(next);
+      applyTypographySettingsToDOM(next);
+    }
+  };
+
+  const handleUpdatePageWidth = (width: EditorPageWidth) => {
+    if (onChangePageWidth) {
+      onChangePageWidth(width);
+    } else {
+      const next = { ...localTypography, pageWidth: width };
+      setLocalTypography(next);
+      applyTypographySettingsToDOM(next);
+    }
+  };
+
   // Typewriter Scroll Mode
   const [typewriterMode, setTypewriterMode] = useState(false);
+
+  // Resizable Editor Left Sidebar (Binder Outline)
+  const DEFAULT_EDITOR_LEFT_WIDTH = 288;
+  const MIN_EDITOR_LEFT_WIDTH = 200;
+  const MAX_EDITOR_LEFT_WIDTH = 520;
+
+  const [editorLeftWidth, setEditorLeftWidth] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('threadline_editor_left_sidebar_width');
+      if (saved) {
+        const parsed = parseInt(saved, 10);
+        if (!isNaN(parsed) && parsed >= MIN_EDITOR_LEFT_WIDTH && parsed <= MAX_EDITOR_LEFT_WIDTH) {
+          return parsed;
+        }
+      }
+    } catch {}
+    return DEFAULT_EDITOR_LEFT_WIDTH;
+  });
+
+  const [isResizingLeft, setIsResizingLeft] = useState(false);
+  const startLeftXRef = useRef(0);
+  const startLeftWidthRef = useRef(editorLeftWidth);
+  const leftWidthRef = useRef(editorLeftWidth);
+  leftWidthRef.current = editorLeftWidth;
+
+  const handleStartLeftResize = (clientX: number) => {
+    setIsResizingLeft(true);
+    startLeftXRef.current = clientX;
+    startLeftWidthRef.current = leftWidthRef.current;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  };
+
+  const handleLeftResizeMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleStartLeftResize(e.clientX);
+  };
+
+  const handleLeftResizeTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      handleStartLeftResize(e.touches[0].clientX);
+    }
+  };
+
+  const handleResetLeftWidth = () => {
+    setEditorLeftWidth(DEFAULT_EDITOR_LEFT_WIDTH);
+    try {
+      localStorage.setItem('threadline_editor_left_sidebar_width', DEFAULT_EDITOR_LEFT_WIDTH.toString());
+    } catch {}
+  };
+
+  useEffect(() => {
+    if (!isResizingLeft) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const delta = e.clientX - startLeftXRef.current;
+      const newWidth = Math.min(Math.max(startLeftWidthRef.current + delta, MIN_EDITOR_LEFT_WIDTH), MAX_EDITOR_LEFT_WIDTH);
+      setEditorLeftWidth(newWidth);
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        const delta = e.touches[0].clientX - startLeftXRef.current;
+        const newWidth = Math.min(Math.max(startLeftWidthRef.current + delta, MIN_EDITOR_LEFT_WIDTH), MAX_EDITOR_LEFT_WIDTH);
+        setEditorLeftWidth(newWidth);
+      }
+    };
+
+    const handleEndResize = () => {
+      setIsResizingLeft(false);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      try {
+        localStorage.setItem('threadline_editor_left_sidebar_width', leftWidthRef.current.toString());
+      } catch {}
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleEndResize);
+    window.addEventListener('touchmove', handleTouchMove);
+    window.addEventListener('touchend', handleEndResize);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleEndResize);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleEndResize);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isResizingLeft]);
+
+  // Resizable Editor Right Sidebar (Metadata / Inspector / Line Edit)
+  const DEFAULT_EDITOR_RIGHT_WIDTH = 320;
+  const MIN_EDITOR_RIGHT_WIDTH = 260;
+  const MAX_EDITOR_RIGHT_WIDTH = 600;
+
+  const [editorRightWidth, setEditorRightWidth] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('threadline_editor_right_sidebar_width');
+      if (saved) {
+        const parsed = parseInt(saved, 10);
+        if (!isNaN(parsed) && parsed >= MIN_EDITOR_RIGHT_WIDTH && parsed <= MAX_EDITOR_RIGHT_WIDTH) {
+          return parsed;
+        }
+      }
+    } catch {}
+    return DEFAULT_EDITOR_RIGHT_WIDTH;
+  });
+
+  const [isResizingRight, setIsResizingRight] = useState(false);
+  const startRightXRef = useRef(0);
+  const startRightWidthRef = useRef(editorRightWidth);
+  const rightWidthRef = useRef(editorRightWidth);
+  rightWidthRef.current = editorRightWidth;
+
+  const handleStartRightResize = (clientX: number) => {
+    setIsResizingRight(true);
+    startRightXRef.current = clientX;
+    startRightWidthRef.current = rightWidthRef.current;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  };
+
+  const handleRightResizeMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleStartRightResize(e.clientX);
+  };
+
+  const handleRightResizeTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      handleStartRightResize(e.touches[0].clientX);
+    }
+  };
+
+  const handleResetRightWidth = () => {
+    setEditorRightWidth(DEFAULT_EDITOR_RIGHT_WIDTH);
+    try {
+      localStorage.setItem('threadline_editor_right_sidebar_width', DEFAULT_EDITOR_RIGHT_WIDTH.toString());
+    } catch {}
+  };
+
+  useEffect(() => {
+    if (!isResizingRight) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      // Right sidebar expands when dragging leftwards
+      const delta = startRightXRef.current - e.clientX;
+      const newWidth = Math.min(Math.max(startRightWidthRef.current + delta, MIN_EDITOR_RIGHT_WIDTH), MAX_EDITOR_RIGHT_WIDTH);
+      setEditorRightWidth(newWidth);
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        const delta = startRightXRef.current - e.touches[0].clientX;
+        const newWidth = Math.min(Math.max(startRightWidthRef.current + delta, MIN_EDITOR_RIGHT_WIDTH), MAX_EDITOR_RIGHT_WIDTH);
+        setEditorRightWidth(newWidth);
+      }
+    };
+
+    const handleEndResize = () => {
+      setIsResizingRight(false);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      try {
+        localStorage.setItem('threadline_editor_right_sidebar_width', rightWidthRef.current.toString());
+      } catch {}
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleEndResize);
+    window.addEventListener('touchmove', handleTouchMove);
+    window.addEventListener('touchend', handleEndResize);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleEndResize);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleEndResize);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isResizingRight]);
 
   // Editor formatting & selection
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -129,6 +450,40 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
   const [newCommentText, setNewCommentText] = useState('');
   const [showCommentInput, setShowCommentInput] = useState(false);
 
+  // Line Editing Lens State & Markers
+  const [isLineEditLensOpen, setIsLineEditLensOpen] = useState(false);
+  const lineEdits = useMemo(() => {
+    return extractLineEditsFromMarkdown(scene.proseContent, scene.id, scene.title);
+  }, [scene.proseContent, scene.id, scene.title]);
+
+  const handleRemoveHighlight = (targetText: string) => {
+    const escaped = targetText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`==([a-z0-9_-]+):(${escaped})==|==(${escaped})==`, 'gi');
+    const updated = scene.proseContent.replace(regex, targetText);
+    const words = updated.trim() ? updated.trim().split(/\s+/).length : 0;
+    pushSnapshot(scene.proseContent);
+    onUpdateScene({ proseContent: updated, wordCount: words });
+  };
+
+  const handleChangeHighlightColor = (targetText: string, newColor: LineEditColorCode) => {
+    const escaped = targetText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`==([a-z0-9_-]+):(${escaped})==|==(${escaped})==`, 'gi');
+    const updated = scene.proseContent.replace(regex, `==${newColor}:${targetText}==`);
+    pushSnapshot(scene.proseContent);
+    onUpdateScene({ proseContent: updated });
+  };
+
+  const handleJumpToText = (text: string) => {
+    setSearchQuery(text.slice(0, 30));
+    setShowSearch(true);
+  };
+
+  const handleAddCommentFromHighlight = (text: string, category: string) => {
+    setSelectedText(text);
+    setNewCommentText(`[${category} Line Edit]: `);
+    setShowCommentInput(true);
+  };
+
   // Dedicated Undo/Redo history tracking per scene
   const {
     undo,
@@ -142,46 +497,55 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
   } = useEditorHistory(scene.id, scene.proseContent);
 
   const handleUndo = useCallback(() => {
-    const prev = undo(scene.proseContent);
+    let current = scene.proseContent;
+    if (editorSurface === 'rich' && richEditorRef.current?.flush) {
+      current = richEditorRef.current.flush();
+    }
+    const prev = undo(current);
     if (prev !== null) {
       const words = prev.trim() ? prev.trim().split(/\s+/).length : 0;
       onUpdateScene({ proseContent: prev, wordCount: words });
-      if (textareaRef.current && document.activeElement === textareaRef.current) {
+      if (editorSurface === 'raw' && textareaRef.current) {
         const textarea = textareaRef.current;
         let i = 0;
-        while (i < scene.proseContent.length && i < prev.length && scene.proseContent[i] === prev[i]) {
+        while (i < current.length && i < prev.length && current[i] === prev[i]) {
           i++;
         }
         setTimeout(() => {
           if (textarea) {
-            textarea.focus();
+            textarea.focus({ preventScroll: true });
             textarea.setSelectionRange(i, i);
           }
         }, 0);
       }
     }
-  }, [undo, scene.proseContent, onUpdateScene]);
+  }, [undo, scene.proseContent, onUpdateScene, editorSurface]);
 
   const handleRedo = useCallback(() => {
-    const next = redo(scene.proseContent);
+    let current = scene.proseContent;
+    if (editorSurface === 'rich' && richEditorRef.current?.flush) {
+      current = richEditorRef.current.flush();
+    }
+    const next = redo(current);
     if (next !== null) {
       const words = next.trim() ? next.trim().split(/\s+/).length : 0;
       onUpdateScene({ proseContent: next, wordCount: words });
-      if (textareaRef.current && document.activeElement === textareaRef.current) {
+      if (editorSurface === 'raw' && textareaRef.current) {
         const textarea = textareaRef.current;
         let i = 0;
-        while (i < scene.proseContent.length && i < next.length && scene.proseContent[i] === next[i]) {
+        while (i < current.length && i < next.length && current[i] === next[i]) {
           i++;
         }
+        const targetPos = i + (next.length - current.length);
         setTimeout(() => {
           if (textarea) {
-            textarea.focus();
-            textarea.setSelectionRange(i, i);
+            textarea.focus({ preventScroll: true });
+            textarea.setSelectionRange(targetPos, targetPos);
           }
         }, 0);
       }
     }
-  }, [redo, scene.proseContent, onUpdateScene]);
+  }, [redo, scene.proseContent, onUpdateScene, editorSurface]);
 
   // Handle typing inside textarea
   const handleProseChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -345,7 +709,7 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
   };
 
   // Highlight helper (applies ==selection== or custom color ==color:selection==)
-  const handleApplyHighlight = (colorKey: string = 'yellow') => {
+  const handleApplyHighlight = (colorKey: string = 'pacing') => {
     if (editorSurface === 'rich' && richEditorRef.current) {
       richEditorRef.current.applyHighlight(colorKey);
       return;
@@ -360,7 +724,7 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
 
       pushSnapshot(current);
 
-      const prefix = colorKey === 'yellow' ? '==' : `==${colorKey}:`;
+      const prefix = `==${colorKey}:`;
       const suffix = '==';
 
       let replacement = '';
@@ -422,7 +786,7 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
     // 5. Highlight (Ctrl+H or Cmd+H)
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'h') {
       e.preventDefault();
-      handleApplyHighlight('yellow');
+      handleApplyHighlight('pacing');
       return;
     }
 
@@ -556,6 +920,46 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
       (scene.location && scene.location.toLowerCase().includes(e.name.toLowerCase()))
   );
 
+  // Scrivenings scenes calculation with accurate single-chapter ownership
+  const scriveningsScenes = useMemo(() => {
+    if (scriveningsMode === 'chapter') {
+      const activeChap = (chapters || []).find(
+        (c) =>
+          (scene.chapterId && c.id === scene.chapterId) ||
+          (c.sceneIds && c.sceneIds.includes(scene.id)) ||
+          (scene.chapterNumber !== undefined && c.number === scene.chapterNumber)
+      );
+      if (activeChap) {
+        const chapScenes = getScenesForChapter(allScenes, activeChap);
+        if (chapScenes.length > 0) return chapScenes;
+      }
+      const match = allScenes.filter((s) => s.chapterId && s.chapterId === scene.chapterId);
+      return match.length > 0 ? match : [scene];
+    }
+    if (scriveningsMode === 'all' || scriveningsMode === 'manuscript') {
+      return [...allScenes].sort((a, b) => (a.order || 0) - (b.order || 0));
+    }
+    return [scene];
+  }, [scriveningsMode, allScenes, scene, chapters]);
+
+  const scriveningsScopeTitle = useMemo(() => {
+    if (scriveningsMode === 'chapter') {
+      const activeChap = (chapters || []).find(
+        (c) =>
+          (scene.chapterId && c.id === scene.chapterId) ||
+          (c.sceneIds && c.sceneIds.includes(scene.id)) ||
+          (scene.chapterNumber !== undefined && c.number === scene.chapterNumber)
+      );
+      if (activeChap) {
+        return `Chapter ${activeChap.number}: ${activeChap.title}`;
+      }
+      return scene.chapterTitle
+        ? `Chapter ${scene.chapterNumber || 1}: ${scene.chapterTitle}`
+        : `Chapter ${scene.chapterNumber || 1}`;
+    }
+    return 'Full Manuscript';
+  }, [scriveningsMode, chapters, scene]);
+
   // Current Scene Index in sequence
   const currentSceneIdx = allScenes.findIndex((s) => s.id === scene.id);
 
@@ -565,8 +969,8 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
         focusMode ? 'fixed inset-0 z-50 h-screen' : 'h-full max-h-full'
       }`}
     >
-      {/* TOPBAR */}
-      <EditorTopBar
+      {/* UNIFIED SINGLE EDITOR BAR (SLIMMED DOWN TO MAX 2 BARS ON SCREEN) */}
+      <UnifiedEditorBar
         scene={scene}
         allScenes={allScenes}
         currentSceneIdx={currentSceneIdx}
@@ -575,20 +979,25 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
         leftNavOpen={leftNavOpen}
         sidebarOpen={sidebarOpen}
         showSearch={showSearch}
+        scriveningsMode={scriveningsMode}
+        onChangeScriveningsMode={setScriveningsMode}
+        onOpenLinguisticStats={() => setShowLinguisticStats(true)}
+        onOpenCompileModal={() => setShowCompileModal(true)}
         onToggleFocusMode={() => setFocusMode(!focusMode)}
         onToggleLeftNav={() => setLeftNavOpen(!leftNavOpen)}
         onToggleSidebar={handleToggleFacts}
         onToggleHistory={handleToggleHistory}
+        onToggleBookmarks={() => {
+          setSidebarOpen(true);
+          setMetadataTab('bookmarks');
+        }}
         activeMetadataTab={metadataTab}
         onToggleSearch={() => setShowSearch(!showSearch)}
         onNavigateToScene={handleSafeNavigateToScene}
         onUpdateScene={onUpdateScene}
         onDuplicateScene={onDuplicateScene}
         onDeleteScene={onDeleteScene}
-      />
-
-      {/* SLEEK FORMATTING & VIEW TOOLBAR */}
-      <EditorFormatBar
+        onNavigateToScreenplay={onNavigateToScreenplay}
         viewMode={viewMode}
         onChangeViewMode={setViewMode}
         editorSurface={editorSurface}
@@ -597,6 +1006,14 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
         onChangeFontFamily={setFontFamily}
         fontSize={fontSize}
         onChangeFontSize={setFontSize}
+        lineSpacing={activeLineSpacing}
+        onChangeLineSpacing={handleUpdateLineSpacing}
+        wordSpacing={activeWordSpacing}
+        onChangeWordSpacing={handleUpdateWordSpacing}
+        textAlign={activeTextAlign}
+        onChangeTextAlign={handleUpdateTextAlign}
+        pageWidth={activePageWidth}
+        onChangePageWidth={handleUpdatePageWidth}
         canUndo={canUndo}
         canRedo={canRedo}
         undoCount={undoCount}
@@ -606,10 +1023,27 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
         onApplyFormat={applyFormat}
         onApplyHighlight={handleApplyHighlight}
         onInsertSceneBreak={insertSceneBreak}
-        focusMode={focusMode}
         typewriterMode={typewriterMode}
         onToggleTypewriterMode={() => setTypewriterMode(!typewriterMode)}
         currentWordCount={scene.wordCount}
+        isLineEditLensOpen={isLineEditLensOpen}
+        onToggleLineEditLens={() => setIsLineEditLensOpen((prev) => !prev)}
+        lineEditCount={lineEdits.length}
+        projectTitle={projectTitle || project?.title}
+        isSidebarOpen={isSidebarOpen}
+        onToggleSidebarNav={onToggleSidebarNav}
+        onOpenMobileDrawer={onOpenMobileDrawer}
+        onNavigate={onNavigate}
+        onOpenSearch={onOpenSearch}
+        userRole={userRole}
+        onToggleRole={onToggleRole}
+        openContinuityCount={openContinuityCount}
+        theme={theme}
+        onToggleTheme={onToggleTheme}
+        colorBlindMode={colorBlindMode}
+        onToggleColorBlind={onToggleColorBlind}
+        vaultInfo={vaultInfo}
+        onOpenVaultManager={onOpenVaultManager}
       />
 
       {/* SEARCH BAR SUB-HEADER */}
@@ -683,51 +1117,126 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
           )
         ) : (
           leftNavOpen && !focusMode && (
-            <SceneOutlineDrawer
-              scene={scene}
-              allScenes={allScenes}
-              chapters={chapters}
-              threads={threads}
-              onNavigateToScene={handleSafeNavigateToScene}
-              onAddScene={onAddSceneToChapter ? () => onAddSceneToChapter(scene.chapterId || '') : undefined}
-            />
+            <div
+              style={{ width: `${editorLeftWidth}px` }}
+              className={`h-full max-h-full min-h-0 flex shrink-0 relative ${
+                isResizingLeft ? '' : 'transition-[width] duration-150 ease-out'
+              }`}
+            >
+              <div className="flex-1 h-full min-w-0 overflow-hidden">
+                <SceneOutlineDrawer
+                  scene={scene}
+                  allScenes={allScenes}
+                  chapters={chapters}
+                  threads={threads}
+                  onNavigateToScene={handleSafeNavigateToScene}
+                  onAddScene={onAddSceneToChapter ? () => onAddSceneToChapter(scene.chapterId || '') : undefined}
+                />
+              </div>
+              {/* Desktop Resize Drag Handle for Left Outline */}
+              <div
+                role="separator"
+                aria-orientation="vertical"
+                aria-label="Resize outline sidebar"
+                title="Drag to resize binder outline · Double-click to reset"
+                onMouseDown={handleLeftResizeMouseDown}
+                onTouchStart={handleLeftResizeTouchStart}
+                onDoubleClick={handleResetLeftWidth}
+                className={`absolute -right-1 top-0 bottom-0 w-2.5 cursor-col-resize z-40 group flex items-center justify-center ${
+                  isResizingLeft ? 'pointer-events-auto' : ''
+                }`}
+              >
+                <div
+                  className={`w-[2px] h-full transition-colors ${
+                    isResizingLeft ? 'bg-[#B54B32]' : 'bg-transparent group-hover:bg-[#B54B32]/60'
+                  }`}
+                />
+              </div>
+            </div>
           )
         )}
 
-        {/* CENTER WRITING CANVAS & LIVE PREVIEW */}
-        <ManuscriptCanvas
-          scene={scene}
-          focusMode={focusMode}
-          viewMode={viewMode}
-          editorSurface={editorSurface}
-          onChangeEditorSurface={handleSwitchEditorSurface}
-          fontFamily={fontFamily}
-          fontSize={fontSize}
-          typewriterMode={typewriterMode}
-          textareaRef={textareaRef}
-          richEditorRef={richEditorRef}
-          showCommentInput={showCommentInput}
-          newCommentText={newCommentText}
-          pushSnapshot={pushSnapshot}
-          recordTypingChange={recordTypingChange}
-          onUndo={handleUndo}
-          onRedo={handleRedo}
-          onUpdateScene={onUpdateScene}
-          onProseChange={handleProseChange}
-          onKeyDown={handleKeyDown}
-          onSelect={handleSelect}
-          onCloseComment={() => setShowCommentInput(false)}
-          onChangeNewComment={setNewCommentText}
-          onSaveComment={handleAddComment}
-          onResolveComment={(commentId) => {
-            onUpdateScene({
-              comments: scene.comments.filter((c) => c.id !== commentId)
-            });
-          }}
-          onAddToStoryBible={() => setShowQuickEntity(true)}
-          onCutToCuttingRoom={handleCutToCuttingRoom}
-          onConsultAI={() => setShowAIPanel(true)}
-        />
+        {/* DESKTOP BALANCING SPACER: Balances left outline drawer when right panel is open */}
+        {!isSmallScreen && !leftNavOpen && (sidebarOpen || isLineEditLensOpen) && !focusMode && (
+          <div
+            style={{ width: `${editorRightWidth}px` }}
+            className="hidden xl:block shrink-0 pointer-events-none opacity-0 select-none"
+            aria-hidden="true"
+          />
+        )}
+
+        {/* CENTER WRITING CANVAS: Scrivenings vs Screenplay vs Standard Manuscript */}
+        {scriveningsMode !== 'single' ? (
+          <ScriveningsCanvas
+            activeSceneId={scene.id}
+            scenes={scriveningsScenes}
+            fontFamily={fontFamily}
+            fontSize={fontSize}
+            scriveningsMode={scriveningsMode}
+            onChangeScriveningsMode={setScriveningsMode}
+            onUpdateScene={(targetSceneId, fields) => {
+              if (targetSceneId === scene.id) {
+                onUpdateScene(fields);
+              } else if (onUpdateSceneById) {
+                onUpdateSceneById(targetSceneId, fields);
+              }
+            }}
+            onFocusSingleScene={(targetSceneId) => {
+              handleSafeNavigateToScene(targetSceneId);
+              setScriveningsMode('single');
+            }}
+            onExitScrivenings={() => setScriveningsMode('single')}
+            scopeTitle={scriveningsScopeTitle}
+            onAddScene={
+              onAddSceneToChapter
+                ? () => onAddSceneToChapter(scene.chapterId || '')
+                : undefined
+            }
+          />
+        ) : (
+          <ManuscriptCanvas
+            scene={scene}
+            focusMode={focusMode}
+            viewMode={viewMode}
+            editorSurface={editorSurface}
+            onChangeEditorSurface={handleSwitchEditorSurface}
+            fontFamily={fontFamily}
+            fontSize={fontSize}
+            lineSpacing={activeLineSpacing}
+            wordSpacing={activeWordSpacing}
+            textAlign={activeTextAlign}
+            pageWidth={activePageWidth}
+            typewriterMode={typewriterMode}
+            textareaRef={textareaRef}
+            richEditorRef={richEditorRef}
+            showCommentInput={showCommentInput}
+            newCommentText={newCommentText}
+            pushSnapshot={pushSnapshot}
+            recordTypingChange={recordTypingChange}
+            onUndo={handleUndo}
+            onRedo={handleRedo}
+            onUpdateScene={onUpdateScene}
+            onProseChange={handleProseChange}
+            onKeyDown={handleKeyDown}
+            onSelect={handleSelect}
+            onCloseComment={() => setShowCommentInput(false)}
+            onChangeNewComment={setNewCommentText}
+            onSaveComment={handleAddComment}
+            onResolveComment={(commentId) => {
+              onUpdateScene({
+                comments: scene.comments.filter((c) => c.id !== commentId)
+              });
+            }}
+            onAddToStoryBible={() => setShowQuickEntity(true)}
+            onCutToCuttingRoom={handleCutToCuttingRoom}
+            onConsultAI={() => setShowAIPanel(true)}
+          />
+        )}
+
+        {/* DESKTOP BALANCING SPACER: Balances right inspector when left binder outline is open */}
+        {!isSmallScreen && leftNavOpen && !sidebarOpen && !isLineEditLensOpen && !focusMode && (
+          <div className="hidden xl:block w-72 shrink-0 pointer-events-none opacity-0 select-none" aria-hidden="true" />
+        )}
 
         {/* FLOATING PILL DOCK */}
         <EditorFloatingDock
@@ -742,8 +1251,46 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
           onOpenAIPanel={() => setShowAIPanel(true)}
         />
 
-        {/* RIGHT METADATA & STORY BIBLE PANEL (Static column on desktop, slide-over overlay sheet on mobile/tablet) */}
-        {isSmallScreen ? (
+        {/* RIGHT METADATA & STORY BIBLE PANEL OR LINE EDIT LENS PANEL */}
+        {isLineEditLensOpen && !focusMode ? (
+          <div
+            style={{ width: isSmallScreen ? undefined : `${editorRightWidth}px` }}
+            className={`border-l border-[#E5DEC9] bg-[#FAF6EE] flex flex-col z-20 shrink-0 relative ${
+              isSmallScreen ? 'w-80' : ''
+            } ${isResizingRight ? '' : 'transition-[width] duration-150 ease-out'}`}
+          >
+            {!isSmallScreen && (
+              <div
+                role="separator"
+                aria-orientation="vertical"
+                aria-label="Resize right inspector panel"
+                title="Drag to resize inspector panel · Double-click to reset"
+                onMouseDown={handleRightResizeMouseDown}
+                onTouchStart={handleRightResizeTouchStart}
+                onDoubleClick={handleResetRightWidth}
+                className={`absolute -left-1 top-0 bottom-0 w-2.5 cursor-col-resize z-40 group flex items-center justify-center ${
+                  isResizingRight ? 'pointer-events-auto' : ''
+                }`}
+              >
+                <div
+                  className={`w-[2px] h-full transition-colors ${
+                    isResizingRight ? 'bg-[#B54B32]' : 'bg-transparent group-hover:bg-[#B54B32]/60'
+                  }`}
+                />
+              </div>
+            )}
+            <LineEditLensPanel
+              markdown={scene.proseContent}
+              sceneId={scene.id}
+              sceneTitle={scene.title}
+              onJumpToText={handleJumpToText}
+              onRemoveHighlight={handleRemoveHighlight}
+              onChangeHighlightColor={handleChangeHighlightColor}
+              onAddCommentFromHighlight={handleAddCommentFromHighlight}
+              onClose={() => setIsLineEditLensOpen(false)}
+            />
+          </div>
+        ) : isSmallScreen ? (
           sidebarOpen && !focusMode && (
             <div className="fixed inset-0 z-50 flex justify-end animate-in fade-in duration-150">
               <div
@@ -766,8 +1313,13 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
                     scene={scene}
                     sceneEntities={sceneEntities}
                     chapters={chapters}
+                    allScenes={allScenes}
+                    researchVault={researchVault}
                     onUpdateScene={onUpdateScene}
                     onCreateChapter={onAddChapter ? (c) => onAddChapter(c.title, c.actOrPhase) : undefined}
+                    onNavigateToScene={handleSafeNavigateToScene}
+                    onOpenResearchItem={onOpenResearchItem}
+                    onOpenCodexEntity={onOpenCodexEntity}
                     activeTab={metadataTab}
                     onTabChange={setMetadataTab}
                   />
@@ -777,15 +1329,48 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
           )
         ) : (
           sidebarOpen && !focusMode && (
-            <SceneMetadataPanel
-              scene={scene}
-              sceneEntities={sceneEntities}
-              chapters={chapters}
-              onUpdateScene={onUpdateScene}
-              onCreateChapter={onAddChapter ? (c) => onAddChapter(c.title, c.actOrPhase) : undefined}
-              activeTab={metadataTab}
-              onTabChange={setMetadataTab}
-            />
+            <div
+              style={{ width: `${editorRightWidth}px` }}
+              className={`h-full max-h-full min-h-0 flex flex-col shrink-0 relative border-l border-[rgba(34,30,24,0.12)] bg-[#FAF6EE] z-20 ${
+                isResizingRight ? '' : 'transition-[width] duration-150 ease-out'
+              }`}
+            >
+              {/* Desktop Resize Drag Handle for Right Panel */}
+              <div
+                role="separator"
+                aria-orientation="vertical"
+                aria-label="Resize right metadata sidebar"
+                title="Drag to resize inspector panel · Double-click to reset"
+                onMouseDown={handleRightResizeMouseDown}
+                onTouchStart={handleRightResizeTouchStart}
+                onDoubleClick={handleResetRightWidth}
+                className={`absolute -left-1 top-0 bottom-0 w-2.5 cursor-col-resize z-40 group flex items-center justify-center ${
+                  isResizingRight ? 'pointer-events-auto' : ''
+                }`}
+              >
+                <div
+                  className={`w-[2px] h-full transition-colors ${
+                    isResizingRight ? 'bg-[#B54B32]' : 'bg-transparent group-hover:bg-[#B54B32]/60'
+                  }`}
+                />
+              </div>
+              <div className="flex-1 h-full min-w-0 overflow-hidden">
+                <SceneMetadataPanel
+                  scene={scene}
+                  sceneEntities={sceneEntities}
+                  chapters={chapters}
+                  allScenes={allScenes}
+                  researchVault={researchVault}
+                  onUpdateScene={onUpdateScene}
+                  onCreateChapter={onAddChapter ? (c) => onAddChapter(c.title, c.actOrPhase) : undefined}
+                  onNavigateToScene={handleSafeNavigateToScene}
+                  onOpenResearchItem={onOpenResearchItem}
+                  onOpenCodexEntity={onOpenCodexEntity}
+                  activeTab={metadataTab}
+                  onTabChange={setMetadataTab}
+                />
+              </div>
+            </div>
           )
         )}
       </div>
@@ -817,6 +1402,10 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
       {/* SOUNDING BOARD AI MODAL */}
       {showAIPanel && (
         <AIPanel
+          scene={scene}
+          chapters={chapters}
+          allScenes={allScenes}
+          sceneEntities={sceneEntities}
           selectedText={selectedText}
           onClose={() => setShowAIPanel(false)}
           onAcceptOutput={handleAcceptAiOutput}
@@ -824,6 +1413,36 @@ export const EditorScreen: React.FC<EditorScreenProps> = ({
           onLogAction={onLogAiAction}
         />
       )}
+
+      {/* DEEP LINGUISTIC & TEXT STATISTICS MODAL */}
+      <LinguisticStatsModal
+        isOpen={showLinguisticStats}
+        activeScene={scene}
+        allScenes={allScenes}
+        onClose={() => setShowLinguisticStats(false)}
+      />
+
+      {/* THE COMPILE ENGINE (MULTI-FORMAT TYPESETTING) MODAL */}
+      <CompileModal
+        isOpen={showCompileModal}
+        scenes={allScenes}
+        chapters={chapters || []}
+        project={
+          project || {
+            id: 'proj-current',
+            title: projectTitle || 'The Escapement in the Mist',
+            type: 'Novel',
+            protagonist: authorName || 'Silas Vance',
+            genre: 'Fiction',
+            situation: '',
+            targetWordCount: 75000,
+            status: 'in-progress',
+            lastActiveSceneId: scene.id,
+            updatedAt: new Date().toISOString()
+          }
+        }
+        onClose={() => setShowCompileModal(false)}
+      />
     </div>
   );
 };

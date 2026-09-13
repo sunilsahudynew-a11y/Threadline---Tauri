@@ -35,7 +35,7 @@ export const SceneOutlineDrawer: React.FC<SceneOutlineDrawerProps> = ({
   const totalManuscriptWords = allScenes.reduce((acc, s) => acc + (s.wordCount || 0), 0);
 
   return (
-    <aside className="w-72 h-full max-h-full min-h-0 border-r border-[rgba(34,30,24,0.12)] bg-[#FAF6EE] flex flex-col shrink-0 select-none overflow-hidden text-xs">
+    <aside className="w-full h-full max-h-full min-h-0 border-r border-[rgba(34,30,24,0.12)] bg-[#FAF6EE] flex flex-col shrink-0 select-none overflow-hidden text-xs">
       {/* Drawer Header & Mode Switcher */}
       <div className="p-3 border-b border-[rgba(34,30,24,0.12)] bg-[#F1EAD9] flex items-center justify-between shrink-0">
         <div className="flex items-center gap-1.5">

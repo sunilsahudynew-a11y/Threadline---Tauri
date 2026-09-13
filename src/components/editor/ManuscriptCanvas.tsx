@@ -7,6 +7,14 @@ import { SlashCommandMenu } from './SlashCommandMenu';
 import { RichLiveEditor, RichEditorHandle } from './RichLiveEditor';
 import { useNotionMarkdown } from '../../hooks/useNotionMarkdown';
 import { getTextareaCaretScreenY } from '../../utils/typewriterHelper';
+import {
+  EditorLineSpacing,
+  EditorWordSpacing,
+  EditorTextAlign,
+  EditorPageWidth,
+  AVAILABLE_LINE_SPACINGS,
+  AVAILABLE_WORD_SPACINGS
+} from '../../services/theme/themeConfig';
 
 export interface ManuscriptCanvasProps {
   scene: Scene;
@@ -14,6 +22,10 @@ export interface ManuscriptCanvasProps {
   viewMode: EditorViewMode;
   fontFamily: EditorFontFamily;
   fontSize: EditorFontSize;
+  lineSpacing?: EditorLineSpacing;
+  wordSpacing?: EditorWordSpacing;
+  textAlign?: EditorTextAlign;
+  pageWidth?: EditorPageWidth;
   typewriterMode?: boolean;
   editorSurface?: 'rich' | 'raw';
   onChangeEditorSurface?: (surface: 'rich' | 'raw') => void;
@@ -44,6 +56,10 @@ export const ManuscriptCanvas: React.FC<ManuscriptCanvasProps> = ({
   viewMode,
   fontFamily,
   fontSize,
+  lineSpacing = 'normal',
+  wordSpacing = 'normal',
+  textAlign = 'left',
+  pageWidth = 'standard',
   typewriterMode = false,
   editorSurface: externalEditorSurface,
   onChangeEditorSurface: externalOnChangeEditorSurface,
@@ -140,11 +156,14 @@ export const ManuscriptCanvas: React.FC<ManuscriptCanvasProps> = ({
       ? 'text-base leading-[1.75]'
       : 'text-lg leading-[1.85]';
 
+  const lineConfig = AVAILABLE_LINE_SPACINGS.find((l) => l.id === lineSpacing) || AVAILABLE_LINE_SPACINGS[1];
+  const wordConfig = AVAILABLE_WORD_SPACINGS.find((w) => w.id === wordSpacing) || AVAILABLE_WORD_SPACINGS[0];
+
   return (
-    <div className={`flex-1 min-h-0 h-full max-h-full flex ${viewMode === 'split' ? 'flex-col md:flex-row' : ''} overflow-hidden bg-[#FAF6EE] relative`}>
+    <div className={`flex-1 min-h-0 min-w-0 h-full max-h-full flex ${viewMode === 'split' ? 'flex-col md:flex-row' : ''} overflow-hidden bg-[#FAF6EE] relative`}>
       {/* TYPEWRITER MODE BADGE (No horizontal line - smooth document shift on newline) */}
       {typewriterMode && viewMode !== 'preview' && (
-        <div className="absolute top-3 right-4 sm:right-6 z-20 pointer-events-none flex items-center gap-1.5 px-2.5 py-1 bg-[#F1EAD9] rounded-full border border-[#E5DEC9] text-[10px] sm:text-[11px] font-mono text-[#221E18] shadow-warm-sm select-none animate-in fade-in">
+        <div className="absolute top-3 right-4 sm:right-6 z-20 pointer-events-none flex items-center gap-1.5 px-2.5 py-1 bg-[#F1EAD9] rounded-[4px] border border-[rgba(34,30,24,0.10)] text-[11px] font-mono text-[#221E18] select-none animate-in fade-in">
           <span className="w-1.5 h-1.5 rounded-full bg-[#B54B32] animate-pulse" />
           <span>Typewriter Mode</span>
         </div>
@@ -152,12 +171,15 @@ export const ManuscriptCanvas: React.FC<ManuscriptCanvasProps> = ({
 
       {/* FULL PREVIEW SURFACE (When in 'preview' mode) */}
       {viewMode === 'preview' && (
-        <div className="flex-1 min-h-0 h-full flex flex-col bg-[#FAF6EE] animate-in fade-in duration-150">
+        <div className="flex-1 min-h-0 min-w-0 h-full flex flex-col bg-[#FAF6EE] animate-in fade-in duration-150 overflow-x-hidden">
           <MarkdownPreview
             title={scene.title}
             content={scene.proseContent}
             fontSize={fontSize}
             fontFamily={fontFamily}
+            lineSpacing={lineSpacing}
+            wordSpacing={wordSpacing}
+            textAlign={textAlign}
             sceneOrder={scene.order}
             wordCount={scene.wordCount}
             isFullPreview={true}
@@ -170,40 +192,42 @@ export const ManuscriptCanvas: React.FC<ManuscriptCanvasProps> = ({
         ref={scrollContainerRef}
         className={`${
           viewMode === 'preview' ? 'hidden' : 'flex-1'
-        } min-h-0 h-full overflow-y-auto overscroll-contain scrollbar-subtle px-3.5 sm:px-6 md:px-12 flex justify-center selection:bg-[#F1EAD9] selection:text-[#221E18] relative ${
+        } min-h-0 min-w-0 h-full overflow-y-auto overflow-x-hidden overscroll-contain scrollbar-subtle px-3.5 sm:px-6 md:px-12 flex justify-center selection:bg-[#F1EAD9] selection:text-[#221E18] relative ${
           typewriterMode ? 'pt-6 sm:pt-8 pb-[70vh]' : 'pt-6 sm:pt-8 pb-36 sm:pb-48'
-        } ${viewMode === 'split' ? 'border-b md:border-b-0 md:border-r border-[#E5DEC9]' : ''}`}
+        } ${viewMode === 'split' ? 'border-b md:border-b-0 md:border-r border-[rgba(34,30,24,0.10)]' : ''}`}
       >
         <div
-          className={`w-full transition-all ${
-            viewMode === 'split' ? 'max-w-xl' : 'max-w-2xl'
-          }`}
+          style={{
+            width: '100%',
+            maxWidth: viewMode === 'split' ? '600px' : 'var(--editor-page-width, 720px)'
+          }}
+          className="manuscript-page-sheet min-w-0 mx-auto"
         >
           {/* Quick Comment Input Modal */}
           {showCommentInput && (
-            <div className="mb-4 p-3 bg-[#FAF6EE] rounded-lg border border-[#E5DEC9] shadow-warm-modal flex items-center gap-2 animate-in fade-in">
+            <div className="mb-4 p-3 bg-[#FAF6EE] rounded-[6px] border border-[rgba(34,30,24,0.10)] shadow-warm-modal flex items-center gap-2 animate-in fade-in">
               <input
                 type="text"
                 autoFocus
                 value={newCommentText}
                 onChange={(e) => onChangeNewComment(e.target.value)}
                 placeholder="Enter private manuscript comment..."
-                className="flex-1 text-xs p-1.5 border border-[#E5DEC9] rounded focus:outline-none bg-[#F1EAD9] text-[#221E18]"
+                className="input-standard flex-1"
                 onKeyDown={(e) => e.key === 'Enter' && onSaveComment()}
               />
               <button
                 type="button"
                 onClick={onSaveComment}
-                className="px-3 py-1.5 bg-[#221E18] text-[#FAF6EE] rounded text-xs font-medium cursor-pointer hover:bg-[#35505F]"
+                className="btn-primary min-h-[40px] px-4"
               >
                 Save
               </button>
               <button
                 type="button"
                 onClick={onCloseComment}
-                className="text-[#7A705F] hover:text-[#221E18] p-1 cursor-pointer"
+                className="text-[#7A705F] hover:text-[#221E18] p-2 cursor-pointer transition-colors"
               >
-                <X size={14} />
+                <X size={16} strokeWidth={1.5} />
               </button>
             </div>
           )}
@@ -214,7 +238,7 @@ export const ManuscriptCanvas: React.FC<ManuscriptCanvasProps> = ({
               type="text"
               value={scene.title}
               onChange={(e) => onUpdateScene({ title: e.target.value })}
-              className="w-full text-center text-2xl sm:text-3xl md:text-4xl font-serif font-semibold text-[#221E18] bg-transparent border-0 focus:outline-none placeholder-[#7A705F]/50 tracking-tight"
+              className="w-full text-center font-serif font-semibold text-[28px] sm:text-[32px] md:text-[36px] leading-[1.15] tracking-[-0.01em] text-[#221E18] bg-transparent border-0 focus:outline-none placeholder-[#7A705F]/50"
               placeholder="Scene Title..."
             />
           </div>
@@ -228,6 +252,9 @@ export const ManuscriptCanvas: React.FC<ManuscriptCanvasProps> = ({
               initialMarkdown={scene.proseContent}
               fontFamily={fontFamily}
               fontSize={fontSize}
+              lineSpacing={lineSpacing}
+              wordSpacing={wordSpacing}
+              textAlign={textAlign}
               typewriterMode={typewriterMode}
               scrollContainerRef={scrollContainerRef}
               onChangeMarkdown={(md, prevMd) => {
@@ -267,6 +294,34 @@ export const ManuscriptCanvas: React.FC<ManuscriptCanvasProps> = ({
                   onProseChange(e);
                   applyTypewriterShift();
                 }}
+                onPaste={(e) => {
+                  const clipboardData = e.clipboardData;
+                  if (!clipboardData) return;
+                  const pasted = clipboardData.getData('text/plain');
+                  if (pasted && (pasted.includes('    ') || pasted.includes('\t') || pasted.includes('```'))) {
+                    e.preventDefault();
+                    // Strip leading 4 spaces or tabs from each line and strip code fences from Courier manuscripts
+                    const cleaned = pasted
+                      .replace(/^```[a-zA-Z0-9_-]*\r?\n([\s\S]*?)\r?\n```$/gm, '$1')
+                      .split('\n')
+                      .map((line) => line.replace(/^[ \t]{1,8}/, ''))
+                      .join('\n');
+
+                    const target = e.currentTarget;
+                    const start = target.selectionStart;
+                    const end = target.selectionEnd;
+                    const val = target.value;
+                    const newVal = val.substring(0, start) + cleaned + val.substring(end);
+                    pushSnapshot(val);
+                    handleRawProseInput(newVal);
+                    onUpdateScene({ proseContent: newVal, wordCount: newVal.trim() ? newVal.trim().split(/\s+/).length : 0 });
+                    setTimeout(() => {
+                      if (textareaRef.current) {
+                        textareaRef.current.selectionStart = textareaRef.current.selectionEnd = start + cleaned.length;
+                      }
+                    }, 0);
+                  }
+                }}
                 onKeyDown={(e) => {
                   // Catch Undo / Redo inside raw textarea to prevent browser's 1-character native undo
                   if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === 'z') {
@@ -304,17 +359,24 @@ export const ManuscriptCanvas: React.FC<ManuscriptCanvasProps> = ({
                   onSelect(e);
                 }}
                 placeholder="Draft your scene here. Type '/' for Notion commands, '# ' for headings, '> ' for quotes, or '- ' for lists..."
-                className={`w-full bg-transparent border-0 focus:outline-none resize-none overflow-hidden text-[#221E18] placeholder-[#7A705F]/50 transition-all duration-100 ${fontClass} ${sizeClass}`}
+                style={{
+                  lineHeight: lineConfig.cssValue,
+                  wordSpacing: wordConfig.cssValue,
+                  textAlign: textAlign === 'justify' ? 'justify' : 'left'
+                }}
+                className={`w-full min-w-0 max-w-full bg-transparent border-0 focus:outline-none resize-none overflow-hidden text-[#221E18] placeholder-[#7A705F]/50 transition-all duration-100 ${fontClass} ${sizeClass} ${
+                  textAlign === 'justify' ? 'text-justify' : 'text-left'
+                }`}
               />
             </div>
           )}
 
           {/* NOTION HINT BADGE (Subtle, distraction-free) */}
           {!focusMode && (
-            <div className="mt-8 flex items-center justify-between text-[11px] font-mono text-[#7A705F] select-none pt-2 border-t border-[#E5DEC9]">
+            <div className="mt-8 flex items-center justify-between text-[11px] font-mono text-[#7A705F] select-none pt-2 border-t border-[rgba(34,30,24,0.10)]">
               <span className="flex items-center gap-1.5">
                 <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#B54B32]" />
-                Type <code className="text-[#221E18] bg-[#F1EAD9] px-1 py-0.5 rounded font-mono border border-[#E5DEC9]">/</code> for command palette, <code className="text-[#221E18] bg-[#F1EAD9] px-1 py-0.5 rounded font-mono border border-[#E5DEC9]">#</code> for headings, <code className="text-[#221E18] bg-[#F1EAD9] px-1 py-0.5 rounded font-mono border border-[#E5DEC9]">&gt;</code> for quotes
+                Type <code className="text-[#221E18] bg-[#F1EAD9] px-1 py-0.5 rounded-[4px] font-mono border border-[rgba(34,30,24,0.10)]">/</code> for command palette, <code className="text-[#221E18] bg-[#F1EAD9] px-1 py-0.5 rounded-[4px] font-mono border border-[rgba(34,30,24,0.10)]">#</code> for headings, <code className="text-[#221E18] bg-[#F1EAD9] px-1 py-0.5 rounded-[4px] font-mono border border-[rgba(34,30,24,0.10)]">&gt;</code> for quotes
               </span>
               <span>
                 {scene.wordCount} words
@@ -324,7 +386,7 @@ export const ManuscriptCanvas: React.FC<ManuscriptCanvasProps> = ({
 
           {/* SCENE COMMENTS LIST (Anchored in document) */}
           {scene.comments && scene.comments.length > 0 && (
-            <div className="mt-10 pt-6 border-t border-[#E5DEC9]">
+            <div className="mt-10 pt-6 border-t border-[rgba(34,30,24,0.10)]">
               <span className="text-[11px] font-sans font-semibold uppercase tracking-[0.16em] text-[#7A705F] mb-3 block select-none">
                 Manuscript Notes &amp; Comments ({scene.comments.length})
               </span>
@@ -332,7 +394,7 @@ export const ManuscriptCanvas: React.FC<ManuscriptCanvasProps> = ({
                 {scene.comments.map((cmt) => (
                   <div
                     key={cmt.id}
-                    className="p-3 bg-[#FAF6EE] rounded-lg border border-[#E5DEC9] text-xs shadow-warm-sm"
+                    className="p-3 bg-[#FAF6EE] rounded-[6px] border border-[rgba(34,30,24,0.10)] text-xs"
                   >
                     <div className="flex items-center justify-between mb-1 text-[11px]">
                       <span className="font-serif italic text-[#221E18] font-medium">
@@ -367,6 +429,9 @@ export const ManuscriptCanvas: React.FC<ManuscriptCanvasProps> = ({
             content={scene.proseContent}
             fontSize={fontSize}
             fontFamily={fontFamily}
+            lineSpacing={lineSpacing}
+            wordSpacing={wordSpacing}
+            textAlign={textAlign}
             sceneOrder={scene.order}
             wordCount={scene.wordCount}
             isFullPreview={false}

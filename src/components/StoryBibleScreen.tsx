@@ -170,14 +170,11 @@ export const StoryBibleScreen: React.FC<StoryBibleScreenProps> = ({
       {/* ========================================================================= */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
         <div>
-          <span className="section-label block mb-1">
-            Canon &amp; World Archive
-          </span>
           <h1 className="text-2xl sm:text-3xl font-serif text-[#221E18] font-semibold">
             Codex &amp; Lore Vault
           </h1>
-          <p className="text-[#7A705F] text-xs sm:text-sm mt-1">
-            Organized character planning, world building, research inquiries, narrative threads, and timeline chronology.
+          <p className="text-[#7A705F] text-xs sm:text-sm mt-1.5">
+            Canon &amp; world archive: organized character planning, world building, research inquiries, narrative threads, and timeline chronology.
           </p>
         </div>
 

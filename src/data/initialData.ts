@@ -10,7 +10,9 @@ import {
   RevisionPass,
   CuttingRoomItem,
   NoteItem,
-  Snapshot
+  Snapshot,
+  LabelDefinition,
+  ResearchVaultItem
 } from '../types';
 
 export const INITIAL_PROJECT: Project = {
@@ -79,6 +81,35 @@ export const INITIAL_SCENES: Scene[] = [
     time: 'Autumn dawn, 1894',
     pov: 'Silas Vance (Third Limited)',
     status: 'complete',
+    labelColor: '#DE6346',
+    labelName: 'POV: Silas Vance',
+    statusTint: 'Locked / Approved',
+    bookmarks: [
+      {
+        id: 'bm-1',
+        type: 'entity',
+        targetId: 'char-silas',
+        title: 'Silas Vance (Horologist Dossier)',
+        note: 'Protagonist: remember the scarred fingertips and sensory tinnitus.',
+        pinnedAt: '2026-08-10T14:30:00.000Z'
+      },
+      {
+        id: 'bm-2',
+        type: 'research',
+        targetId: 'vault-audio-1',
+        title: 'Clocktower Escapement Field Recording',
+        note: 'Cadence reference for seventy-heartbeat crown wheel oscillation.',
+        pinnedAt: '2026-08-10T14:45:00.000Z'
+      },
+      {
+        id: 'bm-3',
+        type: 'scene',
+        targetId: 'scene-2',
+        title: '2. The Ministry of Calipers',
+        note: 'Direct sequence continuation at Imperial Vaults.',
+        pinnedAt: '2026-08-10T15:00:00.000Z'
+      }
+    ],
     wordCount: 742,
     notes: 'Ground the reader in sensory weight: the smell of untreated tallow, damp cedar joists, and seventy-heartbeat crown wheel vibrations.',
     comments: [
@@ -137,6 +168,27 @@ Inside the pouch lay an unstamped copper sphere, no larger than a pigeon’s egg
     time: 'Noon of the same day',
     pov: 'Silas Vance (Third Limited)',
     status: 'revised',
+    labelColor: '#059669',
+    labelName: 'Subplot: Guild Secrets',
+    statusTint: 'Revised',
+    bookmarks: [
+      {
+        id: 'bm-s2-1',
+        type: 'entity',
+        targetId: 'char-julian',
+        title: 'Archivist Julian Croft',
+        note: 'Watch for his nervous tell: dipping quill nib repeatedly.',
+        pinnedAt: '2026-08-11T16:00:00.000Z'
+      },
+      {
+        id: 'bm-s2-2',
+        type: 'research',
+        targetId: 'vault-pdf-1',
+        title: 'Guild Assay Charter (1892)',
+        note: 'Section 4 statute on negative lead teeth.',
+        pinnedAt: '2026-08-11T16:15:00.000Z'
+      }
+    ],
     wordCount: 885,
     notes: 'Julian Croft should embody bureaucratic caution. Emphasize the bone micrometer and the ink blot.',
     comments: [],
@@ -793,9 +845,75 @@ import { NOVELLA_PROJECT_BUNDLE, NOVELLA_PROJECT } from './novellaDemoProject';
 
 export { NOVELLA_PROJECT_BUNDLE, NOVELLA_PROJECT };
 
+export const INITIAL_PROJECT_LABELS: LabelDefinition[] = [
+  { id: 'lbl-1', name: 'POV: Silas Vance', color: '#DE6346', description: 'Master horologist protagonist arc' },
+  { id: 'lbl-2', name: 'POV: Courier Maren', color: '#35505F', description: 'Underground guild messenger perspective' },
+  { id: 'lbl-3', name: 'Main Plotline', color: '#D97706', description: 'The clocktower escapement & the smuggled copper sphere' },
+  { id: 'lbl-4', name: 'Subplot: Guild Secrets', color: '#7C3AED', description: 'Julian Croft & municipal foundry conspiracy' },
+  { id: 'lbl-5', name: 'World Lore / Flashback', color: '#2E7D32', description: 'History of Bohemian brass guilds and the strike' }
+];
+
+export const INITIAL_RESEARCH_VAULT: ResearchVaultItem[] = [
+  {
+    id: 'vault-1',
+    title: 'Clocktower Escapement Field Recording',
+    type: 'audio',
+    url: 'https://actions.google.com/sounds/v1/clocks/ticking_clock_fast.ogg',
+    description: 'Field audio of a Victorian double-three-legged gravity escapement at 72 bpm cadence.',
+    tags: ['audio', 'clockwork', 'cadence', 'sensory'],
+    notes: 'Listen closely to the reverberation after the pallet strikes the tooth; matches Silas’s heartbeat during Scene 1.',
+    fileSize: '1.4 MB',
+    createdAt: '2026-09-01T08:00:00Z',
+    linkedSceneIds: ['scene-1'],
+    linkedEntityIds: ['ent-1'],
+    transcriptions: [
+      { time: 0, note: 'Initial low gear rumble from pendulum arbor' },
+      { time: 4, note: 'Pallet drop onto deadbeat face - sharp metallic ping' },
+      { time: 10, note: 'Reverberation dies in granite vault' }
+    ]
+  },
+  {
+    id: 'vault-2',
+    title: '1888 Municipal Foundry Metallurgical Assay',
+    type: 'pdf',
+    description: 'Declassified chemical analysis of the arsenic-bronze alloy used in the smuggled sphere.',
+    tags: ['metallurgy', 'clues', 'foundry', 'archive'],
+    notes: 'Shows 4.2% copper arsenide ratio. Proves the sphere could not have originated from local guild kilns.',
+    fileSize: '3.8 MB',
+    createdAt: '2026-09-02T11:30:00Z',
+    linkedSceneIds: ['scene-2', 'scene-3'],
+    linkedEntityIds: ['ent-2', 'ent-4']
+  },
+  {
+    id: 'vault-3',
+    title: 'Lower River Quay 4 Architectural Blueprint',
+    type: 'image',
+    url: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1200&q=80',
+    description: 'Hand-drawn surveyor elevation of the salt wharves, crane hoists, and tidal lock basins.',
+    tags: ['map', 'location', 'docks', 'escape-route'],
+    notes: 'Notice the subterranean sluice gate right beneath Berth 7. Maren uses this escape when watchmen approach.',
+    fileSize: '2.1 MB',
+    createdAt: '2026-09-03T14:15:00Z',
+    linkedSceneIds: ['scene-3'],
+    linkedEntityIds: ['ent-3']
+  },
+  {
+    id: 'vault-4',
+    title: 'Grand Censorate Watch Patrol Schedules',
+    type: 'text-note',
+    description: 'Decrypted courier notebook noting the 3-bell watch change over River Gate bridge.',
+    tags: ['timeline', 'conspiracy', 'stealth'],
+    notes: 'Watch changes at 03:00 and 06:00. Silas has exactly seventeen minutes between rounds to cross the drawbridge.',
+    fileSize: '12 KB',
+    createdAt: '2026-09-04T09:45:00Z',
+    linkedSceneIds: ['scene-1', 'scene-2']
+  }
+];
+
 export const INITIAL_PROJECTS: Project[] = [
   INITIAL_PROJECT,
   NOVELLA_PROJECT,
   SECOND_PROJECT_BUNDLE.project
 ];
+
 

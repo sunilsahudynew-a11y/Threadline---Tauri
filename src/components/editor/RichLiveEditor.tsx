@@ -20,6 +20,7 @@ import {
   Strikethrough
 } from 'lucide-react';
 import { markdownToHtml, htmlToMarkdown } from '../../utils/markdownConverter';
+import { sanitizePastedContent } from '../../utils/pasteSanitizer';
 import { SlashCommandMenu, SlashCommand, SlashMenuPosition } from './SlashCommandMenu';
 import { FloatingSelectionToolbar } from './FloatingSelectionToolbar';
 import {
@@ -27,6 +28,13 @@ import {
   getSlashCharacterRect,
   calculateSlashMenuPosition
 } from '../../utils/typewriterHelper';
+import {
+  EditorLineSpacing,
+  EditorWordSpacing,
+  EditorTextAlign,
+  AVAILABLE_LINE_SPACINGS,
+  AVAILABLE_WORD_SPACINGS
+} from '../../services/theme/themeConfig';
 
 export interface RichEditorHandle {
   applyFormat: (prefix: string, suffix?: string) => void;
@@ -36,11 +44,115 @@ export interface RichEditorHandle {
   flush: () => string;
 }
 
+/**
+ * Converts a markdown slice to its approximate plain text length
+ * so DOM text node offsets match the change position accurately.
+ */
+function markdownToPlainTextLength(md: string): number {
+  return md
+    .replace(/^#+\s+/gm, '')
+    .replace(/^\s*[-*+]\s+/gm, '')
+    .replace(/^\s*\d+\.\s+/gm, '')
+    .replace(/^\s*>\s+/gm, '')
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/\*(.*?)\*/g, '$1')
+    .replace(/~~(.*?)~~/g, '$1')
+    .replace(/==(?:[a-zA-Z0-9_-]+:)?(.*?)==/g, '$1')
+    .replace(/^\*\s*\*\s*\*$/gm, '')
+    .replace(/\r\n/g, '\n')
+    .length;
+}
+
+/**
+ * Accurately positions the selection caret at a specific character offset in the DOM tree
+ * without jumping to the end of the document or causing visual layout glitches.
+ */
+function setCaretAtTextOffset(root: HTMLElement, targetOffset: number) {
+  const sel = window.getSelection();
+  if (!sel) return;
+
+  let currentOffset = 0;
+  let targetNode: Node | null = null;
+  let nodeOffset = 0;
+  let lastTextNode: Text | null = null;
+
+  function walk(node: Node): boolean {
+    if (node.nodeType === Node.TEXT_NODE) {
+      lastTextNode = node as Text;
+      const text = node.textContent || '';
+      const len = text.length;
+      if (currentOffset + len >= targetOffset) {
+        targetNode = node;
+        nodeOffset = Math.max(0, targetOffset - currentOffset);
+        return true;
+      }
+      currentOffset += len;
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+      const el = node as HTMLElement;
+      if (el.tagName === 'BR') {
+        currentOffset += 1;
+        if (currentOffset >= targetOffset) {
+          targetNode = el.parentNode;
+          nodeOffset = Array.prototype.indexOf.call(el.parentNode?.childNodes || [], el);
+          return true;
+        }
+      } else {
+        const isBlock = /^(P|DIV|H1|H2|H3|BLOCKQUOTE|LI|HR)$/i.test(el.tagName);
+        for (let i = 0; i < el.childNodes.length; i++) {
+          if (walk(el.childNodes[i])) return true;
+        }
+        if (isBlock) {
+          currentOffset += 1;
+          if (currentOffset >= targetOffset && !targetNode) {
+            targetNode = el;
+            nodeOffset = el.childNodes.length;
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  walk(root);
+
+  try {
+    const range = document.createRange();
+    if (targetNode) {
+      if (targetNode.nodeType === Node.TEXT_NODE) {
+        const maxLen = (targetNode as Text).length || 0;
+        range.setStart(targetNode, Math.min(nodeOffset, maxLen));
+        range.collapse(true);
+      } else {
+        range.setStart(targetNode, Math.min(nodeOffset, targetNode.childNodes.length));
+        range.collapse(true);
+      }
+    } else if (lastTextNode) {
+      // If target offset exceeded, place caret cleanly at end of last text node
+      // NEVER select entire document contents!
+      range.setStart(lastTextNode, lastTextNode.length);
+      range.collapse(true);
+    } else {
+      // Empty editor fallback: place in first child
+      const targetChild = root.firstChild || root;
+      range.setStart(targetChild, 0);
+      range.collapse(true);
+    }
+    sel.removeAllRanges();
+    sel.addRange(range);
+  } catch {
+    // Graceful fallback
+  }
+}
+
 interface RichLiveEditorProps {
   initialMarkdown: string;
   sceneId: string;
   fontFamily: 'serif' | 'sans' | 'mono';
   fontSize: 'compact' | 'normal' | 'large';
+  lineSpacing?: EditorLineSpacing;
+  wordSpacing?: EditorWordSpacing;
+  textAlign?: EditorTextAlign;
   typewriterMode?: boolean;
   scrollContainerRef: React.RefObject<HTMLDivElement | null>;
   onChangeMarkdown: (markdown: string, prevMarkdown?: string) => void;
@@ -60,6 +172,9 @@ export const RichLiveEditor = forwardRef<RichEditorHandle, RichLiveEditorProps>(
       sceneId,
       fontFamily,
       fontSize,
+      lineSpacing = 'normal',
+      wordSpacing = 'normal',
+      textAlign = 'left',
       typewriterMode = false,
       scrollContainerRef,
       onChangeMarkdown,
@@ -95,18 +210,71 @@ export const RichLiveEditor = forwardRef<RichEditorHandle, RichLiveEditorProps>(
       const isMount = lastSavedMarkdownRef.current === null;
       const isSceneChange = currentSceneIdRef.current !== sceneId;
       const isExternalChange = !isMount && !isSceneChange && initialMarkdown !== lastSavedMarkdownRef.current;
-      const isFocused = editorRef.current ? editorRef.current.contains(document.activeElement) : false;
 
-      // When the user is actively typing/focused inside this editor, do NOT blast innerHTML unless it's a scene change
-      if (isMount || isSceneChange || (isExternalChange && !isFocused)) {
+      if (isMount || isSceneChange || isExternalChange) {
+        // Save current scroll position prior to HTML update to prevent scroll jump or layout glitch
+        const container = scrollContainerRef?.current;
+        const prevScrollTop = container ? container.scrollTop : 0;
+        const prevScrollLeft = container ? container.scrollLeft : 0;
+        const prevMd = lastSavedMarkdownRef.current || '';
+        const newMd = initialMarkdown;
+
         editorRef.current.innerHTML = markdownToHtml(initialMarkdown);
         lastSavedMarkdownRef.current = initialMarkdown;
         currentSceneIdRef.current = sceneId;
-      } else if (isExternalChange && isFocused) {
-        // Just track the latest initialMarkdown if it differs so we don't desync
-        lastSavedMarkdownRef.current = initialMarkdown;
+
+        // Reposition caret and maintain view stability on external change (Undo/Redo/Paste/AI)
+        if (isExternalChange) {
+          let commonPrefix = 0;
+          while (
+            commonPrefix < prevMd.length &&
+            commonPrefix < newMd.length &&
+            prevMd[commonPrefix] === newMd[commonPrefix]
+          ) {
+            commonPrefix++;
+          }
+
+          // Compute raw markdown index where caret belongs:
+          // If text shrank (Undo removed word), place caret at commonPrefix
+          // If text grew (Redo restored word), place caret at end of restored word
+          const targetMdIndex =
+            newMd.length < prevMd.length
+              ? commonPrefix
+              : commonPrefix + (newMd.length - prevMd.length);
+
+          const targetPlainOffset = markdownToPlainTextLength(newMd.slice(0, targetMdIndex));
+
+          setCaretAtTextOffset(editorRef.current, targetPlainOffset);
+
+          // Lock scroll container position immediately to eliminate UI glitch
+          if (container) {
+            container.scrollTop = prevScrollTop;
+            container.scrollLeft = prevScrollLeft;
+          }
+
+          // Ensure editor keeps focus without triggering native scroll jumps
+          editorRef.current.focus({ preventScroll: true });
+
+          // Re-affirm scroll position after focus
+          if (container) {
+            container.scrollTop = prevScrollTop;
+            container.scrollLeft = prevScrollLeft;
+          }
+
+          // Lock position across subsequent paint frame
+          requestAnimationFrame(() => {
+            if (container && Math.abs(container.scrollTop - prevScrollTop) > 1) {
+              container.scrollTop = prevScrollTop;
+              container.scrollLeft = prevScrollLeft;
+            }
+          });
+
+          // Dismiss selection popups
+          setSelectionText('');
+          setSelectionPos(undefined);
+        }
       }
-    }, [initialMarkdown, sceneId]);
+    }, [initialMarkdown, sceneId, scrollContainerRef]);
 
     // Convert HTML to markdown and trigger parent update with previous markdown for history grouping
     const syncToMarkdown = useCallback(() => {
@@ -123,18 +291,13 @@ export const RichLiveEditor = forwardRef<RichEditorHandle, RichLiveEditorProps>(
     // Imperative handle for parent formatting controls and instant content flush
     useImperativeHandle(ref, () => ({
       focus: () => {
-        editorRef.current?.focus();
+        editorRef.current?.focus({ preventScroll: true });
       },
       flush: () => {
         if (!editorRef.current) return lastSavedMarkdownRef.current || '';
         const html = editorRef.current.innerHTML;
         const md = htmlToMarkdown(html);
-        if (md !== lastSavedMarkdownRef.current) {
-          const prev = lastSavedMarkdownRef.current ?? '';
-          lastSavedMarkdownRef.current = md;
-          onChangeMarkdown(md, prev);
-        }
-        return md;
+        return md || lastSavedMarkdownRef.current || '';
       },
       applyFormat: (prefix: string, suffix = prefix) => {
         if (pushSnapshot) {
@@ -742,6 +905,83 @@ export const RichLiveEditor = forwardRef<RichEditorHandle, RichLiveEditorProps>(
       updateSlashState();
     };
 
+    // Capture browser native undo/redo (e.g. from browser Edit menu or OS shortcuts) to route to unified undo stack
+    const handleBeforeInput = (e: React.FormEvent<HTMLDivElement>) => {
+      const inputEvent = e.nativeEvent as InputEvent;
+      if (inputEvent && inputEvent.inputType === 'historyUndo') {
+        e.preventDefault();
+        if (onUndo) onUndo();
+      } else if (inputEvent && inputEvent.inputType === 'historyRedo') {
+        e.preventDefault();
+        if (onRedo) onRedo();
+      }
+    };
+
+    // Handle paste events: strip foreign fonts, font sizes, colors, and layout styles
+    const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+      e.preventDefault();
+
+      if (pushSnapshot) {
+        pushSnapshot(lastSavedMarkdownRef.current ?? '');
+      }
+
+      const clipboardData = e.clipboardData;
+      if (!clipboardData) return;
+
+      const rawHtml = clipboardData.getData('text/html');
+      const rawText = clipboardData.getData('text/plain');
+
+      const { cleanHtml, isInline } = sanitizePastedContent(rawHtml, rawText);
+
+      editorRef.current?.focus();
+
+      let inserted = false;
+      if (cleanHtml) {
+        try {
+          inserted = document.execCommand('insertHTML', false, cleanHtml);
+        } catch {
+          inserted = false;
+        }
+      }
+
+      // Fallback if insertHTML was unsupported in current context
+      if (!inserted) {
+        if (isInline && rawText) {
+          try {
+            inserted = document.execCommand('insertText', false, rawText);
+          } catch {
+            inserted = false;
+          }
+        }
+
+        if (!inserted && cleanHtml) {
+          const sel = window.getSelection();
+          if (sel && sel.rangeCount > 0) {
+            const range = sel.getRangeAt(0);
+            range.deleteContents();
+            const temp = document.createElement('div');
+            temp.innerHTML = cleanHtml;
+            const frag = document.createDocumentFragment();
+            let child: ChildNode | null;
+            let lastNode: ChildNode | null = null;
+            while ((child = temp.firstChild)) {
+              lastNode = frag.appendChild(child);
+            }
+            range.insertNode(frag);
+            if (lastNode) {
+              range.setStartAfter(lastNode);
+              range.collapse(true);
+              sel.removeAllRanges();
+              sel.addRange(range);
+            }
+          }
+        }
+      }
+
+      syncToMarkdown();
+      updateSlashState();
+    };
+
     // Handle text selection for floating toolbar
     const handleSelectionChange = () => {
       const sel = window.getSelection();
@@ -886,25 +1126,42 @@ export const RichLiveEditor = forwardRef<RichEditorHandle, RichLiveEditorProps>(
         )}
 
         {/* The Live Formatted Markdown ContentEditable Surface */}
-        <div
-          ref={editorRef}
-          contentEditable
-          suppressContentEditableWarning
-          onInput={handleInput}
-          onKeyDown={handleKeyDown}
-          onBlur={syncToMarkdown}
-          onCompositionStart={() => {
-            isComposingRef.current = true;
-          }}
-          onCompositionEnd={() => {
-            isComposingRef.current = false;
-            syncToMarkdown();
-          }}
-          className={`editor-rich-surface w-full bg-transparent focus:outline-none text-[#33312D] ${fontClass} ${sizeClass}`}
-          role="textbox"
-          aria-multiline="true"
-          aria-label="Scene prose editor"
-        />
+        {(() => {
+          const lineConfig = AVAILABLE_LINE_SPACINGS.find((l) => l.id === lineSpacing) || AVAILABLE_LINE_SPACINGS[1];
+          const wordConfig = AVAILABLE_WORD_SPACINGS.find((w) => w.id === wordSpacing) || AVAILABLE_WORD_SPACINGS[0];
+
+          return (
+            <div
+              ref={editorRef}
+              contentEditable
+              suppressContentEditableWarning
+              onBeforeInput={handleBeforeInput}
+              onInput={handleInput}
+              onPaste={handlePaste}
+              onKeyDown={handleKeyDown}
+              onBlur={syncToMarkdown}
+              onCompositionStart={() => {
+                isComposingRef.current = true;
+              }}
+              onCompositionEnd={() => {
+                isComposingRef.current = false;
+                syncToMarkdown();
+              }}
+              data-align={textAlign}
+              style={{
+                lineHeight: lineConfig.cssValue,
+                wordSpacing: wordConfig.cssValue,
+                textAlign: textAlign === 'justify' ? 'justify' : 'left'
+              }}
+              className={`editor-rich-surface w-full min-w-0 max-w-full overflow-hidden bg-transparent focus:outline-none text-[#33312D] ${fontClass} ${sizeClass} ${
+                textAlign === 'justify' ? 'text-justify' : 'text-left'
+              }`}
+              role="textbox"
+              aria-multiline="true"
+              aria-label="Scene prose editor"
+            />
+          );
+        })()}
       </div>
     );
   }

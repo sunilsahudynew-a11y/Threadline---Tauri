@@ -54,6 +54,9 @@ import { EditorialSceneNavigator } from './EditorialSceneNavigator';
 import { EditorialLetterModal } from './EditorialLetterModal';
 import { MergeManuscriptModal } from './MergeManuscriptModal';
 import { EditorialExportModal } from './EditorialExportModal';
+import { LineEditLensPanel } from '../editor/LineEditLensPanel';
+import { LineEditColorCode } from '../../types';
+import { extractLineEditsFromMarkdown } from '../../utils/lineEditConstants';
 
 export type EditorialViewMode = 'markup' | 'clean' | 'draft' | 'split';
 
@@ -166,8 +169,27 @@ export const EditorialDeskScreen: React.FC<EditorialDeskScreenProps> = ({
   // View state: 'markup' (redlines), 'clean' (final reading), 'draft' (baseline), 'split' (side-by-side)
   const [viewMode, setViewMode] = useState<EditorialViewMode>('markup');
 
-  // Active right-side inspector tab: 'queries' | 'stylesheet' | 'passes'
-  const [activeInspectorTab, setActiveInspectorTab] = useState<'queries' | 'stylesheet' | 'passes'>('queries');
+  // Active right-side inspector tab: 'queries' | 'stylesheet' | 'passes' | 'line-edits'
+  const [activeInspectorTab, setActiveInspectorTab] = useState<'queries' | 'stylesheet' | 'passes' | 'line-edits'>('line-edits');
+
+  // Total line edits count in active scene
+  const activeSceneLineEdits = useMemo(() => {
+    return extractLineEditsFromMarkdown(activeScene.proseContent || '', activeScene.id, activeScene.title);
+  }, [activeScene.proseContent, activeScene.id, activeScene.title]);
+
+  const handleRemoveSceneHighlight = (targetText: string) => {
+    const escaped = targetText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`==([a-z0-9_-]+):(${escaped})==|==(${escaped})==`, 'gi');
+    const updated = (activeScene.proseContent || '').replace(regex, targetText);
+    onUpdateScene(activeScene.id, { proseContent: updated });
+  };
+
+  const handleChangeSceneHighlightColor = (targetText: string, newColor: LineEditColorCode) => {
+    const escaped = targetText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`==([a-z0-9_-]+):(${escaped})==|==(${escaped})==`, 'gi');
+    const updated = (activeScene.proseContent || '').replace(regex, `==${newColor}:${targetText}==`);
+    onUpdateScene(activeScene.id, { proseContent: updated });
+  };
 
   // Queries filter state
   const [queryCategoryFilter, setQueryCategoryFilter] = useState<string>('all');
@@ -693,17 +715,22 @@ export const EditorialDeskScreen: React.FC<EditorialDeskScreenProps> = ({
             {/* Scene Header */}
             <div className="border-b border-[rgba(34,30,24,0.1)] pb-3 flex items-start justify-between gap-4">
               <div>
-                <span className="text-[11px] font-mono uppercase tracking-wider text-[#7A705F]">
-                  {activeScene.actOrPhase || 'Act I'} · {activeScene.narrativeBeat || 'Beat'}
-                </span>
-                <h2 className="text-2xl sm:text-3xl font-serif font-bold text-[#221E18] mt-0.5">
+                <h2 className="text-2xl sm:text-3xl font-serif font-bold text-[#221E18]">
                   {activeScene.title}
                 </h2>
-                {activeScene.premise && (
-                  <p className="text-xs sm:text-sm text-[#7A705F] italic mt-1 font-serif">
-                    {activeScene.premise}
-                  </p>
-                )}
+                <div className="flex flex-wrap items-center gap-2 mt-1">
+                  <span className="text-[12px] font-sans font-medium text-[#7A705F]">
+                    {activeScene.actOrPhase || 'Act I'} · {activeScene.narrativeBeat || 'Beat'}
+                  </span>
+                  {activeScene.premise && (
+                    <>
+                      <span className="text-[#7A705F]/40">·</span>
+                      <p className="text-xs sm:text-sm text-[#7A705F] italic font-serif inline">
+                        {activeScene.premise}
+                      </p>
+                    </>
+                  )}
+                </div>
               </div>
 
               {/* Leave Query Button */}
@@ -905,43 +932,75 @@ export const EditorialDeskScreen: React.FC<EditorialDeskScreenProps> = ({
         {/* C. RIGHT: EDITORIAL INSPECTOR (QUERIES, STYLE SHEET, PASSES) */}
         <div className="w-full lg:w-96 border-t lg:border-t-0 lg:border-l border-[rgba(34,30,24,0.12)] bg-[#F1EAD9] flex flex-col shrink-0">
           {/* Tabs */}
-          <div className="flex items-center border-b border-[rgba(34,30,24,0.1)] bg-[#FAF6EE] p-1 gap-1 text-xs">
+          <div className="flex items-center border-b border-[rgba(34,30,24,0.1)] bg-[#FAF6EE] p-1 gap-1 text-xs overflow-x-auto no-scrollbar">
+            <button
+              onClick={() => setActiveInspectorTab('line-edits')}
+              className={`flex-1 py-1.5 px-2 rounded-[4px] font-medium transition-colors cursor-pointer flex items-center justify-center gap-1 shrink-0 ${
+                activeInspectorTab === 'line-edits'
+                  ? 'bg-[#221E18] text-[#FAF6EE] font-semibold shadow-2xs'
+                  : 'text-[#7A705F] hover:text-[#221E18]'
+              }`}
+            >
+              <Sparkles size={12} className={activeInspectorTab === 'line-edits' ? 'text-amber-300' : ''} />
+              <span>Line Edits ({activeSceneLineEdits.length})</span>
+            </button>
+
             <button
               onClick={() => setActiveInspectorTab('queries')}
-              className={`flex-1 py-1.5 px-2 rounded-[4px] font-medium transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
+              className={`flex-1 py-1.5 px-2 rounded-[4px] font-medium transition-colors cursor-pointer flex items-center justify-center gap-1 shrink-0 ${
                 activeInspectorTab === 'queries'
                   ? 'bg-[#221E18] text-[#FAF6EE] font-semibold shadow-2xs'
                   : 'text-[#7A705F] hover:text-[#221E18]'
               }`}
             >
-              <MessageSquare size={13} />
+              <MessageSquare size={12} />
               <span>Queries ({openQueriesCount})</span>
             </button>
 
             <button
               onClick={() => setActiveInspectorTab('stylesheet')}
-              className={`flex-1 py-1.5 px-2 rounded-[4px] font-medium transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
+              className={`flex-1 py-1.5 px-2 rounded-[4px] font-medium transition-colors cursor-pointer flex items-center justify-center gap-1 shrink-0 ${
                 activeInspectorTab === 'stylesheet'
                   ? 'bg-[#221E18] text-[#FAF6EE] font-semibold shadow-2xs'
                   : 'text-[#7A705F] hover:text-[#221E18]'
               }`}
             >
-              <BookOpen size={13} />
-              <span>Style Sheet</span>
+              <BookOpen size={12} />
+              <span>Style</span>
             </button>
 
             <button
               onClick={() => setActiveInspectorTab('passes')}
-              className={`flex-1 py-1.5 px-2 rounded-[4px] font-medium transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
+              className={`flex-1 py-1.5 px-2 rounded-[4px] font-medium transition-colors cursor-pointer flex items-center justify-center gap-1 shrink-0 ${
                 activeInspectorTab === 'passes'
                   ? 'bg-[#221E18] text-[#FAF6EE] font-semibold shadow-2xs'
                   : 'text-[#7A705F] hover:text-[#221E18]'
               }`}
             >
-              <Sliders size={13} />
+              <Sliders size={12} />
               <span>Passes</span>
             </button>
           </div>
+
+          {/* TAB 0: LINE EDITING LENS & COLOR CODES */}
+          {activeInspectorTab === 'line-edits' && (
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <LineEditLensPanel
+                markdown={activeScene.proseContent || ''}
+                sceneId={activeScene.id}
+                sceneTitle={activeScene.title}
+                onRemoveHighlight={handleRemoveSceneHighlight}
+                onChangeHighlightColor={handleChangeSceneHighlightColor}
+                onAddCommentFromHighlight={(text, cat) => {
+                  setNewQueryExcerpt(text);
+                  setNewQueryCategory(cat.toLowerCase().includes('query') ? 'author-query' : 'line-edit');
+                  setNewQueryText(`[${cat}]: `);
+                  setIsAddingQuery(true);
+                  setActiveInspectorTab('queries');
+                }}
+              />
+            </div>
+          )}
 
           {/* TAB 1: EDITORIAL QUERIES & MARGINALIA */}
           {activeInspectorTab === 'queries' && (

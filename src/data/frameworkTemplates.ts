@@ -10,7 +10,8 @@ import {
   RevisionPass,
   NoteItem,
   ProjectType,
-  WritingFramework
+  WritingFramework,
+  ScreenplayRevisionColor
 } from '../types';
 
 export interface FrameworkDefinition {
@@ -150,6 +151,7 @@ function createThreeActBundle(
     id: projId,
     title,
     type,
+    projectType: (type === 'Screenplay' || type === 'Screenplay Experiment') ? 'screenplay' : 'novel',
     protagonist,
     situation,
     genre: config.genre || 'Dramatic Fiction',
@@ -468,6 +470,14 @@ Yet underneath the silence, an uneasy vibration hummed. ${situation}`
     }
   ];
 
+  const isScreenplay = type === 'Screenplay' || type === 'Screenplay Experiment';
+  const processedScenes: Scene[] = scenes.map((s, idx) => ({
+    ...s,
+    editorMode: (isScreenplay ? 'screenplay' : 'prose') as 'prose' | 'screenplay',
+    sceneNumber: String(idx + 1),
+    revisionColor: 'white' as ScreenplayRevisionColor
+  }));
+
   const threads: Thread[] = [
     {
       id: 'th-main-plot',
@@ -624,7 +634,7 @@ Yet underneath the silence, an uneasy vibration hummed. ${situation}`
   return {
     project,
     chapters,
-    scenes,
+    scenes: processedScenes,
     activeSceneId: scene1Id,
     entities,
     threads,
@@ -655,6 +665,7 @@ function createSaveTheCatBundle(
     id: projId,
     title,
     type,
+    projectType: (type === 'Screenplay' || type === 'Screenplay Experiment') ? 'screenplay' : 'novel',
     protagonist,
     situation,
     genre: config.genre || 'Commercial Fiction',
@@ -810,7 +821,8 @@ The sudden sound arrived like a stone through glass: ${situation}`
     { order: 15, name: '15. Final Image', desc: 'The visual opposite of the Opening Image. Concrete proof that permanent change has taken root.', id: 'scene-stc-15', prose: '', chapterId: 'chap-stc-14', chapterNum: 14, chapterTitle: 'The Final Image & Transformed World', act: 'Act 3: Synthesis World' }
   ];
 
-  const scenes: Scene[] = stcBeats.map((b) => ({
+  const isScreenplay = type === 'Screenplay' || type === 'Screenplay Experiment';
+  const scenes: Scene[] = stcBeats.map((b, idx) => ({
     id: b.id,
     title: `Beat ${b.name}`,
     order: b.order,
@@ -828,7 +840,10 @@ The sudden sound arrived like a stone through glass: ${situation}`
     wordCount: b.prose ? b.prose.trim().split(/\s+/).length : 0,
     notes: `Save the Cat! guideline: ${b.desc}`,
     proseContent: b.prose,
-    comments: []
+    comments: [],
+    editorMode: (isScreenplay ? 'screenplay' : 'prose') as 'prose' | 'screenplay',
+    sceneNumber: String(idx + 1),
+    revisionColor: 'white' as ScreenplayRevisionColor
   }));
 
   const threads: Thread[] = [
@@ -997,6 +1012,7 @@ function createHerosJourneyBundle(
     id: projId,
     title,
     type,
+    projectType: (type === 'Screenplay' || type === 'Screenplay Experiment') ? 'screenplay' : 'novel',
     protagonist,
     situation,
     genre: config.genre || 'Mythic Adventure / Speculative Saga',
@@ -1125,7 +1141,8 @@ Then, across the frontier, came the sign: ${situation}`
     { order: 12, name: '12. Return with the Elixir', desc: 'Returning to the Ordinary World transformed, bearing the healing wisdom or power that regenerates society.', id: 'scene-hero-12', prose: '', chapterId: 'chap-hero-11', chapterNum: 11, chapterTitle: 'Return with the Elixir', act: 'Return & Transformation' }
   ];
 
-  const scenes: Scene[] = heroStages.map((s) => ({
+  const isScreenplay = type === 'Screenplay' || type === 'Screenplay Experiment';
+  const scenes: Scene[] = heroStages.map((s, idx) => ({
     id: s.id,
     title: `Stage ${s.name}`,
     order: s.order,
@@ -1143,7 +1160,10 @@ Then, across the frontier, came the sign: ${situation}`
     wordCount: s.prose ? s.prose.trim().split(/\s+/).length : 0,
     notes: `Hero’s Journey archetypal note: ${s.desc}`,
     proseContent: s.prose,
-    comments: []
+    comments: [],
+    editorMode: (isScreenplay ? 'screenplay' : 'prose') as 'prose' | 'screenplay',
+    sceneNumber: String(idx + 1),
+    revisionColor: 'white' as ScreenplayRevisionColor
   }));
 
   const threads: Thread[] = [
@@ -1313,6 +1333,7 @@ function createStoryCircleBundle(
     id: projId,
     title,
     type,
+    projectType: (type === 'Screenplay' || type === 'Screenplay Experiment') ? 'screenplay' : 'novel',
     protagonist,
     situation,
     genre: config.genre || 'Modern Speculative / Character Drama',
@@ -1413,7 +1434,8 @@ And then, the crack in the floorboards appeared: ${situation}`
     { order: 8, name: '8. CHANGE (Transformed State)', desc: 'Back where they began, but fundamentally altered—master of both the old world and the new.', id: 'scene-circle-8', prose: '', chapterId: 'chap-circle-8', chapterNum: 8, chapterTitle: 'CHANGE — Master of Both Worlds', act: 'Top Hemisphere: Order' }
   ];
 
-  const scenes: Scene[] = circleSteps.map((c) => ({
+  const isScreenplay = type === 'Screenplay' || type === 'Screenplay Experiment';
+  const scenes: Scene[] = circleSteps.map((c, idx) => ({
     id: c.id,
     title: `Step ${c.name}`,
     order: c.order,
@@ -1431,7 +1453,10 @@ And then, the crack in the floorboards appeared: ${situation}`
     wordCount: c.prose ? c.prose.trim().split(/\s+/).length : 0,
     notes: `Dan Harmon Story Circle step: ${c.desc}`,
     proseContent: c.prose,
-    comments: []
+    comments: [],
+    editorMode: (isScreenplay ? 'screenplay' : 'prose') as 'prose' | 'screenplay',
+    sceneNumber: String(idx + 1),
+    revisionColor: 'white' as ScreenplayRevisionColor
   }));
 
   const threads: Thread[] = [

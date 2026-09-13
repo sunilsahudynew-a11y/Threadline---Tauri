@@ -16,6 +16,7 @@ import {
   PanelLeftOpen
 } from 'lucide-react';
 import { Scene, Chapter } from '../../types';
+import { getScenesForChapter } from '../../utils/chapterUtils';
 
 interface EditorialSceneNavigatorProps {
   scenes: Scene[];
@@ -189,12 +190,7 @@ export const EditorialSceneNavigator: React.FC<EditorialSceneNavigatorProps> = (
       <div className="flex-1 overflow-y-auto p-2 space-y-2 no-scrollbar">
         {chapters.length > 0 ? (
           chapters.map((chap) => {
-            const chapScenes = filteredScenes.filter(
-              (s) =>
-                s.chapterId === chap.id ||
-                chap.sceneIds.includes(s.id) ||
-                s.chapterNumber === chap.number
-            );
+            const chapScenes = getScenesForChapter(filteredScenes, chap);
 
             if (chapScenes.length === 0 && searchQuery) return null;
 

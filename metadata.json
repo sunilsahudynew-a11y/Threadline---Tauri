@@ -1,6 +1,6 @@
 {
   "name": "Threadline",
-  "description": "Narrative studio & novelist workspace. Keep the story connected. Keep the voice yours.",
+  "description": "Narrative studio & dual novel/screenplay workspace featuring prose binder and industry-standard script studio with Fountain and FDX export.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -1,24 +1,28 @@
 import { jsPDF } from 'jspdf';
 import { Project, Scene, Chapter } from '../../types';
-import { ensureChapters, getScenesForChapter } from '../../utils/chapterUtils';
+import {
+  calculateBookLayout,
+  BookPdfOptions,
+  DEFAULT_BOOK_PDF_OPTIONS,
+  TypesetBookModel
+} from './bookTypesetter';
 
-export interface BookPdfOptions {
-  pageSize: 'trade' | 'a5' | 'letter';
-  fontStyle: 'times' | 'helvetica' | 'courier';
-  includeTableOfContents: boolean;
-  includeSceneTitles: boolean;
-  includeCoverPage: boolean;
-  authorName?: string;
-}
-
-export const DEFAULT_BOOK_PDF_OPTIONS: BookPdfOptions = {
-  pageSize: 'trade',
-  fontStyle: 'times',
-  includeTableOfContents: true,
-  includeSceneTitles: false, // Novels typically use scene breaks rather than scene subheadings
-  includeCoverPage: true,
-  authorName: ''
-};
+export { DEFAULT_BOOK_PDF_OPTIONS } from './bookTypesetter';
+export type {
+  BookPdfOptions,
+  TrimSize,
+  BookFontChoice,
+  ChapterStyle,
+  SceneBreakOrnament,
+  NumberingPlacement,
+  RunningHeaderStyle,
+  LineSpacingChoice,
+  FontSizeChoice,
+  MarginChoice,
+  TypesetBookModel,
+  TypesetPage,
+  TypesetBlock
+} from './bookTypesetter';
 
 export async function generateBookPdf(
   project: Project,
@@ -26,324 +30,353 @@ export async function generateBookPdf(
   chapters?: Chapter[],
   options: Partial<BookPdfOptions> = {}
 ): Promise<jsPDF> {
-  const opts: BookPdfOptions = { ...DEFAULT_BOOK_PDF_OPTIONS, ...options };
-  const effectiveChapters = ensureChapters(scenes, chapters);
-
-  // Determine dimensions in points (72 points = 1 inch)
-  // Trade 6"x9" = 432 x 648 pt
-  let format: [number, number] | string = [432, 648];
-  if (opts.pageSize === 'a5') {
-    format = 'a5';
-  } else if (opts.pageSize === 'letter') {
-    format = 'letter';
-  }
+  const book = calculateBookLayout(project, scenes, chapters, options);
+  const { widthPt, heightPt, marginX, marginTop, marginBottom, contentWidth, gutterPt } = book.dimensions;
+  const opts = book.options;
 
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'pt',
-    format
+    format: [widthPt, heightPt]
   });
-
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
-
-  // Margins
-  const marginX = 46;
-  const marginTop = 50;
-  const marginBottom = 50;
-  const contentWidth = pageWidth - marginX * 2;
-  const contentHeight = pageHeight - marginTop - marginBottom;
 
   const font = opts.fontStyle;
   const primaryInk = '#1A1815';
-  const mutedInk = '#635D52';
+  const mutedInk = '#5C5549';
   const accentInk = '#9C3A24';
+  const lineInk = '#D4CEBF';
 
-  const chapterStartPages: number[] = [];
-  const tocEntries: { title: string; number: number; page: number }[] = [];
-
-  let currentPageNumber = 1;
-
-  // Helper: Draw decorative threadline knot/arc
-  const drawOrnament = (y: number, text = '•   ✦   •') => {
+  // Helper to draw ornament
+  const drawOrnament = (text: string, y: number, x = widthPt / 2) => {
+    if (!text) return;
     doc.setFont(font, 'normal');
     doc.setFontSize(10);
     doc.setTextColor(accentInk);
-    doc.text(text, pageWidth / 2, y, { align: 'center' });
+    doc.text(text, x, y, { align: 'center' });
   };
 
-  // 1. COVER / TITLE PAGE
-  if (opts.includeCoverPage) {
-    doc.setTextColor(primaryInk);
-    
-    // Top spacing
-    const titleY = pageHeight * 0.35;
-    
-    // Project Title
-    doc.setFont(font, 'bold');
-    doc.setFontSize(26);
-    const titleLines = doc.splitTextToSize(project.title.toUpperCase(), contentWidth);
-    doc.text(titleLines, pageWidth / 2, titleY, { align: 'center' });
-
-    // Decorative line
-    const titleHeight = titleLines.length * 30;
-    doc.setDrawColor(180, 75, 50);
-    doc.setLineWidth(1.2);
-    doc.line(pageWidth / 2 - 40, titleY + titleHeight + 10, pageWidth / 2 + 40, titleY + titleHeight + 10);
-
-    // Subtitle / Project Type
-    doc.setFont(font, 'italic');
-    doc.setFontSize(12);
-    doc.setTextColor(mutedInk);
-    const subtitle = project.type ? `A ${project.type}` : 'A Novel Manuscript';
-    doc.text(subtitle, pageWidth / 2, titleY + titleHeight + 32, { align: 'center' });
-
-    // Author
-    if (opts.authorName) {
-      doc.setFont(font, 'normal');
-      doc.setFontSize(13);
-      doc.setTextColor(primaryInk);
-      doc.text(`BY ${opts.authorName.toUpperCase()}`, pageWidth / 2, titleY + titleHeight + 64, { align: 'center' });
+  book.pages.forEach((page, pageIdx) => {
+    if (pageIdx > 0) {
+      doc.addPage([widthPt, heightPt], 'portrait');
     }
 
-    // Genre / Premise metadata (bottom)
-    if (project.genre) {
+    const isRecto = page.isRecto;
+    // Binding gutter shifts: odd (recto) shifts right, even (verso) shifts left
+    const leftMargin = marginX + (isRecto ? gutterPt : 0);
+    const rightMargin = widthPt - marginX - (!isRecto ? gutterPt : 0);
+    const printableWidth = rightMargin - leftMargin;
+
+    // RUNNING HEADER (Chicago Manual: suppress on Cover, Copyright, Dedication, TOC, Chapter Openers)
+    if (page.type === 'body' && page.headerText && opts.runningHeaders !== 'none') {
+      doc.setFont(font, 'italic');
+      doc.setFontSize(8.5);
+      doc.setTextColor(mutedInk);
+      doc.text(page.headerText, widthPt / 2, marginTop - 16, { align: 'center' });
+
+      if (opts.headerDividerRule) {
+        doc.setDrawColor(210, 204, 192);
+        doc.setLineWidth(0.5);
+        doc.line(leftMargin, marginTop - 10, rightMargin, marginTop - 10);
+      }
+    }
+
+    // RUNNING FOOTER / PAGE NUMBER
+    if (
+      opts.pageNumberPlacement !== 'none' &&
+      page.type !== 'cover' &&
+      page.type !== 'copyright'
+    ) {
       doc.setFont(font, 'normal');
       doc.setFontSize(9);
-      doc.setTextColor(mutedInk);
-      doc.text(project.genre.toUpperCase(), pageWidth / 2, pageHeight - 90, { align: 'center' });
-    }
-
-    doc.setFont(font, 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor('#8A8070');
-    doc.text('COMPOSED IN THREADLINE MANUSCRIPT STUDIO', pageWidth / 2, pageHeight - 65, { align: 'center' });
-
-    doc.addPage();
-    currentPageNumber++;
-  }
-
-  // 2. TABLE OF CONTENTS PLACEHOLDER (if selected, we'll record page index)
-  let tocPageIndex = -1;
-  if (opts.includeTableOfContents) {
-    tocPageIndex = doc.getNumberOfPages();
-    chapterStartPages.push(tocPageIndex);
-    // Leave blank for now, populate at the end after all page numbers are known!
-    doc.addPage();
-    currentPageNumber++;
-  }
-
-  // 3. CHAPTERS & PROSE CONTENT
-  effectiveChapters.forEach((chap, chapIdx) => {
-    // Each chapter opens on a clean fresh page
-    if (doc.getNumberOfPages() > 0 && !(chapIdx === 0 && !opts.includeCoverPage && !opts.includeTableOfContents)) {
-      // If we are not at start of doc
-    }
-
-    const currentDocPage = doc.getNumberOfPages();
-    chapterStartPages.push(currentDocPage);
-    tocEntries.push({
-      number: chap.number,
-      title: chap.title,
-      page: currentDocPage
-    });
-
-    let cursorY = marginTop + 40;
-
-    // Chapter Header (Classic book layout: Chapter numeral, then title)
-    doc.setFont(font, 'normal');
-    doc.setFontSize(11);
-    doc.setTextColor(accentInk);
-    doc.text(`C H A P T E R   ${chap.number}`, pageWidth / 2, cursorY, { align: 'center' });
-    cursorY += 22;
-
-    doc.setFont(font, 'bold');
-    doc.setFontSize(18);
-    doc.setTextColor(primaryInk);
-    const chapTitleLines = doc.splitTextToSize(chap.title, contentWidth);
-    doc.text(chapTitleLines, pageWidth / 2, cursorY, { align: 'center' });
-    cursorY += chapTitleLines.length * 20 + 8;
-
-    if (chap.actOrPhase) {
-      doc.setFont(font, 'italic');
-      doc.setFontSize(10);
-      doc.setTextColor(mutedInk);
-      doc.text(chap.actOrPhase, pageWidth / 2, cursorY, { align: 'center' });
-      cursorY += 16;
-    }
-
-    // Small ornament below chapter heading
-    drawOrnament(cursorY, '✦');
-    cursorY += 32;
-
-    // Get scenes for this chapter
-    const chapScenes = getScenesForChapter(scenes, chap);
-
-    chapScenes.forEach((s, sIdx) => {
-      // Optional Scene Title
-      if (opts.includeSceneTitles) {
-        if (cursorY > pageHeight - marginBottom - 60) {
-          doc.addPage();
-          cursorY = marginTop + 20;
-        }
-        doc.setFont(font, 'bold');
-        doc.setFontSize(12);
-        doc.setTextColor(primaryInk);
-        doc.text(s.title, marginX, cursorY);
-        cursorY += 18;
-      } else if (sIdx > 0) {
-        // Scene break ornament between scenes
-        if (cursorY > pageHeight - marginBottom - 50) {
-          doc.addPage();
-          cursorY = marginTop + 20;
-        } else {
-          cursorY += 10;
-          drawOrnament(cursorY, '*   *   *');
-          cursorY += 24;
-        }
-      }
-
-      // Prose paragraphs
-      const rawText = s.proseContent || '';
-      const paragraphs = rawText
-        .split(/\n\s*\n/)
-        .map((p) => p.trim())
-        .filter((p) => p.length > 0);
-
-      paragraphs.forEach((paragraph, pIdx) => {
-        // Check if paragraph is an explicit markdown divider (e.g. * * * or ---)
-        if (/^(\*|\-|_|\#)\s*(\*|\-|_|\#)\s*(\*|\-|_|\#)/.test(paragraph)) {
-          if (cursorY > pageHeight - marginBottom - 40) {
-            doc.addPage();
-            cursorY = marginTop + 20;
-          } else {
-            drawOrnament(cursorY, '*   *   *');
-            cursorY += 24;
-          }
-          return;
-        }
-
-        doc.setFont(font, 'normal');
-        doc.setFontSize(10.5);
-        doc.setTextColor(primaryInk);
-
-        const lineHeight = 15;
-        const lines = doc.splitTextToSize(paragraph, contentWidth);
-        const paragraphHeight = lines.length * lineHeight;
-
-        // Check if paragraph fits on current page
-        if (cursorY + paragraphHeight > pageHeight - marginBottom) {
-          // If paragraph is long, we can print lines that fit, then pagebreak
-          for (let lIdx = 0; lIdx < lines.length; lIdx++) {
-            if (cursorY + lineHeight > pageHeight - marginBottom) {
-              doc.addPage();
-              cursorY = marginTop + 15;
-            }
-            // Paragraph indent for first line of subsequent paragraphs (classic book format)
-            const isFirstLine = lIdx === 0 && pIdx > 0 && !opts.includeSceneTitles;
-            const lineX = isFirstLine ? marginX + 16 : marginX;
-            doc.text(lines[lIdx], lineX, cursorY);
-            cursorY += lineHeight;
-          }
-          cursorY += 6; // paragraph spacing
-        } else {
-          // Fits on page
-          lines.forEach((line: string, lIdx: number) => {
-            const isFirstLine = lIdx === 0 && pIdx > 0 && !opts.includeSceneTitles;
-            const lineX = isFirstLine ? marginX + 16 : marginX;
-            doc.text(line, lineX, cursorY);
-            cursorY += lineHeight;
-          });
-          cursorY += 6;
-        }
-      });
-    });
-
-    // Add page break for the next chapter (unless this is the last chapter)
-    if (chapIdx < effectiveChapters.length - 1) {
-      doc.addPage();
-    }
-  });
-
-  // 4. POPULATE TABLE OF CONTENTS (if enabled)
-  if (opts.includeTableOfContents && tocPageIndex > 0) {
-    doc.setPage(tocPageIndex);
-    let tocY = marginTop + 30;
-
-    doc.setFont(font, 'bold');
-    doc.setFontSize(16);
-    doc.setTextColor(primaryInk);
-    doc.text('CONTENTS', pageWidth / 2, tocY, { align: 'center' });
-    tocY += 20;
-
-    drawOrnament(tocY, '✦');
-    tocY += 30;
-
-    doc.setFont(font, 'normal');
-    doc.setFontSize(10.5);
-
-    tocEntries.forEach((entry) => {
-      if (tocY > pageHeight - marginBottom - 30) {
-        return; // truncate if exceeds 1 page for now
-      }
-
-      const chapterLabel = `Chapter ${entry.number}: ${entry.title}`;
-      const pageStr = `${entry.page}`;
-
       doc.setTextColor(primaryInk);
-      doc.text(chapterLabel, marginX, tocY);
 
-      // Dot leader
-      const labelWidth = doc.getTextWidth(chapterLabel);
-      const pageNumWidth = doc.getTextWidth(pageStr);
-      const dotStartX = marginX + labelWidth + 8;
-      const dotEndX = pageWidth - marginX - pageNumWidth - 8;
-
-      if (dotEndX > dotStartX) {
-        doc.setTextColor('#B8B0A2');
-        let dotX = dotStartX;
-        while (dotX < dotEndX) {
-          doc.text('.', dotX, tocY);
-          dotX += 5;
-        }
+      const numStr = `— ${page.pageNumber} —`;
+      if (opts.pageNumberPlacement === 'bottom-center') {
+        doc.text(numStr, widthPt / 2, heightPt - marginBottom + 24, { align: 'center' });
+      } else if (opts.pageNumberPlacement === 'bottom-outer') {
+        const posX = isRecto ? rightMargin : leftMargin;
+        const align = isRecto ? 'right' : 'left';
+        doc.text(String(page.pageNumber), posX, heightPt - marginBottom + 24, { align });
+      } else if (opts.pageNumberPlacement === 'top-outer' && page.type === 'body') {
+        const posX = isRecto ? rightMargin : leftMargin;
+        const align = isRecto ? 'right' : 'left';
+        doc.text(String(page.pageNumber), posX, marginTop - 16, { align });
       }
-
-      doc.setTextColor(accentInk);
-      doc.text(pageStr, pageWidth - marginX, tocY, { align: 'right' });
-      tocY += 20;
-    });
-  }
-
-  // 5. RUNNING HEADERS & FOOTERS (Page numbers)
-  const totalPages = doc.getNumberOfPages();
-  for (let p = 1; p <= totalPages; p++) {
-    // Skip headers & footers on Cover page, TOC page, and chapter opening pages
-    if (opts.includeCoverPage && p === 1) continue;
-    if (chapterStartPages.includes(p)) continue;
-
-    doc.setPage(p);
-
-    // Running Header (alternate project title / chapter title)
-    doc.setFont(font, 'italic');
-    doc.setFontSize(8.5);
-    doc.setTextColor(mutedInk);
-
-    const isEven = p % 2 === 0;
-    if (isEven) {
-      doc.text(project.title.toUpperCase(), pageWidth / 2, marginTop - 18, { align: 'center' });
-    } else {
-      // Find active chapter title for this page
-      const activeEntry = [...tocEntries].reverse().find((e) => e.page <= p);
-      const headerTitle = activeEntry ? `CHAPTER ${activeEntry.number}: ${activeEntry.title.toUpperCase()}` : project.title.toUpperCase();
-      doc.text(headerTitle, pageWidth / 2, marginTop - 18, { align: 'center' });
     }
 
-    // Running Footer (Centered Page Number)
-    doc.setFont(font, 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(primaryInk);
-    doc.text(`— ${p} —`, pageWidth / 2, pageHeight - marginBottom + 24, { align: 'center' });
-  }
+    // RENDER PAGE BLOCKS
+    let cursorY = marginTop + 10;
+
+    page.blocks.forEach((block) => {
+      switch (block.type) {
+        case 'title-block': {
+          cursorY = heightPt * 0.32;
+          doc.setTextColor(primaryInk);
+          doc.setFont(font, 'bold');
+          doc.setFontSize(24);
+          const titleLines = doc.splitTextToSize(project.title.toUpperCase(), printableWidth);
+          doc.text(titleLines, widthPt / 2, cursorY, { align: 'center' });
+          cursorY += titleLines.length * 28;
+
+          // Decorative accent line
+          doc.setDrawColor(156, 58, 36);
+          doc.setLineWidth(1.2);
+          doc.line(widthPt / 2 - 35, cursorY + 4, widthPt / 2 + 35, cursorY + 4);
+          cursorY += 24;
+
+          // Subtitle
+          doc.setFont(font, 'italic');
+          doc.setFontSize(11);
+          doc.setTextColor(mutedInk);
+          doc.text(block.text || 'A Novel', widthPt / 2, cursorY, { align: 'center' });
+          cursorY += 40;
+
+          // Author
+          if (block.author) {
+            doc.setFont(font, 'normal');
+            doc.setFontSize(13);
+            doc.setTextColor(primaryInk);
+            doc.text(`BY ${block.author.toUpperCase()}`, widthPt / 2, cursorY, { align: 'center' });
+          }
+
+          // Imprint / Publisher at foot
+          if (block.imprint) {
+            doc.setFont(font, 'normal');
+            doc.setFontSize(9);
+            doc.setTextColor(mutedInk);
+            doc.text(block.imprint.toUpperCase(), widthPt / 2, heightPt - marginBottom - 30, { align: 'center' });
+          }
+          if (block.year) {
+            doc.setFont(font, 'normal');
+            doc.setFontSize(8);
+            doc.setTextColor('#8A8070');
+            doc.text(block.year, widthPt / 2, heightPt - marginBottom - 16, { align: 'center' });
+          }
+          break;
+        }
+
+        case 'copyright-block': {
+          cursorY = heightPt * 0.65;
+          doc.setTextColor(mutedInk);
+          doc.setFont(font, 'normal');
+          doc.setFontSize(8.5);
+
+          const copyrightLines = [
+            `Published by ${block.imprint || 'Threadline Press'}`,
+            `First Edition: ${block.year || new Date().getFullYear()}`,
+            `Copyright © ${block.year || new Date().getFullYear()} by ${block.author}`,
+            '',
+            block.text || 'All rights reserved.',
+            '',
+            'This book is a work of fiction. Names, characters, places, and incidents are products of the author’s imagination or are used fictitiously.',
+            '',
+            'Composed and typeset in Threadline Manuscript Studio.'
+          ];
+
+          copyrightLines.forEach((line) => {
+            const split = doc.splitTextToSize(line, printableWidth);
+            doc.text(split, leftMargin, cursorY);
+            cursorY += split.length * 12;
+          });
+          break;
+        }
+
+        case 'dedication-block': {
+          cursorY = heightPt * 0.38;
+          doc.setTextColor(primaryInk);
+          doc.setFont(font, 'italic');
+          doc.setFontSize(12);
+
+          const split = doc.splitTextToSize(block.text || '', printableWidth * 0.85);
+          doc.text(split, widthPt / 2, cursorY, { align: 'center' });
+          break;
+        }
+
+        case 'toc-block': {
+          cursorY = marginTop + 25;
+          doc.setTextColor(primaryInk);
+          doc.setFont(font, 'bold');
+          doc.setFontSize(15);
+          doc.text('CONTENTS', widthPt / 2, cursorY, { align: 'center' });
+          cursorY += 18;
+
+          drawOrnament('✦', cursorY);
+          cursorY += 30;
+
+          doc.setFont(font, 'normal');
+          doc.setFontSize(10);
+
+          (block.tocItems || []).forEach((item) => {
+            if (cursorY > heightPt - marginBottom - 25) return;
+
+            const label = `Chapter ${item.number}: ${item.title}`;
+            const pageStr = `${item.page}`;
+
+            doc.setTextColor(primaryInk);
+            doc.text(label, leftMargin, cursorY);
+
+            const labelW = doc.getTextWidth(label);
+            const pageNumW = doc.getTextWidth(pageStr);
+            const dotStart = leftMargin + labelW + 8;
+            const dotEnd = rightMargin - pageNumW - 8;
+
+            if (dotEnd > dotStart) {
+              doc.setTextColor(lineInk);
+              let dx = dotStart;
+              while (dx < dotEnd) {
+                doc.text('.', dx, cursorY);
+                dx += 5;
+              }
+            }
+
+            doc.setTextColor(accentInk);
+            doc.text(pageStr, rightMargin, cursorY, { align: 'right' });
+            cursorY += 19;
+          });
+          break;
+        }
+
+        case 'chapter-heading': {
+          cursorY = marginTop + 40;
+
+          // Chapter Numeral
+          doc.setTextColor(accentInk);
+          doc.setFont(font, 'normal');
+          doc.setFontSize(11);
+          doc.text(`C H A P T E R   ${block.numeralStr}`, widthPt / 2, cursorY, { align: 'center' });
+          cursorY += 22;
+
+          // Chapter Title
+          doc.setTextColor(primaryInk);
+          doc.setFont(font, 'bold');
+          doc.setFontSize(17);
+          const chapTitleLines = doc.splitTextToSize(block.title || '', printableWidth);
+          doc.text(chapTitleLines, widthPt / 2, cursorY, { align: 'center' });
+          cursorY += chapTitleLines.length * 20 + 8;
+
+          // Subtitle / Act
+          if (block.actOrPhase) {
+            doc.setTextColor(mutedInk);
+            doc.setFont(font, 'italic');
+            doc.setFontSize(9.5);
+            doc.text(block.actOrPhase, widthPt / 2, cursorY, { align: 'center' });
+            cursorY += 16;
+          }
+
+          // Ornamental flourish
+          drawOrnament(block.ornament || '✦', cursorY);
+          cursorY += 32;
+          break;
+        }
+
+        case 'scene-heading': {
+          cursorY += 8;
+          doc.setTextColor(primaryInk);
+          doc.setFont(font, 'bold');
+          doc.setFontSize(11);
+          doc.text(block.title || '', leftMargin, cursorY);
+          cursorY += 16;
+          break;
+        }
+
+        case 'ornament': {
+          cursorY += 8;
+          drawOrnament(block.text || '*   *   *', cursorY);
+          cursorY += 20;
+          break;
+        }
+
+        case 'paragraph': {
+          const bodySize = opts.fontSize === 'compact' ? 9.5 : opts.fontSize === 'large' ? 11.5 : 10.5;
+          const bodyLineHeight = opts.fontSize === 'compact' ? 13 : opts.fontSize === 'large' ? 17 : 15;
+          const spacingFactor = opts.lineSpacing === 'compact' ? 1.25 : opts.lineSpacing === 'generous' ? 1.75 : 1.5;
+          const stepLine = bodyLineHeight * (spacingFactor / 1.5);
+
+          const lines = block.lines || [];
+          if (lines.length === 0) break;
+
+          // Drop Cap handling for first paragraph in chapter
+          if (block.dropCap && opts.dropCaps) {
+            const dropChar = block.dropCap;
+            const restWord = (block.restOfFirstWord || '').toUpperCase();
+
+            // Draw large drop cap letter
+            doc.setFont(font, 'bold');
+            doc.setFontSize(bodySize * 2.8);
+            doc.setTextColor(accentInk);
+            doc.text(dropChar, leftMargin, cursorY + stepLine * 0.85);
+
+            const dropCapWidth = doc.getTextWidth(dropChar) + 5;
+
+            // Draw rest of first word in small caps
+            doc.setFont(font, 'bold');
+            doc.setFontSize(bodySize * 0.85);
+            doc.setTextColor(primaryInk);
+
+            // Draw first line adjacent to drop cap
+            const firstLineWords = lines[0].split(/\s+/);
+            const remainderOfFirstLine = firstLineWords.slice(1).join(' ');
+
+            doc.text(restWord, leftMargin + dropCapWidth, cursorY);
+            const restWordWidth = doc.getTextWidth(restWord) + 4;
+
+            doc.setFont(font, 'normal');
+            doc.setFontSize(bodySize);
+            doc.text(remainderOfFirstLine, leftMargin + dropCapWidth + restWordWidth, cursorY);
+            cursorY += stepLine;
+
+            // Second line (if exists) indented by drop cap width
+            if (lines.length > 1) {
+              doc.text(lines[1], leftMargin + dropCapWidth, cursorY);
+              cursorY += stepLine;
+            }
+
+            // Remaining lines flush left
+            for (let i = 2; i < lines.length; i++) {
+              doc.text(lines[i], leftMargin, cursorY);
+              cursorY += stepLine;
+            }
+          } else {
+            // Standard paragraph
+            doc.setFont(font, 'normal');
+            doc.setFontSize(bodySize);
+            doc.setTextColor(primaryInk);
+
+            lines.forEach((line, lIdx) => {
+              // First line indent on subsequent paragraphs if enabled
+              const isIndent = lIdx === 0 && !block.isFirstParagraph && opts.firstLineIndent;
+              const posX = isIndent ? leftMargin + 16 : leftMargin;
+              doc.text(line, posX, cursorY);
+              cursorY += stepLine;
+            });
+          }
+
+          cursorY += 4; // subtle paragraph separation
+          break;
+        }
+
+        case 'acknowledgments-block': {
+          cursorY = marginTop + 40;
+          doc.setTextColor(primaryInk);
+          doc.setFont(font, 'bold');
+          doc.setFontSize(14);
+          doc.text('ACKNOWLEDGMENTS', widthPt / 2, cursorY, { align: 'center' });
+          cursorY += 24;
+
+          drawOrnament('✦', cursorY);
+          cursorY += 30;
+
+          doc.setFont(font, 'normal');
+          doc.setFontSize(10.5);
+          doc.setTextColor(primaryInk);
+
+          const split = doc.splitTextToSize(block.text || '', printableWidth);
+          doc.text(split, leftMargin, cursorY);
+          break;
+        }
+      }
+    });
+  });
 
   return doc;
 }

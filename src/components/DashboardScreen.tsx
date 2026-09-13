@@ -277,24 +277,20 @@ const DashboardScreenInner: React.FC<DashboardScreenProps> = ({
 
     onUpdateScene(mappingScene.id, updatedFields);
 
-    // Update chapter sceneIds if changed
-    if (onUpdateChapters && mapChapterId !== mappingScene.chapterId) {
+    // Atomically purge scene from all other chapters and add only to target chapter
+    if (onUpdateChapters) {
       const updatedChapters = effectiveChapters.map((c) => {
-        // Remove from old chapter
-        if (c.id === mappingScene.chapterId) {
+        const filteredIds = (c.sceneIds || []).filter((id) => id !== mappingScene.id);
+        if (mapChapterId && c.id === mapChapterId) {
           return {
             ...c,
-            sceneIds: (c.sceneIds || []).filter((id) => id !== mappingScene.id)
+            sceneIds: [...filteredIds, mappingScene.id]
           };
         }
-        // Add to new chapter
-        if (c.id === mapChapterId) {
-          return {
-            ...c,
-            sceneIds: [...(c.sceneIds || []).filter((id) => id !== mappingScene.id), mappingScene.id]
-          };
-        }
-        return c;
+        return {
+          ...c,
+          sceneIds: filteredIds
+        };
       });
       onUpdateChapters(updatedChapters);
     }
@@ -361,14 +357,11 @@ const DashboardScreenInner: React.FC<DashboardScreenProps> = ({
       {/* 1. SCREEN HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8 w-full min-w-0">
         <div>
-          <span className="section-label block mb-1">
-            Structure &amp; Arc Index
-          </span>
           <h1 className="text-2xl sm:text-3xl font-serif text-[#221E18] font-semibold">
             Corkboard &amp; Scene Matrix
           </h1>
-          <p className="text-[#7A705F] text-xs sm:text-sm mt-1">
-            Digital index cards organized by chapters, acts, and dramatic beats to ensure narrative continuity.
+          <p className="text-[#7A705F] text-xs sm:text-sm mt-1.5">
+            Structure &amp; arc index: digital index cards organized by chapters, acts, and dramatic beats to ensure narrative continuity.
           </p>
         </div>
 
@@ -911,16 +904,16 @@ const DashboardScreenInner: React.FC<DashboardScreenProps> = ({
 
                       <div>
                         <div className="flex items-center gap-2">
+                          <h2 className="font-serif font-bold text-lg text-[#221E18]">
+                            {actName}
+                          </h2>
                           <span className="text-[10px] font-mono font-semibold uppercase px-2 py-0.5 rounded-[4px] bg-[#B54B32] text-[#FAF6EE]">
                             Phase {actIdx + 1}
                           </span>
-                          <span className="text-xs font-mono text-[#7A705F]">
-                            {actChapters.length} Chapters · {actScenes.length} Scenes
-                          </span>
                         </div>
-                        <h2 className="font-serif font-bold text-lg text-[#221E18] mt-0.5">
-                          {actName}
-                        </h2>
+                        <span className="text-xs font-mono text-[#7A705F]">
+                          {actChapters.length} Chapters · {actScenes.length} Scenes
+                        </span>
                       </div>
                     </div>
 

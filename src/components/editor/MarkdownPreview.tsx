@@ -2,12 +2,22 @@ import React, { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
+import {
+  EditorLineSpacing,
+  EditorWordSpacing,
+  EditorTextAlign,
+  AVAILABLE_LINE_SPACINGS,
+  AVAILABLE_WORD_SPACINGS
+} from '../../services/theme/themeConfig';
 
 interface MarkdownPreviewProps {
   title: string;
   content: string;
   fontSize: 'normal' | 'large' | 'compact';
   fontFamily: 'serif' | 'sans' | 'mono';
+  lineSpacing?: EditorLineSpacing;
+  wordSpacing?: EditorWordSpacing;
+  textAlign?: EditorTextAlign;
   sceneOrder?: number;
   wordCount?: number;
   isFullPreview?: boolean;
@@ -18,6 +28,9 @@ export const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({
   content,
   fontSize,
   fontFamily,
+  lineSpacing = 'normal',
+  wordSpacing = 'normal',
+  textAlign = 'left',
   sceneOrder,
   wordCount,
   isFullPreview = false
@@ -28,17 +41,41 @@ export const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({
 
     let text = content;
 
-    // Color-coded highlights
-    text = text.replace(/==yellow:(.*?)==/gi, '<mark class="hl-yellow">$1</mark>');
-    text = text.replace(/==amber:(.*?)==/gi, '<mark class="hl-yellow">$1</mark>');
-    text = text.replace(/==mint:(.*?)==/gi, '<mark class="hl-mint">$1</mark>');
-    text = text.replace(/==green:(.*?)==/gi, '<mark class="hl-mint">$1</mark>');
-    text = text.replace(/==rose:(.*?)==/gi, '<mark class="hl-rose">$1</mark>');
-    text = text.replace(/==blue:(.*?)==/gi, '<mark class="hl-blue">$1</mark>');
-    text = text.replace(/==purple:(.*?)==/gi, '<mark class="hl-purple">$1</mark>');
+    // Color-coded Line Edit highlights
+    text = text.replace(/==pacing:(.*?)==/gi, '<mark class="hl-pacing" data-category="pacing">$1</mark>');
+    text = text.replace(/==yellow:(.*?)==/gi, '<mark class="hl-pacing" data-category="pacing">$1</mark>');
+    text = text.replace(/==amber:(.*?)==/gi, '<mark class="hl-pacing" data-category="pacing">$1</mark>');
+
+    text = text.replace(/==voice:(.*?)==/gi, '<mark class="hl-voice" data-category="voice">$1</mark>');
+    text = text.replace(/==mint:(.*?)==/gi, '<mark class="hl-voice" data-category="voice">$1</mark>');
+    text = text.replace(/==green:(.*?)==/gi, '<mark class="hl-voice" data-category="voice">$1</mark>');
+
+    text = text.replace(/==tighten:(.*?)==/gi, '<mark class="hl-tighten" data-category="tighten">$1</mark>');
+    text = text.replace(/==rose:(.*?)==/gi, '<mark class="hl-tighten" data-category="tighten">$1</mark>');
+    text = text.replace(/==red:(.*?)==/gi, '<mark class="hl-tighten" data-category="tighten">$1</mark>');
+
+    text = text.replace(/==continuity:(.*?)==/gi, '<mark class="hl-continuity" data-category="continuity">$1</mark>');
+    text = text.replace(/==blue:(.*?)==/gi, '<mark class="hl-continuity" data-category="continuity">$1</mark>');
+    text = text.replace(/==sky:(.*?)==/gi, '<mark class="hl-continuity" data-category="continuity">$1</mark>');
+
+    text = text.replace(/==theme:(.*?)==/gi, '<mark class="hl-theme" data-category="theme">$1</mark>');
+    text = text.replace(/==purple:(.*?)==/gi, '<mark class="hl-theme" data-category="theme">$1</mark>');
+
+    text = text.replace(/==query:(.*?)==/gi, '<mark class="hl-query" data-category="query">$1</mark>');
+    text = text.replace(/==orange:(.*?)==/gi, '<mark class="hl-query" data-category="query">$1</mark>');
 
     // Standard highlight: ==text==
-    text = text.replace(/==(.*?)==/g, '<mark class="hl-yellow">$1</mark>');
+    text = text.replace(/==(.*?)==/g, '<mark class="hl-pacing" data-category="pacing">$1</mark>');
+
+    // Wikilinks & Internal Document References: [[Target|Label]] and [[Target]]
+    text = text.replace(
+      /\[\[(.*?)\|(.*?)\]\]/g,
+      '<span class="inline-flex items-center gap-0.5 text-[#DE6346] font-mono text-[0.9em] bg-[#DE6346]/10 px-1.5 py-0.2 rounded border border-[#DE6346]/20 cursor-pointer hover:bg-[#DE6346]/20 transition-colors" data-wikilink="$1" title="Jump to Internal Document / Entity: $1"><span class="opacity-40">[[</span><span class="font-sans font-semibold underline underline-offset-2">$2</span><span class="opacity-40">]]</span></span>'
+    );
+    text = text.replace(
+      /\[\[(.*?)\]\]/g,
+      '<span class="inline-flex items-center gap-0.5 text-[#DE6346] font-mono text-[0.9em] bg-[#DE6346]/10 px-1.5 py-0.2 rounded border border-[#DE6346]/20 cursor-pointer hover:bg-[#DE6346]/20 transition-colors" data-wikilink="$1" title="Jump to Internal Document / Entity: $1"><span class="opacity-40">[[</span><span class="font-sans font-semibold underline underline-offset-2">$1</span><span class="opacity-40">]]</span></span>'
+    );
 
     return text;
   }, [content]);
@@ -54,19 +91,26 @@ export const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({
   // Typography size class
   const sizeClass =
     fontSize === 'large'
-      ? 'text-xl leading-[1.95]'
+      ? 'text-xl'
       : fontSize === 'compact'
-      ? 'text-base leading-[1.75]'
-      : 'text-lg leading-[1.85]';
+      ? 'text-base'
+      : 'text-lg';
+
+  const lineSpacingValue = AVAILABLE_LINE_SPACINGS.find((l) => l.id === lineSpacing)?.cssValue || '1.75';
+  const wordSpacingValue = AVAILABLE_WORD_SPACINGS.find((w) => w.id === wordSpacing)?.cssValue || 'normal';
+  const textAlignValue = textAlign || 'left';
 
   return (
-    <div
-      className={`h-full min-h-0 overflow-y-auto overscroll-contain scrollbar-subtle selection:bg-[#EAE4D6] px-6 md:px-12 py-8 ${
-        isFullPreview ? 'max-w-2xl mx-auto w-full' : 'w-full'
-      }`}
-    >
-      {/* Header Info */}
-      <div className="pt-8 sm:pt-12 mb-8 pb-6 border-b border-[#EBE8E2]/80 text-center">
+    <div className="h-full min-h-0 overflow-y-auto overscroll-contain scrollbar-subtle selection:bg-[#EAE4D6] px-4 sm:px-6 md:px-12 py-8">
+      <div
+        style={{
+          maxWidth: isFullPreview ? 'var(--editor-page-width, 720px)' : '100%',
+          width: '100%'
+        }}
+        className="manuscript-page-sheet min-w-0 mx-auto"
+      >
+        {/* Header Info */}
+        <div className="pt-8 sm:pt-12 mb-8 pb-6 border-b border-[#EBE8E2]/80 text-center">
         <div className="flex items-center justify-center gap-3 text-[11px] font-mono text-[#8C887F] uppercase tracking-wider mb-3 select-none">
           <span>{sceneOrder ? `Scene ${sceneOrder}` : 'Draft'}</span>
           <span className="opacity-30">·</span>
@@ -83,24 +127,30 @@ export const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({
       {/* Rendered Prose */}
       {processedMarkdown.trim() ? (
         <div
-          className={`${fontClass} ${sizeClass} text-[#33312D] prose-manuscript space-y-4`}
+          className={`${fontClass} ${sizeClass} text-[#33312D] prose-manuscript space-y-4 break-words`}
+          style={{
+            lineHeight: lineSpacingValue,
+            wordSpacing: wordSpacingValue,
+            textAlign: textAlignValue,
+            hyphens: 'auto'
+          }}
         >
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             rehypePlugins={[rehypeRaw]}
             components={{
               h1: ({ children }) => (
-                <h1 className="text-2xl md:text-3xl font-serif font-bold text-[#1A1814] mt-8 mb-3 tracking-tight">
+                <h1 className="text-2xl md:text-3xl font-bold text-[#1A1814] mt-8 mb-3 tracking-tight">
                   {children}
                 </h1>
               ),
               h2: ({ children }) => (
-                <h2 className="text-xl md:text-2xl font-serif font-semibold text-[#1A1814] mt-7 mb-2.5 tracking-tight">
+                <h2 className="text-xl md:text-2xl font-semibold text-[#1A1814] mt-7 mb-2.5 tracking-tight">
                   {children}
                 </h2>
               ),
               h3: ({ children }) => (
-                <h3 className="text-lg md:text-xl font-serif font-medium text-[#2D2A26] mt-6 mb-2">
+                <h3 className="text-lg md:text-xl font-medium text-[#2D2A26] mt-6 mb-2">
                   {children}
                 </h3>
               ),
@@ -141,15 +191,17 @@ export const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({
                 <em className="italic text-[#2D2A26]">{children}</em>
               ),
               mark: ({ children, className }) => {
-                let bgClass = 'bg-amber-100/90 border-amber-300 text-amber-950';
-                if (className?.includes('hl-mint')) {
-                  bgClass = 'bg-emerald-100/90 border-emerald-300 text-emerald-950';
-                } else if (className?.includes('hl-rose')) {
-                  bgClass = 'bg-rose-100/90 border-rose-300 text-rose-950';
-                } else if (className?.includes('hl-blue')) {
-                  bgClass = 'bg-sky-100/90 border-sky-300 text-sky-950';
-                } else if (className?.includes('hl-purple')) {
-                  bgClass = 'bg-purple-100/90 border-purple-300 text-purple-950';
+                let bgClass = 'bg-amber-100/90 border-amber-400 text-amber-950';
+                if (className?.includes('hl-voice') || className?.includes('hl-mint')) {
+                  bgClass = 'bg-emerald-100/90 border-emerald-400 text-emerald-950';
+                } else if (className?.includes('hl-tighten') || className?.includes('hl-rose')) {
+                  bgClass = 'bg-rose-100/90 border-rose-400 text-rose-950';
+                } else if (className?.includes('hl-continuity') || className?.includes('hl-blue')) {
+                  bgClass = 'bg-sky-100/90 border-sky-400 text-sky-950';
+                } else if (className?.includes('hl-theme') || className?.includes('hl-purple')) {
+                  bgClass = 'bg-purple-100/90 border-purple-400 text-purple-950';
+                } else if (className?.includes('hl-query') || className?.includes('hl-orange')) {
+                  bgClass = 'bg-orange-100/90 border-orange-400 text-orange-950';
                 }
                 return (
                   <mark
@@ -158,7 +210,17 @@ export const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({
                     {children}
                   </mark>
                 );
-              }
+              },
+              pre: ({ children }) => (
+                <div className="my-4 whitespace-pre-wrap font-inherit">
+                  {children}
+                </div>
+              ),
+              code: ({ children }) => (
+                <span className="font-inherit">
+                  {children}
+                </span>
+              )
             }}
           >
             {processedMarkdown}
@@ -172,6 +234,7 @@ export const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({
           </p>
         </div>
       )}
+      </div>
     </div>
   );
 };

@@ -21,7 +21,8 @@ import {
   Smartphone,
   CheckCircle2,
   HardDrive,
-  Lightbulb
+  Lightbulb,
+  Film
 } from 'lucide-react';
 import { Project } from '../types';
 import { VaultInfo } from '../services/storage/vaultTypes';
@@ -36,13 +37,19 @@ export type ScreenType =
   | 'projects'
   | 'home'
   | 'editor'
+  | 'screenplay'
+  | 'plan-lore'
   | 'editorial'
+  | 'editor-review'
+  | 'version-history'
+  | 'diagnostics'
   | 'ideation'
   | 'bible'
   | 'codex'
   | 'dashboard'
   | 'continuity'
   | 'revisions'
+  | 'research-vault'
   | 'export'
   | 'settings'
   | 'new-project'
@@ -103,7 +110,8 @@ export const Navigation: React.FC<NavigationProps> = ({
   const navItems: { screen: ScreenType; label: string; icon: React.ComponentType<{ size?: number; className?: string }>; count?: number }[] = [
     { screen: 'projects', label: 'Manuscripts', icon: FolderKanban },
     { screen: 'home', label: 'Overview', icon: BookOpen },
-    { screen: 'editor', label: 'Manuscript', icon: FileText },
+    { screen: 'editor', label: 'Prose', icon: FileText },
+    { screen: 'screenplay', label: 'Screenplay', icon: Film },
     { screen: 'ideation', label: 'Ideation', icon: Lightbulb },
     { screen: 'dashboard', label: 'Corkboard', icon: Layers },
     { screen: 'codex', label: 'Codex & Lore', icon: Compass },

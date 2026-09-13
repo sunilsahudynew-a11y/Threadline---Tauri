@@ -124,12 +124,11 @@ export const EditorFloatingDock: React.FC<EditorFloatingDockProps> = ({
       </button>
       <button
         onClick={onOpenAIPanel}
-        className="px-3 sm:px-4 py-1.5 text-[10px] text-[#FAF6EE] bg-[#B54B32] font-bold uppercase tracking-wider rounded-full hover:bg-[#9E3E28] transition-all flex items-center gap-1.5 cursor-pointer min-h-[32px] sm:min-h-[28px] shrink-0"
-        title="Open Sounding Board (AI Canon & Continuity Advisor)"
+        className="px-3 sm:px-4 py-1.5 text-[10px] text-[#FAF6EE] bg-[#B54B32] font-bold uppercase tracking-wider rounded-full hover:bg-[#9E3E28] transition-all flex items-center gap-1.5 cursor-pointer min-h-[32px] sm:min-h-[28px] shrink-0 shadow-xs"
+        title="Open Literary Advisor (Critique Cadence, Tone & Pacing)"
       >
         <Sparkles size={12} />
-        <span className="hidden xs:inline">Sounding Board</span>
-        <span className="xs:hidden">Advisor</span>
+        <span>Advisor</span>
       </button>
     </div>
   );

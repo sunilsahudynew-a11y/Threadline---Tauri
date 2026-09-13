@@ -224,64 +224,78 @@ export const RevisionsScreen: React.FC<RevisionsScreenProps> = ({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <span className="text-[10px] font-mono font-semibold tracking-[0.14em] text-[#7A705F] uppercase">
-            Craft &amp; Polish
-          </span>
-          <h1 className="text-2xl sm:text-3xl font-serif text-[#221E18] font-semibold mt-1">
+          <h1 className="text-2xl sm:text-3xl font-serif text-[#221E18] font-semibold">
             Revision Workspace
           </h1>
-          <p className="text-[#7A705F] text-xs sm:text-sm mt-1 max-w-2xl leading-relaxed">
-            Systematic editorial passes, immutable point-in-time snapshot diffs, and a peaceful cutting room where no excised sentence is ever lost.
+          <p className="text-[#7A705F] text-xs sm:text-sm mt-1.5 max-w-2xl leading-relaxed">
+            Craft &amp; polish: systematic editorial passes, immutable point-in-time snapshot diffs, and a peaceful cutting room where no excised sentence is ever lost.
           </p>
         </div>
 
-        {/* Tab Selector */}
-        <div className="bg-[#F1EAD9] p-0.5 rounded-[6px] flex text-xs font-medium border border-[rgba(34,30,24,0.12)] self-start overflow-x-auto no-scrollbar">
+        {/* Tab Selector - Industry Standard Underline Style */}
+        <div className="flex items-center gap-4 border-b border-[rgba(34,30,24,0.12)] w-full overflow-x-auto no-scrollbar -mb-2">
           <button
             onClick={() => setActiveTab('passes')}
-            className={`px-3 py-1.5 rounded-[5px] text-xs font-medium transition-colors duration-150 cursor-pointer min-h-[36px] whitespace-nowrap border ${
+            className={`py-2 px-1 text-xs font-medium transition-colors cursor-pointer border-b-2 whitespace-nowrap flex items-center gap-1.5 ${
               activeTab === 'passes'
-                ? 'bg-[#FAF6EE] shadow-warm-sm text-[#221E18] border-[rgba(34,30,24,0.12)]'
-                : 'text-[#7A705F] hover:text-[#221E18] border-transparent'
+                ? 'border-[#B54B32] text-[#221E18] font-semibold'
+                : 'border-transparent text-[#7A705F] hover:text-[#221E18] hover:border-[rgba(34,30,24,0.2)]'
             }`}
           >
-            Named Passes ({revisionPasses.length})
+            <span>Named Passes</span>
+            <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+              activeTab === 'passes' ? 'bg-[#221E18] text-[#FAF6EE]' : 'bg-[rgba(34,30,24,0.08)] text-[#7A705F]'
+            }`}>
+              {revisionPasses.length}
+            </span>
           </button>
           <button
             onClick={() => setActiveTab('history')}
-            className={`px-3 py-1.5 rounded-[5px] text-xs font-medium transition-colors duration-150 cursor-pointer min-h-[36px] whitespace-nowrap border flex items-center gap-1.5 ${
+            className={`py-2 px-1 text-xs font-medium transition-colors cursor-pointer border-b-2 whitespace-nowrap flex items-center gap-1.5 ${
               activeTab === 'history'
-                ? 'bg-[#FAF6EE] shadow-warm-sm text-[#221E18] border-[rgba(34,30,24,0.12)]'
-                : 'text-[#7A705F] hover:text-[#221E18] border-transparent'
+                ? 'border-[#B54B32] text-[#221E18] font-semibold'
+                : 'border-transparent text-[#7A705F] hover:text-[#221E18] hover:border-[rgba(34,30,24,0.2)]'
             }`}
           >
             <History size={13} className={activeTab === 'history' ? 'text-[#B54B32]' : 'text-[#7A705F]'} />
             <span>Version History</span>
             {totalVersionsCount > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full bg-[#B54B32] text-[#FAF6EE] text-[9px] font-mono font-bold">
+              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+                activeTab === 'history' ? 'bg-[#B54B32] text-[#FAF6EE]' : 'bg-[rgba(34,30,24,0.08)] text-[#7A705F]'
+              }`}>
                 {totalVersionsCount}
               </span>
             )}
           </button>
           <button
             onClick={() => setActiveTab('snapshots')}
-            className={`px-3 py-1.5 rounded-[5px] text-xs font-medium transition-colors duration-150 cursor-pointer min-h-[36px] whitespace-nowrap border ${
+            className={`py-2 px-1 text-xs font-medium transition-colors cursor-pointer border-b-2 whitespace-nowrap flex items-center gap-1.5 ${
               activeTab === 'snapshots'
-                ? 'bg-[#FAF6EE] shadow-warm-sm text-[#221E18] border-[rgba(34,30,24,0.12)]'
-                : 'text-[#7A705F] hover:text-[#221E18] border-transparent'
+                ? 'border-[#B54B32] text-[#221E18] font-semibold'
+                : 'border-transparent text-[#7A705F] hover:text-[#221E18] hover:border-[rgba(34,30,24,0.2)]'
             }`}
           >
-            Snapshots &amp; Diffs ({snapshots.length})
+            <span>Snapshots &amp; Diffs</span>
+            <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+              activeTab === 'snapshots' ? 'bg-[#221E18] text-[#FAF6EE]' : 'bg-[rgba(34,30,24,0.08)] text-[#7A705F]'
+            }`}>
+              {snapshots.length}
+            </span>
           </button>
           <button
             onClick={() => setActiveTab('cutting-room')}
-            className={`px-3 py-1.5 rounded-[5px] text-xs font-medium transition-colors duration-150 cursor-pointer min-h-[36px] whitespace-nowrap border ${
+            className={`py-2 px-1 text-xs font-medium transition-colors cursor-pointer border-b-2 whitespace-nowrap flex items-center gap-1.5 ${
               activeTab === 'cutting-room'
-                ? 'bg-[#FAF6EE] shadow-warm-sm text-[#221E18] border-[rgba(34,30,24,0.12)]'
-                : 'text-[#7A705F] hover:text-[#221E18] border-transparent'
+                ? 'border-[#B54B32] text-[#221E18] font-semibold'
+                : 'border-transparent text-[#7A705F] hover:text-[#221E18] hover:border-[rgba(34,30,24,0.2)]'
             }`}
           >
-            Cutting Room ({cuttingRoom.length})
+            <span>Cutting Room</span>
+            <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+              activeTab === 'cutting-room' ? 'bg-[#221E18] text-[#FAF6EE]' : 'bg-[rgba(34,30,24,0.08)] text-[#7A705F]'
+            }`}>
+              {cuttingRoom.length}
+            </span>
           </button>
         </div>
       </div>
